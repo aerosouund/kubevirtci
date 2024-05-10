@@ -35,6 +35,8 @@ const (
 	//PortDNS contains DNS port
 	PortDNS = 31111
 
+	PortSocat = 2222
+
 	// PortNameSSH contains control-plane node SSH port name
 	PortNameSSH = "ssh"
 	// PortNameSSHWorker contains worker node SSH port name
@@ -61,7 +63,8 @@ const (
 	// PortNameUploadProxy contains CDI UploadProxy port
 	PortNameUploadProxy = "uploadproxy"
 	// PortNameDNS contains UDP port
-	PortNameDNS = "dns"
+	PortNameDNS   = "dns"
+	PortNameSocat = "socat"
 )
 
 // GetPublicPort returns public port by private port
