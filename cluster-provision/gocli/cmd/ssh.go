@@ -68,7 +68,7 @@ func hostSSH(nodeIdx int, dnsmasqID string, sshPort int16, cmd string) error {
 	success, err := docker.Exec(cli, dnsmasqID, []string{
 		"socat",
 		"TCP-LISTEN:2222,fork,reuseaddr",
-		fmt.Sprintf("TCP:192.168.66.1%s:22", nodeIdx),
+		fmt.Sprintf("TCP:192.168.66.10%s:22", nodeIdx),
 	}, os.NewFile(0, os.DevNull))
 	if err != nil {
 		return err

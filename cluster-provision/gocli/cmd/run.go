@@ -359,6 +359,13 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 
+	dnsmasqJSON, err := cli.ContainerInspect(context.Background(), dnsmasq.ID)
+	if err != nil {
+		return err
+	}
+
+	workerSSHPort, err := utils.GetPublicPort(utils.PortSocat, dnsmasqJSON.NetworkSettings.Ports)
+
 	// Pull the registry image
 	err = docker.ImagePull(cli, ctx, utils.DockerRegistryImage, types.ImagePullOptions{})
 	if err != nil {
@@ -557,6 +564,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 		containers <- node.ID
+
 		if err := cli.ContainerStart(ctx, node.ID, types.ContainerStartOptions{}); err != nil {
 			return err
 		}
@@ -704,6 +712,10 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 			wg.Done()
 		}(node.ID)
+	}
+	err = hostSSH(1, dnsmasq.ID, int16(workerSSHPort), "echo ammar")
+	if err != nil {
+		panic(err)
 	}
 
 	if cephEnabled {
