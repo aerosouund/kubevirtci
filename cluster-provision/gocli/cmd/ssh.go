@@ -63,7 +63,7 @@ func ssh(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func hostSSH(nodeIdx int, dnsmasqID string, sshPort int16, cmd string) error {
+func hostSSH(nodeIdx int, dnsmasqID string, sshPort int16, cmd string) (string, error) {
 	// docker exec socat on the dnsmasq
 	success, err := docker.Exec(cli, dnsmasqID, []string{
 		"socat",
@@ -71,10 +71,10 @@ func hostSSH(nodeIdx int, dnsmasqID string, sshPort int16, cmd string) error {
 		fmt.Sprintf("TCP:192.168.66.10%d:22", nodeIdx),
 	}, os.NewFile(0, os.DevNull))
 	if err != nil {
-		return err
+		return "", err
 	}
 	if !success {
-		return fmt.Errorf("failed to execute cmd %s on node %+v", cmd, nodeIdx)
+		return "", fmt.Errorf("failed to execute cmd %s on node %+v", cmd, nodeIdx)
 	}
 
 	defer func() {
@@ -85,7 +85,7 @@ func hostSSH(nodeIdx int, dnsmasqID string, sshPort int16, cmd string) error {
 
 	signer, err := ssh1.ParsePrivateKey([]byte(sshKey))
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	config := &ssh1.ClientConfig{
@@ -98,7 +98,7 @@ func hostSSH(nodeIdx int, dnsmasqID string, sshPort int16, cmd string) error {
 
 	client, err := ssh1.Dial("tcp", "localhost:"+fmt.Sprintf("%d", sshPort), config)
 	if err != nil {
-		return fmt.Errorf("Failed to connect to SSH server: %v", err)
+		return "", fmt.Errorf("Failed to connect to SSH server: %v", err)
 	}
 	defer client.Close()
 
@@ -108,12 +108,15 @@ func hostSSH(nodeIdx int, dnsmasqID string, sshPort int16, cmd string) error {
 	}
 	defer session.Close()
 
-	var b bytes.Buffer
-	session.Stderr = &b
+	var stderr bytes.Buffer
+	var stdout bytes.Buffer
+
+	session.Stderr = &stderr
+	session.Stdout = &stdout
 
 	err = session.Run(cmd)
 	if err != nil {
-		return fmt.Errorf("Failed to execute command: %v", err)
+		return "", fmt.Errorf("Failed to execute command: %v", err)
 	}
-	return nil
+	return stdout.String(), nil
 }

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"path"
@@ -723,10 +724,11 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			wg.Done()
 		}(node.ID)
 	}
-	err = hostSSH(1, dnsmasq.ID, int16(workerSSHPort), "echo ammar")
+	out, err := hostSSH(1, dnsmasq.ID, int16(workerSSHPort), "echo ammar")
 	if err != nil {
 		panic(err)
 	}
+	log.Println("command output: " + out)
 
 	if cephEnabled {
 		nodeName := nodeNameFromIndex(1)
