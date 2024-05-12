@@ -74,17 +74,21 @@ func hostSSH(nodeIdx int, dnsmasqID string, sshPort int16, cmd string) (string, 
 		return "", fmt.Errorf("failed to install socat")
 	}
 	// docker exec socat on the dnsmasq
-	success, err = docker.Exec(cli, dnsmasqID, []string{
-		"socat",
-		"TCP-LISTEN:2222,fork,reuseaddr",
-		fmt.Sprintf("TCP:192.168.66.10%d:22 &", nodeIdx),
-	}, os.NewFile(0, os.DevNull))
-	if err != nil {
-		return "", err
-	}
-	if !success {
-		return "", fmt.Errorf("failed to execute cmd %s on node %+v", cmd, nodeIdx)
-	}
+	go func() {
+		success, err = docker.Exec(cli, dnsmasqID, []string{
+			"socat",
+			"TCP-LISTEN:2222,fork,reuseaddr",
+			fmt.Sprintf("TCP:192.168.66.10%d:22 &", nodeIdx),
+		}, os.NewFile(0, os.DevNull))
+		if err != nil {
+			// Handle error if needed
+			fmt.Printf("Error executing socat command: %v\n", err)
+		}
+		if !success {
+			// Handle failure if needed
+			fmt.Printf("Failed to execute socat command\n")
+		}
+	}()
 
 	defer func() {
 		docker.Exec(cli, dnsmasqID, []string{
