@@ -724,7 +724,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			wg.Done()
 		}(node.ID)
 	}
-	out, err := hostSSH(1, dnsmasq.ID, int16(workerSSHPort), "echo ammar")
+	out, err := hostSSH(1, dnsmasq.ID, workerSSHPort, "echo ammar")
 	if err != nil {
 		panic(err)
 	}
