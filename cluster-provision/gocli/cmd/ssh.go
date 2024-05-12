@@ -64,8 +64,17 @@ func ssh(cmd *cobra.Command, args []string) error {
 }
 
 func hostSSH(nodeIdx int, dnsmasqID string, sshPort int16, cmd string) (string, error) {
-	// docker exec socat on the dnsmasq
 	success, err := docker.Exec(cli, dnsmasqID, []string{
+		"yum", "install", "socat",
+	}, os.Stdout)
+	if err != nil {
+		return "", err
+	}
+	if !success {
+		return "", fmt.Errorf("failed to install socat")
+	}
+	// docker exec socat on the dnsmasq
+	success, err = docker.Exec(cli, dnsmasqID, []string{
 		"socat",
 		"TCP-LISTEN:2222,fork,reuseaddr",
 		fmt.Sprintf("TCP:192.168.66.10%d:22", nodeIdx),
