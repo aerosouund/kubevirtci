@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"net"
 	"os"
 
 	"github.com/docker/docker/client"
@@ -108,10 +109,8 @@ func hostSSH(nodeIdx int, dnsmasqID string, sshPort uint16, cmd string) (string,
 		},
 		HostKeyCallback: ssh1.InsecureIgnoreHostKey(),
 	}
-	addr := "localhost:" + fmt.Sprint(sshPort)
-	fmt.Println("ssh address: ", addr)
 
-	client, err := ssh1.Dial("tcp", addr, config)
+	client, err := ssh1.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(sshPort)), config)
 	if err != nil {
 		return "", fmt.Errorf("Failed to connect to SSH server: %v", err)
 	}
