@@ -79,7 +79,7 @@ func hostSSH(nodeIdx int, dnsmasqID string, sshPort uint16, cmd string) (string,
 			"/usr/bin/socat",
 			"TCP-LISTEN:2222,fork,reuseaddr",
 			fmt.Sprintf("TCP:192.168.66.10%d:22 &", nodeIdx),
-		}, os.NewFile(0, os.DevNull))
+		}, os.Stdout)
 		if err != nil {
 			// Handle error if needed
 			fmt.Printf("Error executing socat command: %v\n", err)
