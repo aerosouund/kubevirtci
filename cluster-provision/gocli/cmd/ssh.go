@@ -108,8 +108,10 @@ func hostSSH(nodeIdx int, dnsmasqID string, sshPort uint16, cmd string) (string,
 		},
 		HostKeyCallback: ssh1.InsecureIgnoreHostKey(),
 	}
+	addr := "localhost:" + fmt.Sprint(sshPort)
+	fmt.Println("ssh address: ", addr)
 
-	client, err := ssh1.Dial("tcp", "localhost:"+fmt.Sprintf("%d", sshPort), config)
+	client, err := ssh1.Dial("tcp", addr, config)
 	if err != nil {
 		return "", fmt.Errorf("Failed to connect to SSH server: %v", err)
 	}
