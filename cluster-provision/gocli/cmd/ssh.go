@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
@@ -127,6 +128,7 @@ func hostSSH(nodeIdx int, dnsmasqID string, sshPort uint16, cmd string) (string,
 
 	session.Stderr = &stderr
 	session.Stdout = &stdout
+	time.Sleep(time.Second * 500)
 
 	err = session.Run(cmd)
 	if err != nil {
