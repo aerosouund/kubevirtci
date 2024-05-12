@@ -65,7 +65,7 @@ func ssh(cmd *cobra.Command, args []string) error {
 
 func hostSSH(nodeIdx int, dnsmasqID string, sshPort int16, cmd string) (string, error) {
 	success, err := docker.Exec(cli, dnsmasqID, []string{
-		"yum", "install", "socat",
+		"yum", "install", "socat", "-y",
 	}, os.Stdout)
 	if err != nil {
 		return "", err
