@@ -4,6 +4,7 @@ RUN apk add git
 WORKDIR /workdir
 RUN git config --global --add safe.directory /workdir
 
+COPY ../cmd/scripts ./scripts
 COPY cli /cli
 
 ENTRYPOINT ["/cli"]
