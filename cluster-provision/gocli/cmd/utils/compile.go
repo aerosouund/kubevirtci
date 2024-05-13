@@ -10,7 +10,7 @@ import (
 func compileToTargetOS(location string) error {
 	cmd := exec.Command("CGO_ENABLED=0",
 		"GOOS=linux", "GOARCH=amd64",
-		"go", "build", "-o", fmt.Sprintf("./bin/%s", location), fmt.Sprintf("./bin/%s", location),
+		"go", "build", "-o", fmt.Sprintf("./bin/%s", location), fmt.Sprintf("./scripts/%s", location),
 	)
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
