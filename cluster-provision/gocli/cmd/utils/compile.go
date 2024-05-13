@@ -20,6 +20,7 @@ func CompileToTargetOS(location string) error {
 
 	err := cmd.Run()
 	if err != nil {
+		fmt.Println("error:", err)
 		return fmt.Errorf("Error executing build: %s", stderr.String())
 	}
 
