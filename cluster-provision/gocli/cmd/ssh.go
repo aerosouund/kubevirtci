@@ -87,14 +87,13 @@ func jumpSSH(nodeIdx int, sshPort uint16, cmd string) (string, error) {
 
 	conn, err := client.Dial("tcp", fmt.Sprintf("192.168.66.10%d:22", nodeIdx))
 	if err != nil {
-		log.Fatal(err)
+		return "", fmt.Errorf("Error establishing connection to the next hop host: %s", err)
 	}
 
 	ncc, chans, reqs, err := ssh1.NewClientConn(conn, fmt.Sprintf("192.168.66.10%d:22", nodeIdx), config)
 	if err != nil {
-		log.Fatal(err)
+		return "", fmt.Errorf("Error creating forwarded ssh connection: %s", err)
 	}
-
 	jumpHost := ssh1.NewClient(ncc, chans, reqs)
 	session, err := jumpHost.NewSession()
 	if err != nil {
@@ -113,7 +112,6 @@ func jumpSSH(nodeIdx int, sshPort uint16, cmd string) (string, error) {
 		return "", fmt.Errorf("Failed to execute command: %v", err)
 	}
 	return stdout.String(), nil
-
 }
 
 func hostSSH(nodeIdx int, dnsmasqID string, sshPort uint16, cmd string) (string, error) {
