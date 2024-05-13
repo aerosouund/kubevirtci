@@ -718,7 +718,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		panic(err)
 	}
 
-	err = jumpSCP(workerSSHPort, 1, "bin/provision")
+	err = jumpSCP(workerSSHPort, 2, "bin/provision")
 	if err != nil {
 		panic(err)
 	}
