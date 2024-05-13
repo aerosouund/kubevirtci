@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -67,9 +68,11 @@ export ISTIO_BIN_DIR="/opt/istio-${ISTIO_VERSION}/bin"
 		"centos-release-nfv-openvswitch", "openvswitch2.16", "NetworkManager",
 		"NetworkManager-ovs", "NetworkManager-config-server"}
 
-	err = installPackages(packages)
-	if err != nil {
-		panic(err)
+	for _, p := range packages {
+		_, err = runCMD(fmt.Sprintf("dnf install -y %s", p))
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	f, err := os.OpenFile("/etc/udev/rules.d/60-force-ssd-rotational.rules", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
@@ -116,6 +119,7 @@ export ISTIO_BIN_DIR="/opt/istio-${ISTIO_VERSION}/bin"
 	if err != nil {
 		panic(err)
 	}
+	log.Println("Executed linux phase successfully")
 }
 
 func runCMD(cmd string) (string, error) {
@@ -128,20 +132,7 @@ func runCMD(cmd string) (string, error) {
 
 	err := command.Run()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf(stderr.String())
 	}
 	return stdout.String(), nil
-}
-
-func installPackages(packages []string) error {
-	for _, p := range packages {
-		cmd := exec.Command("dnf", "install", "-y", p)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err := cmd.Run()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
