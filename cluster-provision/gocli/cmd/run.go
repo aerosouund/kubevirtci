@@ -714,7 +714,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			wg.Done()
 		}(node.ID)
 	}
-	out, err := jumpSSH(2, workerSSHPort, "echo ammar")
+	out, err := jumpSSH(2, workerSSHPort, "echo ammar > ammar.txt")
 	if err != nil {
 		panic(err)
 	}
