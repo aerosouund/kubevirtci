@@ -65,6 +65,57 @@ func ssh(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func jumpSSH(nodeIdx int, sshPort uint16, cmd string) (string, error) {
+	signer, err := ssh1.ParsePrivateKey([]byte(sshKey))
+	if err != nil {
+		return "", err
+	}
+
+	config := &ssh1.ClientConfig{
+		User: "vagrant",
+		Auth: []ssh1.AuthMethod{
+			ssh1.PublicKeys(signer),
+		},
+		HostKeyCallback: ssh1.InsecureIgnoreHostKey(),
+	}
+
+	client, err := ssh1.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(sshPort)), config)
+	if err != nil {
+		return "", fmt.Errorf("Failed to connect to SSH server: %v", err)
+	}
+	defer client.Close()
+
+	conn, err := client.Dial("tcp", fmt.Sprintf("192.168.66.10%d:22", nodeIdx))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ncc, chans, reqs, err := ssh1.NewClientConn(conn, fmt.Sprintf("192.168.66.10%d:22", nodeIdx), config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	jumpHost := ssh1.NewClient(ncc, chans, reqs)
+	session, err := jumpHost.NewSession()
+	if err != nil {
+		log.Fatalf("Failed to create SSH session: %v", err)
+	}
+	defer session.Close()
+
+	var stderr bytes.Buffer
+	var stdout bytes.Buffer
+
+	session.Stderr = &stderr
+	session.Stdout = &stdout
+
+	err = session.Run(cmd)
+	if err != nil {
+		return "", fmt.Errorf("Failed to execute command: %v", err)
+	}
+	return stdout.String(), nil
+
+}
+
 func hostSSH(nodeIdx int, dnsmasqID string, sshPort uint16, cmd string) (string, error) {
 	success, err := docker.Exec(cli, dnsmasqID, []string{
 		"yum", "install", "socat", "-y",

@@ -365,7 +365,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 
-	workerSSHPort, err := utils.GetPublicPort(utils.PortSocat, dnsmasqJSON.NetworkSettings.Ports)
+	workerSSHPort, err := utils.GetPublicPort(utils.PortSSH, dnsmasqJSON.NetworkSettings.Ports)
 
 	// Pull the registry image
 	err = docker.ImagePull(cli, ctx, utils.DockerRegistryImage, types.ImagePullOptions{})
@@ -714,7 +714,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			wg.Done()
 		}(node.ID)
 	}
-	out, err := hostSSH(1, dnsmasq.ID, workerSSHPort, "echo ammar")
+	out, err := jumpSSH(2, workerSSHPort, "echo ammar")
 	if err != nil {
 		panic(err)
 	}
