@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"path"
@@ -714,11 +713,15 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			wg.Done()
 		}(node.ID)
 	}
-	out, err := jumpSSH(2, workerSSHPort, "echo ammar > ammar.txt")
+	err = utils.CompileToTargetOS("provision")
 	if err != nil {
 		panic(err)
 	}
-	log.Println("command output: " + out)
+
+	err = jumpSCP(workerSSHPort, 1, "bin/provision")
+	if err != nil {
+		panic(err)
+	}
 
 	if cephEnabled {
 		nodeName := nodeNameFromIndex(1)

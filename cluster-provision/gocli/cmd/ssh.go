@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/exec"
 
 	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
@@ -111,4 +112,13 @@ func jumpSSH(nodeIdx int, sshPort uint16, cmd string) (string, error) {
 		return "", fmt.Errorf("Failed to execute command: %v", err)
 	}
 	return stdout.String(), nil
+}
+
+func jumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
+	cmd := exec.Command("scp", "-p", fmt.Sprintf("%d", sshPort), "-oProxyJump=vagrant@localhost", fileName, fmt.Sprintf("vagrant@192.168.66.10%d:destination", destNodeIdx))
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+	return nil
 }
