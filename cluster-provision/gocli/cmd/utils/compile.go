@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"time"
 )
 
 // this will be used to compile go code to a target os then scp it to the vm to be executed
 func CompileToTargetOS(location string) error {
+	time.Sleep(time.Second * 5000)
 	cmd := exec.Command(
 		"go", "build", "-o", fmt.Sprintf("./bin/%s", location), fmt.Sprintf("./scripts/%s", location),
 	)
