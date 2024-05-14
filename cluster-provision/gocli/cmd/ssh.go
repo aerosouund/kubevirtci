@@ -132,9 +132,14 @@ func jumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
 
 	cmd := exec.Command("scp", "-i key.pem", fmt.Sprintf("-oProxyCommand='ssh -p %d -i key.pem", sshPort),
 		"-W %h:%p vagrant@localhost'", "-o StrictHostKeyChecking=no", fileName, fmt.Sprintf("vagrant@192.168.66.10%d:/home/vagrant", destNodeIdx))
+	var stderr bytes.Buffer
+	var stdout bytes.Buffer
+
+	cmd.Stderr = &stderr
+	cmd.Stdout = &stdout
 	err = cmd.Run()
 	if err != nil {
-		return err
+		return fmt.Errorf(stderr.String())
 	}
 	return nil
 }
