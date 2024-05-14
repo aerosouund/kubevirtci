@@ -13,7 +13,7 @@ func CompileToTargetOS(location string) error {
 	if err != nil {
 		return fmt.Errorf("error creating bin directory")
 	}
-	err = os.Chdir("scripts/" + location)
+	os.Chdir("scripts/" + location)
 	cmd := exec.Command(
 		"go", "build", "-o", fmt.Sprintf("../../bin/%s", location), ".",
 	)
@@ -28,6 +28,7 @@ func CompileToTargetOS(location string) error {
 		fmt.Println("error:", err)
 		return fmt.Errorf("Error executing build: %s", stderr.String())
 	}
+	os.Chdir("/workdir" + location)
 
 	return nil
 }
