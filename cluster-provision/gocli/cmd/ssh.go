@@ -115,7 +115,8 @@ func jumpSSH(nodeIdx int, sshPort uint16, cmd string) (string, error) {
 }
 
 func jumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
-	cmd := exec.Command("scp", "-p", fmt.Sprintf("%d", sshPort), "-oProxyJump=vagrant@localhost", fileName, fmt.Sprintf("vagrant@192.168.66.10%d:destination", destNodeIdx))
+	fmt.Println("going to execute: ", "scp", "-p", fmt.Sprintf("%d", sshPort), "-oProxyJump=vagrant@localhost", fileName, fmt.Sprintf("vagrant@192.168.66.10%d:22", destNodeIdx))
+	cmd := exec.Command("scp", "-p", fmt.Sprintf("%d", sshPort), "-oProxyJump=vagrant@localhost", fileName, fmt.Sprintf("vagrant@192.168.66.10%d:22", destNodeIdx))
 	err := cmd.Run()
 	if err != nil {
 		return err
