@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"time"
 
 	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
@@ -116,10 +115,24 @@ func jumpSSH(nodeIdx int, sshPort uint16, cmd string) (string, error) {
 }
 
 func jumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
-	fmt.Println("going to execute: ", "scp", "-p", fmt.Sprintf("%d", sshPort), "-oProxyJump=vagrant@localhost", fileName, fmt.Sprintf("vagrant@192.168.66.10%d:22", destNodeIdx))
-	time.Sleep(time.Second * 5000)
-	cmd := exec.Command("scp", "-P", fmt.Sprintf("%d", sshPort), "-oProxyJump=vagrant@localhost", "-o StrictHostKeyChecking=no", fileName, fmt.Sprintf("vagrant@192.168.66.10%d:22", destNodeIdx))
-	err := cmd.Run()
+	fmt.Println("scp", "-i key.pem", fmt.Sprintf("-oProxyCommand='ssh -p %d -i key.pem", sshPort),
+		"-W %h:%p vagrant@localhost'", "-o StrictHostKeyChecking=no", fileName, fmt.Sprintf("vagrant@192.168.66.10%d:/home/vagrant", destNodeIdx))
+
+	file, err := os.Create("key.pem")
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(sshKey)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command("scp", "-i key.pem", fmt.Sprintf("-oProxyCommand='ssh -p %d -i key.pem", sshPort),
+		"-W %h:%p vagrant@localhost'", "-o StrictHostKeyChecking=no", fileName, fmt.Sprintf("vagrant@192.168.66.10%d:/home/vagrant", destNodeIdx))
+	err = cmd.Run()
 	if err != nil {
 		return err
 	}
