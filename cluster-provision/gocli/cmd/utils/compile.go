@@ -3,15 +3,19 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
-	"time"
 )
 
 // this will be used to compile go code to a target os then scp it to the vm to be executed
 func CompileToTargetOS(location string) error {
-	time.Sleep(time.Second * 5000)
+	err := os.Mkdir("bin", 0755) // 0755 sets permissions for the directory
+	if err != nil {
+		return fmt.Errorf("error creating bin directory")
+	}
+	err = os.Chdir("scripts/" + location)
 	cmd := exec.Command(
-		"go", "build", "-o", fmt.Sprintf("./bin/%s", location), fmt.Sprintf("./scripts/%s", location),
+		"go", "build", "-o", fmt.Sprintf("../../bin/%s", location), ".",
 	)
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -19,7 +23,7 @@ func CompileToTargetOS(location string) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		fmt.Println("error:", err)
 		return fmt.Errorf("Error executing build: %s", stderr.String())
