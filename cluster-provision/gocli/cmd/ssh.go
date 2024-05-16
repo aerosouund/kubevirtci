@@ -115,7 +115,7 @@ func jumpSSH(nodeIdx int, sshPort uint16, cmd string) (string, error) {
 }
 
 func jumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
-	file, err := os.Create("key.pem")
+	file, err := os.Create("/workdir/key.pem")
 	if err != nil {
 		fmt.Println("Error creating file:", err)
 		return err
@@ -128,7 +128,7 @@ func jumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
 	}
 	fmt.Println("key created")
 
-	cmd := exec.Command("scp", "-i key.pem", fmt.Sprintf(`-o ProxyCommand='ssh -p %d -i key.pem -W %%h:%%p vagrant@localhost'`, sshPort),
+	cmd := exec.Command("scp", "-i /workdir/key.pem", fmt.Sprintf(`-o ProxyCommand='ssh -p %d -i /workdir/key.pem -W %%h:%%p vagrant@localhost'`, sshPort),
 		"-o StrictHostKeyChecking=no", fileName, fmt.Sprintf("vagrant@192.168.66.10%d:/home/vagrant", destNodeIdx))
 	var stderr bytes.Buffer
 	var stdout bytes.Buffer
