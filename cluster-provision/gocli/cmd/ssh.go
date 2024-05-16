@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"time"
 
 	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
@@ -128,9 +127,8 @@ func jumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
 		return err
 	}
 	fmt.Println("key created")
-	time.Sleep(time.Second * 50000)
 
-	cmd := exec.Command("scp", "-i /workdir/key.pem", fmt.Sprintf(`-o ProxyCommand='ssh -p %d -i /workdir/key.pem -W %%h:%%p vagrant@localhost'`, sshPort),
+	cmd := exec.Command("scp", "-i /workdir/key.pem", fmt.Sprintf(`-o ProxyCommand='ssh -p %d`, sshPort), "-i /workdir/key.pem -W %h:%p vagrant@localhost'",
 		"-o StrictHostKeyChecking=no", fileName, fmt.Sprintf("vagrant@192.168.66.10%d:/home/vagrant", destNodeIdx))
 	var stderr bytes.Buffer
 	var stdout bytes.Buffer
