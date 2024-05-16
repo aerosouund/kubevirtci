@@ -9,7 +9,7 @@ import (
 
 // this will be used to compile go code to a target os then scp it to the vm to be executed
 func CompileToTargetOS(location string) error {
-	err := os.Mkdir("bin", 0755) // 0755 sets permissions for the directory
+	err := os.Mkdir("bin", 0755)
 	if err != nil {
 		return fmt.Errorf("error creating bin directory")
 	}
