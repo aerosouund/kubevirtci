@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"path"
@@ -24,6 +25,9 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/api/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	containers2 "kubevirt.io/kubevirtci/cluster-provision/gocli/containers"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
@@ -371,6 +375,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	workerSSHPort, err := utils.GetPublicPort(utils.PortSSH, dnsmasqJSON.NetworkSettings.Ports)
+	apiServerPort, err := utils.GetPublicPort(utils.PortAPI, dnsmasqJSON.NetworkSettings.Ports)
 
 	// Pull the registry image
 	err = docker.ImagePull(cli, ctx, utils.DockerRegistryImage, types.ImagePullOptions{})
@@ -737,6 +742,35 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		panic(err)
 	}
 	fmt.Println("file copied")
+
+	err = utils.PrepareKubeconf(".kubeconfig", apiServerPort)
+	if err != nil {
+		panic(err)
+	}
+
+	config, err := clientcmd.BuildConfigFromFlags("", ".kubeconfig")
+	if err != nil {
+		log.Fatalf("Error building kubeconfig: %v", err)
+	}
+
+	// Create a Kubernetes client
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		log.Fatalf("Error creating clientset: %v", err)
+	}
+
+	// List namespaces
+	namespaces, err := clientset.CoreV1().Namespaces().List(v1.ListOptions{})
+	if err != nil {
+		log.Fatalf("Error listing namespaces: %v", err)
+	}
+
+	// Print namespaces
+	fmt.Println("Namespaces:")
+	for _, ns := range namespaces.Items {
+		fmt.Printf("%s\n", ns.Name)
+	}
+
 	time.Sleep(time.Second * 5000)
 
 	if cephEnabled {
