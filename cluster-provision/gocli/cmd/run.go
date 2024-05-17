@@ -760,7 +760,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	// List namespaces
-	namespaces, err := clientset.CoreV1().Namespaces().List(v1.ListOptions{})
+	namespaces, err := clientset.CoreV1().Namespaces().List(context.Background(), v1.ListOptions{})
 	if err != nil {
 		log.Fatalf("Error listing namespaces: %v", err)
 	}
