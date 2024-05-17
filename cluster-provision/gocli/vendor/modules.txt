@@ -7,8 +7,8 @@ github.com/Microsoft/go-winio/pkg/guid
 # github.com/alessio/shellescape v1.4.2
 ## explicit; go 1.14
 github.com/alessio/shellescape
-# github.com/bramvdbogaerde/go-scp v1.4.1-0.20240428162038-db7cf4f3ec29
-## explicit; go 1.21
+# github.com/bramvdbogaerde/go-scp v1.2.0
+## explicit; go 1.13
 github.com/bramvdbogaerde/go-scp
 # github.com/containerd/containerd v1.6.26
 ## explicit; go 1.19
