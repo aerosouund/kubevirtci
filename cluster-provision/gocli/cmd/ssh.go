@@ -166,7 +166,7 @@ func jumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
 	filename := strings.Split(fileName, "/")
 	fmt.Println("filename is: ", fileName)
 
-	err = scpClient.CopyFromFile(context.Background(), *file, "/home/vagrant/"+filename[len(filename)-1], "0655")
+	err = scpClient.CopyFromFile(context.Background(), *file, "/home/vagrant/"+filename[len(filename)-1], "0775")
 
 	if err != nil {
 		return err
