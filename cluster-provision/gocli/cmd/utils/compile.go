@@ -8,7 +8,7 @@ import (
 )
 
 // this will be used to compile go code to a target os then scp it to the vm to be executed
-func CompileToTargetOS(location string) error {
+func Compile(location string) error {
 	err := os.Mkdir("/workdir/bin", 0755)
 	if err != nil {
 		return fmt.Errorf("error creating bin directory")
