@@ -9,11 +9,11 @@ import (
 
 // this will be used to compile go code to a target os then scp it to the vm to be executed
 func CompileToTargetOS(location string) error {
-	err := os.Mkdir("bin", 0755)
+	err := os.Mkdir("/workdir/bin", 0755)
 	if err != nil {
 		return fmt.Errorf("error creating bin directory")
 	}
-	os.Chdir("scripts/" + location)
+	os.Chdir("/workdir/scripts/" + location)
 	cmd := exec.Command(
 		"go", "build", "-o", fmt.Sprintf("../../bin/%s", location), ".",
 	)

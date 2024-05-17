@@ -728,7 +728,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		panic(err)
 	}
 
-	err = jumpSCPGoLib(workerSSHPort, 2, "/workdir/bin/provision")
+	err = jumpSCP(workerSSHPort, 2, "/workdir/bin/provision")
 	if err != nil {
 		panic(err)
 	}
@@ -808,6 +808,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		wg.Wait()
 		stop <- fmt.Errorf("Done. please clean up")
 	}
+	time.Sleep(time.Second * 5000)
 
 	return nil
 }
