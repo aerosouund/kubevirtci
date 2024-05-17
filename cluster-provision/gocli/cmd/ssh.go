@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/exec"
 
+	scp1 "github.com/bramvdbogaerde/go-scp"
 	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 	ssh1 "golang.org/x/crypto/ssh"
@@ -112,6 +114,62 @@ func jumpSSH(nodeIdx int, sshPort uint16, cmd string) (string, error) {
 		return "", fmt.Errorf("Failed to execute command: %v", err)
 	}
 	return stdout.String(), nil
+}
+
+func jumpSCPGoLib(sshPort uint16, destNodeIdx int, fileName string) error {
+	signer, err := ssh1.ParsePrivateKey([]byte(sshKey))
+	if err != nil {
+		return err
+	}
+
+	config := &ssh1.ClientConfig{
+		User: "vagrant",
+		Auth: []ssh1.AuthMethod{
+			ssh1.PublicKeys(signer),
+		},
+		HostKeyCallback: ssh1.InsecureIgnoreHostKey(),
+	}
+
+	client, err := ssh1.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(sshPort)), config)
+	if err != nil {
+		return fmt.Errorf("Failed to connect to SSH server: %v", err)
+	}
+	defer client.Close()
+
+	conn, err := client.Dial("tcp", fmt.Sprintf("192.168.66.10%d:22", destNodeIdx))
+	if err != nil {
+		return fmt.Errorf("Error establishing connection to the next hop host: %s", err)
+	}
+
+	ncc, chans, reqs, err := ssh1.NewClientConn(conn, fmt.Sprintf("192.168.66.10%d:22", destNodeIdx), config)
+	if err != nil {
+		return fmt.Errorf("Error creating forwarded ssh connection: %s", err)
+	}
+	jumpHost := ssh1.NewClient(ncc, chans, reqs)
+
+	scpClient, err := scp1.NewClientBySSH(jumpHost)
+
+	err = scpClient.Connect()
+	if err != nil {
+		return err
+	}
+
+	// Open a file
+	f, _ := os.Open(fileName)
+
+	// Close client connection after the file has been copied
+	defer client.Close()
+
+	// Close the file after it has been copied
+	defer f.Close()
+
+	err = scpClient.CopyFromFile(context.Background(), *f, "/home/vagrant/"+fileName, "0655")
+
+	if err != nil {
+		fmt.Println("Error while copying file ", err)
+	}
+
+	return nil
 }
 
 func jumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
