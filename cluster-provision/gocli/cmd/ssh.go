@@ -152,6 +152,8 @@ func jumpSCPGoLib(sshPort uint16, destNodeIdx int, fileName string) error {
 		return err
 	}
 
+	fmt.Println("scp client object:", scpClient)
+
 	err = scpClient.Connect()
 	if err != nil {
 		return err
