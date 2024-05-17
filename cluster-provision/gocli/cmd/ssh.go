@@ -30,7 +30,6 @@ func NewSSHCommand() *cobra.Command {
 }
 
 func ssh(cmd *cobra.Command, args []string) error {
-
 	prefix, err := cmd.Flags().GetString("prefix")
 	if err != nil {
 		return err
@@ -145,6 +144,7 @@ func jumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
 	if err != nil {
 		return fmt.Errorf("Error creating forwarded ssh connection: %s", err)
 	}
+
 	jumpHost := ssh1.NewClient(ncc, chans, reqs)
 	defer jumpHost.Close()
 
@@ -163,15 +163,12 @@ func jumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
 		return err
 	}
 	defer file.Close()
+
 	filename := strings.Split(fileName, "/")
-	fmt.Println("filename is: ", fileName)
-
 	err = scpClient.CopyFromFile(context.Background(), *file, "/home/vagrant/"+filename[len(filename)-1], "0775")
-
 	if err != nil {
 		return err
 	}
-	fmt.Println("successfully copied file")
 
 	return nil
 }
