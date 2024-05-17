@@ -148,6 +148,9 @@ func jumpSCPGoLib(sshPort uint16, destNodeIdx int, fileName string) error {
 	jumpHost := ssh1.NewClient(ncc, chans, reqs)
 
 	scpClient, err := scp1.NewClientBySSH(jumpHost)
+	if err != nil {
+		return err
+	}
 
 	err = scpClient.Connect()
 	if err != nil {
