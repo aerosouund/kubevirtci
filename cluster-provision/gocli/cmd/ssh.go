@@ -8,11 +8,11 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 
 	scp1 "github.com/bramvdbogaerde/go-scp"
 	"github.com/docker/docker/client"
-	"github.com/pkg/sftp"
 	"github.com/spf13/cobra"
 	ssh1 "golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
@@ -182,42 +182,100 @@ func copyRemoteFile(sshPort uint16, remotePath, localPath string) error {
 	}
 
 	config := &ssh1.ClientConfig{
-		User: "root",
+		User: "vagrant",
 		Auth: []ssh1.AuthMethod{
 			ssh1.PublicKeys(signer),
 		},
 		HostKeyCallback: ssh1.InsecureIgnoreHostKey(),
 	}
 
-	client, err := ssh1.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(sshPort)), config)
+	connection, err := ssh1.Dial("tcp", fmt.Sprintf("127.0.0.1:%v", sshPort), config)
 	if err != nil {
-		return fmt.Errorf("Failed to connect to SSH server: %v", err)
-	}
-	defer client.Close()
-
-	sftpClient, err := sftp.NewClient(client)
-	if err != nil {
-		panic(err)
-	}
-	defer sftpClient.Close()
-
-	// Open remote file
-	remoteFile, err := sftpClient.Open(remotePath)
-	if err != nil {
-		panic(err)
-	}
-	defer remoteFile.Close()
-
-	localFile, err := os.Create(localPath)
-	if err != nil {
-		panic(err)
-	}
-	defer localFile.Close()
-
-	_, err = io.Copy(localFile, remoteFile)
-	if err != nil {
-		panic(err)
+		return err
 	}
 
-	return nil
+	session, err := connection.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	stdout, err := session.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("Unable to setup stdout for session: %v", err)
+	}
+
+	stderr, err := session.StderrPipe()
+	if err != nil {
+		return fmt.Errorf("Unable to setup stderr for session: %v", err)
+	}
+	go io.Copy(os.Stderr, stderr)
+
+	var target *os.File
+	if localPath == "-" {
+		target = os.Stdout
+	} else {
+		target, err = os.Create(localPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	errChan := make(chan error)
+
+	go func() {
+		defer close(errChan)
+		b := make([]byte, 1)
+		var buf bytes.Buffer
+		for {
+			n, err := stdout.Read(b)
+			if err != nil {
+				errChan <- fmt.Errorf("error: %v", err)
+				return
+			}
+			if n == 0 {
+				continue
+			}
+
+			if b[0] == '\n' {
+				break
+			}
+			buf.WriteByte(b[0])
+		}
+
+		metadata := strings.Split(buf.String(), " ")
+		if len(metadata) < 3 || !strings.HasPrefix(buf.String(), "C") {
+			errChan <- fmt.Errorf("%v", buf.String())
+			return
+		}
+		l, err := strconv.Atoi(metadata[1])
+		if err != nil {
+			errChan <- fmt.Errorf("invalid metadata: %v", buf.String())
+			return
+		}
+		_, err = io.CopyN(target, stdout, int64(l))
+		errChan <- err
+	}()
+	wrPipe, err := session.StdinPipe()
+	if err != nil {
+		return fmt.Errorf("failed to open pipe: %v", err)
+	}
+
+	go func(wrPipe io.WriteCloser) {
+		defer wrPipe.Close()
+		fmt.Fprintf(wrPipe, "\x00")
+		fmt.Fprintf(wrPipe, "\x00")
+		fmt.Fprintf(wrPipe, "\x00")
+		fmt.Fprintf(wrPipe, "\x00")
+	}(wrPipe)
+
+	err = session.Run("sudo -i /usr/bin/scp -qf " + remotePath)
+
+	copyError := <-errChan
+
+	if err == nil && copyError != nil {
+		return copyError
+	}
+
+	return err
 }
