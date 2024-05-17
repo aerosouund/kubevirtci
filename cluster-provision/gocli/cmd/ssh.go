@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -11,6 +12,7 @@ import (
 
 	scp1 "github.com/bramvdbogaerde/go-scp"
 	"github.com/docker/docker/client"
+	"github.com/pkg/sftp"
 	"github.com/spf13/cobra"
 	ssh1 "golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
@@ -168,6 +170,53 @@ func jumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
 	err = scpClient.CopyFromFile(context.Background(), *file, "/home/vagrant/"+filename[len(filename)-1], "0775")
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func copyRemoteFile(sshPort uint16, remotePath, localPath string) error {
+	signer, err := ssh1.ParsePrivateKey([]byte(sshKey))
+	if err != nil {
+		return err
+	}
+
+	config := &ssh1.ClientConfig{
+		User: "vagrant",
+		Auth: []ssh1.AuthMethod{
+			ssh1.PublicKeys(signer),
+		},
+		HostKeyCallback: ssh1.InsecureIgnoreHostKey(),
+	}
+
+	client, err := ssh1.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(sshPort)), config)
+	if err != nil {
+		return fmt.Errorf("Failed to connect to SSH server: %v", err)
+	}
+	defer client.Close()
+
+	sftpClient, err := sftp.NewClient(client)
+	if err != nil {
+		panic(err)
+	}
+	defer sftpClient.Close()
+
+	// Open remote file
+	remoteFile, err := sftpClient.Open(remotePath)
+	if err != nil {
+		panic(err)
+	}
+	defer remoteFile.Close()
+
+	localFile, err := os.Create(localPath)
+	if err != nil {
+		panic(err)
+	}
+	defer localFile.Close()
+
+	_, err = io.Copy(localFile, remoteFile)
+	if err != nil {
+		panic(err)
 	}
 
 	return nil
