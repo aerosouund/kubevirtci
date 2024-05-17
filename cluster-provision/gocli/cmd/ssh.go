@@ -152,23 +152,26 @@ func jumpSCPGoLib(sshPort uint16, destNodeIdx int, fileName string) error {
 		return err
 	}
 
-	fmt.Println("scp client object:", scpClient)
-
 	err = scpClient.Connect()
 	if err != nil {
 		return err
 	}
 
 	// Open a file
-	f, _ := os.Open(fileName)
+	file, err := os.Create("/workdir/ammar.txt")
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return err
+	}
+	defer file.Close()
 
 	// Close client connection after the file has been copied
 	defer client.Close()
 
 	// Close the file after it has been copied
-	defer f.Close()
+	defer file.Close()
 
-	err = scpClient.CopyFromFile(context.Background(), *f, "/home/vagrant/"+fileName, "0655")
+	err = scpClient.CopyFromFile(context.Background(), *file, "/home/vagrant/ammar.txt", "0655")
 
 	if err != nil {
 		fmt.Println("Error while copying file ", err)
