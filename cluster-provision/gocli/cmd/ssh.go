@@ -146,12 +146,12 @@ func jumpSCPGoLib(sshPort uint16, destNodeIdx int, fileName string) error {
 		return fmt.Errorf("Error creating forwarded ssh connection: %s", err)
 	}
 	jumpHost := ssh1.NewClient(ncc, chans, reqs)
+	_ = jumpHost
 
-	scpClient, err := scp1.NewClientBySSH(jumpHost)
+	scpClient, err := scp1.NewClientBySSH(client)
 	if err != nil {
 		return err
 	}
-	scpClient.Host = fmt.Sprintf("192.168.66.10%d:22", destNodeIdx)
 
 	fmt.Println("scp client object:", scpClient)
 
