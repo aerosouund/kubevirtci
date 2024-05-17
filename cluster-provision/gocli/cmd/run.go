@@ -723,7 +723,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			wg.Done()
 		}(node.ID)
 	}
-	err = utils.CompileToTargetOS("provision")
+	err = utils.Compile("provision")
 	if err != nil {
 		panic(err)
 	}
