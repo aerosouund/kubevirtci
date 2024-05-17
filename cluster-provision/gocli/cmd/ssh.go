@@ -7,7 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
-	"os/exec"
+	"strings"
 
 	scp1 "github.com/bramvdbogaerde/go-scp"
 	"github.com/docker/docker/client"
@@ -116,7 +116,7 @@ func jumpSSH(nodeIdx int, sshPort uint16, cmd string) (string, error) {
 	return stdout.String(), nil
 }
 
-func jumpSCPGoLib(sshPort uint16, destNodeIdx int, fileName string) error {
+func jumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
 	signer, err := ssh1.ParsePrivateKey([]byte(sshKey))
 	if err != nil {
 		return err
@@ -146,6 +146,7 @@ func jumpSCPGoLib(sshPort uint16, destNodeIdx int, fileName string) error {
 		return fmt.Errorf("Error creating forwarded ssh connection: %s", err)
 	}
 	jumpHost := ssh1.NewClient(ncc, chans, reqs)
+	defer jumpHost.Close()
 
 	scpClient, err := scp1.NewClientBySSH(jumpHost)
 	if err != nil {
@@ -157,53 +158,18 @@ func jumpSCPGoLib(sshPort uint16, destNodeIdx int, fileName string) error {
 		return err
 	}
 
-	// Open a file
-	file, err := os.Create("/workdir/ammar.txt")
+	file, err := os.Open(fileName)
 	if err != nil {
-		fmt.Println("Error creating file:", err)
 		return err
 	}
 	defer file.Close()
+	filename := strings.Split(fileName, "/")
 
-	// Close client connection after the file has been copied
-	defer client.Close()
-
-	// Close the file after it has been copied
-	defer file.Close()
-
-	err = scpClient.CopyFromFile(context.Background(), *file, "/home/vagrant/ammar.txt", "0655")
+	err = scpClient.CopyFromFile(context.Background(), *file, "/home/vagrant/"+filename[len(filename)-1], "0655")
 
 	if err != nil {
 		fmt.Println("Error while copying file ", err)
 	}
 
-	return nil
-}
-
-func jumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
-	file, err := os.Create("/workdir/key.pem")
-	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return err
-	}
-	defer file.Close()
-
-	_, err = file.WriteString(sshKey)
-	if err != nil {
-		return err
-	}
-	fmt.Println("key created")
-
-	cmd := exec.Command("scp", "-i", "/workdir/key.pem", fmt.Sprintf(`-o ProxyCommand='ssh -p %d`, sshPort), "-i /workdir/key.pem -W %h:%p vagrant@localhost'",
-		"-o StrictHostKeyChecking=no", fileName, fmt.Sprintf("vagrant@192.168.66.10%d:/home/vagrant", destNodeIdx))
-	var stderr bytes.Buffer
-	var stdout bytes.Buffer
-
-	cmd.Stderr = &stderr
-	cmd.Stdout = &stdout
-	err = cmd.Run()
-	if err != nil {
-		return fmt.Errorf(stderr.String())
-	}
 	return nil
 }
