@@ -182,7 +182,7 @@ func copyRemoteFile(sshPort uint16, remotePath, localPath string) error {
 	}
 
 	config := &ssh1.ClientConfig{
-		User: "vagrant",
+		User: "root",
 		Auth: []ssh1.AuthMethod{
 			ssh1.PublicKeys(signer),
 		},
