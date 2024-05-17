@@ -733,8 +733,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		panic(err)
 	}
 
-	time.Sleep(time.Second * 5000)
-
 	if cephEnabled {
 		nodeName := nodeNameFromIndex(1)
 		success, err := docker.Exec(cli, nodeContainer(prefix, nodeName), []string{
