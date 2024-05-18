@@ -338,7 +338,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	if len(containerRegistry) > 0 {
-		clusterImage = path.Join(containerRegistry, clusterImage+"2403130317-a3e0778")
+		clusterImage = path.Join(containerRegistry, clusterImage+":2403130317-a3e0778")
 		fmt.Printf("Download the image %s\n", clusterImage)
 		err = docker.ImagePull(cli, ctx, clusterImage, types.ImagePullOptions{})
 		if err != nil {
