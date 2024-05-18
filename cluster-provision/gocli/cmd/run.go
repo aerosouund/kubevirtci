@@ -737,6 +737,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	// if err != nil {
 	// 	panic(err)
 	// }
+
 	err = copyRemoteFile(workerSSHPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
 	if err != nil {
 		panic(err)
@@ -767,8 +768,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	for _, ns := range namespaces.Items {
 		fmt.Printf("%s\n", ns.Name)
 	}
-
-	time.Sleep(time.Second * 5000)
 
 	if cephEnabled {
 		nodeName := nodeNameFromIndex(1)
