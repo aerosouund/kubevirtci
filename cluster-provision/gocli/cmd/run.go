@@ -749,10 +749,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	config.Insecure = true
 	config.CAData = []byte{}
 
-	err = utils.K8sApply(config, "/workdir/manifests/nginx.yaml")
-	if err != nil {
-		panic(err)
-	}
 	cephEnabled = true
 
 	if cephEnabled {
