@@ -733,17 +733,14 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 	fmt.Println("file copied")
 
-	err = utils.PrepareKubeconf(".kubeconfig", apiServerPort)
-	if err != nil {
-		panic(err)
-	}
-
 	time.Sleep(time.Second * 5000)
 
 	config, err := clientcmd.BuildConfigFromFlags("", ".kubeconfig")
 	if err != nil {
 		log.Fatalf("Error building kubeconfig: %v", err)
 	}
+	config.Host = "https://127.0.0.1:" + fmt.Sprintf("%d", apiServerPort)
+	config.Insecure = true
 
 	// Create a Kubernetes client
 	clientset, err := kubernetes.NewForConfig(config)
