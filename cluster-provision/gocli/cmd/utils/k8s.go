@@ -44,7 +44,7 @@ func K8sApply(config *rest.Config, manifestPath string) error {
 	if err != nil {
 		log.Fatalf("Error decoding JSON to Unstructured object: %v", err)
 	}
-	deployments := clientset.AppsV1().Deployments(obj.GetNamespace())
+	deployments := clientset.AppsV1().Deployments("default")
 	// if err != nil {
 	// 	log.Fatalf("Error listing namespaces: %v", err)
 	// }
