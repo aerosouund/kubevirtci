@@ -753,6 +753,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	if err != nil {
 		panic(err)
 	}
+	cephEnabled = true
 
 	if cephEnabled {
 		// nodeName := nodeNameFromIndex(1)
