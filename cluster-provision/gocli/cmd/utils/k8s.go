@@ -23,13 +23,6 @@ func K8sApply(config *rest.Config, manifestPath string) error {
 		log.Fatalf("Error creating dynamic client: %v", err)
 	}
 
-	// clientset, err := kubernetes.NewForConfig(config)
-	// if err != nil {
-	// 	log.Fatalf("Error creating clientset: %v", err)
-	// }
-
-	// List namespaces
-
 	yamlData, err := os.ReadFile(manifestPath)
 	if err != nil {
 		log.Fatalf("Error reading YAML file: %v", err)
@@ -46,10 +39,6 @@ func K8sApply(config *rest.Config, manifestPath string) error {
 	if err != nil {
 		log.Fatalf("Error decoding JSON to Unstructured object: %v", err)
 	}
-	// deployments := clientset.AppsV1().Deployments("default")
-	// if err != nil {
-	// 	log.Fatalf("Error listing namespaces: %v", err)
-	// }
 
 	gvk := obj.GroupVersionKind()
 	restMapper := meta.NewDefaultRESTMapper([]schema.GroupVersion{gvk.GroupVersion()})
@@ -64,7 +53,6 @@ func K8sApply(config *rest.Config, manifestPath string) error {
 	if err != nil {
 		log.Fatalf("Error applying manifest: %v", err)
 	}
-	// obj, err = deployments.Create(context.TODO(), obj, metav1.CreateOptions{})
 
 	fmt.Println("Manifest applied successfully!")
 	return nil
