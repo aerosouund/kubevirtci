@@ -741,9 +741,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("file copied")
-
-	time.Sleep(time.Second * 5000)
 
 	config, err := clientcmd.BuildConfigFromFlags("", ".kubeconfig")
 	if err != nil {
