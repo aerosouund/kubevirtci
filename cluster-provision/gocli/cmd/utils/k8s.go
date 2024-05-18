@@ -3,7 +3,6 @@ package utils
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -20,24 +19,24 @@ import (
 func K8sApply(config *rest.Config, manifestPath string) error {
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		log.Fatalf("Error creating dynamic client: %v", err)
+		return fmt.Errorf("Error creating dynamic client: %v", err)
 	}
 
 	yamlData, err := os.ReadFile(manifestPath)
 	if err != nil {
-		log.Fatalf("Error reading YAML file: %v", err)
+		return fmt.Errorf("Error reading YAML file: %v", err)
 	}
 
 	jsonData, err := yaml.YAMLToJSON(yamlData)
 	if err != nil {
-		log.Fatalf("Error converting YAML to JSON: %v", err)
+		return fmt.Errorf("Error converting YAML to JSON: %v", err)
 	}
 
 	obj := &unstructured.Unstructured{}
 	dec := serializer.NewCodecFactory(scheme.Scheme).UniversalDeserializer()
 	_, _, err = dec.Decode(jsonData, nil, obj)
 	if err != nil {
-		log.Fatalf("Error decoding JSON to Unstructured object: %v", err)
+		return fmt.Errorf("Error decoding JSON to Unstructured object: %v", err)
 	}
 
 	gvk := obj.GroupVersionKind()
@@ -45,13 +44,13 @@ func K8sApply(config *rest.Config, manifestPath string) error {
 	restMapper.Add(gvk, meta.RESTScopeNamespace)
 	mapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
-		log.Fatalf("Error getting REST mapping: %v", err)
+		return fmt.Errorf("Error getting REST mapping: %v", err)
 	}
 
 	resourceClient := dynamicClient.Resource(mapping.Resource).Namespace("default")
 	_, err = resourceClient.Create(context.TODO(), obj, v1.CreateOptions{})
 	if err != nil {
-		log.Fatalf("Error applying manifest: %v", err)
+		return fmt.Errorf("Error applying manifest: %v", err)
 	}
 
 	fmt.Println("Manifest applied successfully!")
