@@ -17,7 +17,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func k8sApply(config *rest.Config, manifestPath string) error {
+func K8sApply(config *rest.Config, manifestPath string) error {
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		log.Fatalf("Error creating dynamic client: %v", err)
