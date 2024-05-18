@@ -25,8 +25,6 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/api/resource"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	containers2 "kubevirt.io/kubevirtci/cluster-provision/gocli/containers"
@@ -741,22 +739,9 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	config.Insecure = true
 	config.CAData = []byte{}
 
-	// Create a Kubernetes client
-	clientset, err := kubernetes.NewForConfig(config)
+	err = utils.K8sApply(config, "/workdir/manifests/nginx.yaml")
 	if err != nil {
-		log.Fatalf("Error creating clientset: %v", err)
-	}
-
-	// List namespaces
-	namespaces, err := clientset.CoreV1().Namespaces().List(context.Background(), v1.ListOptions{})
-	if err != nil {
-		log.Fatalf("Error listing namespaces: %v", err)
-	}
-
-	// Print namespaces
-	fmt.Println("Namespaces:")
-	for _, ns := range namespaces.Items {
-		fmt.Printf("%s\n", ns.Name)
+		panic(err)
 	}
 
 	if cephEnabled {
