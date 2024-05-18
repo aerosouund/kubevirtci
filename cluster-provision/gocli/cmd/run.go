@@ -754,15 +754,15 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		// if !success {
 		// 	return fmt.Errorf("provisioning Ceph CSI failed")
 		// }
-		err = utils.K8sApply(config, "/workdir/manifests/ceph/snapshot.storage.k8s.io_volumesnapshots.yaml")
+		err = utils.CreateCRD(config, "/workdir/manifests/ceph/snapshot.storage.k8s.io_volumesnapshots.yaml")
 		if err != nil {
 			panic(err)
 		}
-		err = utils.K8sApply(config, "/workdir/manifests/ceph/snapshot.storage.k8s.io_volumesnapshotcontents.yaml")
+		err = utils.CreateCRD(config, "/workdir/manifests/ceph/snapshot.storage.k8s.io_volumesnapshotcontents.yaml")
 		if err != nil {
 			panic(err)
 		}
-		err = utils.K8sApply(config, "/workdir/manifests/ceph/snapshot.storage.k8s.io_volumesnapshotclasses.yaml")
+		err = utils.CreateCRD(config, "/workdir/manifests/ceph/snapshot.storage.k8s.io_volumesnapshotclasses.yaml")
 		if err != nil {
 			panic(err)
 		}
