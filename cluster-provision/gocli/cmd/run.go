@@ -748,6 +748,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 	config.Host = "https://127.0.0.1:" + fmt.Sprintf("%d", apiServerPort)
 	config.Insecure = true
+	config.CAData = []byte{}
 
 	// Create a Kubernetes client
 	clientset, err := kubernetes.NewForConfig(config)
