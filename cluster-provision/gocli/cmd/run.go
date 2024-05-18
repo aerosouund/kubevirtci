@@ -738,7 +738,9 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		panic(err)
 	}
 
-	config, err := clientcmd.BuildConfigFromFlags("", "/workdir/.kubeconfig")
+	time.Sleep(time.Second * 5000)
+
+	config, err := clientcmd.BuildConfigFromFlags("", ".kubeconfig")
 	if err != nil {
 		log.Fatalf("Error building kubeconfig: %v", err)
 	}
