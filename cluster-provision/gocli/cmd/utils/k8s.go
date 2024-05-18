@@ -53,6 +53,6 @@ func K8sApply(config *rest.Config, manifestPath string) error {
 		return fmt.Errorf("Error applying manifest: %v", err)
 	}
 
-	fmt.Println("Manifest applied successfully!")
+	fmt.Printf("Manifest %v applied successfully!\n", manifestPath)
 	return nil
 }
