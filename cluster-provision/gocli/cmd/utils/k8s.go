@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -56,32 +57,48 @@ func K8sApply(config *rest.Config, manifestPath string) error {
 		return fmt.Errorf("Error reading YAML file: %v", err)
 	}
 
-	jsonData, err := yaml.YAMLToJSON(yamlData)
-	if err != nil {
-		return fmt.Errorf("Error converting YAML to JSON: %v", err)
+	yamlDocs := bytes.Split(yamlData, []byte("---\n"))
+
+	for i, yamlDoc := range yamlDocs {
+		if len(yamlDoc) == 0 {
+			continue
+		}
+
+		fmt.Printf("YAML Document %d:\n%s\n", i+1, yamlDoc)
+		jsonData, err := yaml.YAMLToJSON(yamlDoc)
+		if err != nil {
+			fmt.Printf("Error converting YAML to JSON: %v\n", err)
+			continue
+		}
+
+		obj := &unstructured.Unstructured{}
+		dec := serializer.NewCodecFactory(scheme.Scheme).UniversalDeserializer()
+		_, _, err = dec.Decode(jsonData, nil, obj)
+		if err != nil {
+			return fmt.Errorf("Error decoding JSON to Unstructured object: %v", err)
+		}
+
+		gvk := obj.GroupVersionKind()
+		restMapper := meta.NewDefaultRESTMapper([]schema.GroupVersion{gvk.GroupVersion()})
+		restMapper.Add(gvk, meta.RESTScopeNamespace)
+		mapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+		if err != nil {
+			return fmt.Errorf("Error getting REST mapping: %v", err)
+		}
+
+		ns := obj.GetNamespace()
+		if ns == "" {
+			ns = "default"
+		}
+
+		resourceClient := dynamicClient.Resource(mapping.Resource).Namespace(ns)
+		_, err = resourceClient.Create(context.TODO(), obj, v1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("Error applying manifest: %v", err)
+		}
+
+		fmt.Printf("Manifest %v applied successfully!\n", manifestPath)
 	}
 
-	obj := &unstructured.Unstructured{}
-	dec := serializer.NewCodecFactory(scheme.Scheme).UniversalDeserializer()
-	_, _, err = dec.Decode(jsonData, nil, obj)
-	if err != nil {
-		return fmt.Errorf("Error decoding JSON to Unstructured object: %v", err)
-	}
-
-	gvk := obj.GroupVersionKind()
-	restMapper := meta.NewDefaultRESTMapper([]schema.GroupVersion{gvk.GroupVersion()})
-	restMapper.Add(gvk, meta.RESTScopeNamespace)
-	mapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
-	if err != nil {
-		return fmt.Errorf("Error getting REST mapping: %v", err)
-	}
-
-	resourceClient := dynamicClient.Resource(mapping.Resource).Namespace(obj.GetNamespace())
-	_, err = resourceClient.Create(context.TODO(), obj, v1.CreateOptions{})
-	if err != nil {
-		return fmt.Errorf("Error applying manifest: %v", err)
-	}
-
-	fmt.Printf("Manifest %v applied successfully!\n", manifestPath)
 	return nil
 }
