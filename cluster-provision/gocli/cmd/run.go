@@ -776,7 +776,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		if err != nil {
 			panic(err)
 		}
-		err = utils.K8sApply(config, "/workdir/manifests/role.yaml")
+		err = utils.K8sApply(config, "/workdir/manifests/ceph/rbac-snapshot-controller.yaml")
 		if err != nil {
 			panic(err)
 		}
