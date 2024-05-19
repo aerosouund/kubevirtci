@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"path"
@@ -25,11 +24,12 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/client-go/tools/clientcmd"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	containers2 "kubevirt.io/kubevirtci/cluster-provision/gocli/containers"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/images"
+	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/common"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/rookceph"
 
 	"github.com/alessio/shellescape"
 )
@@ -731,46 +731,20 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		panic(err)
 	}
 
-	config, err := clientcmd.BuildConfigFromFlags("", ".kubeconfig")
-	if err != nil {
-		log.Fatalf("Error building kubeconfig: %v", err)
-	}
-	config.Host = "https://127.0.0.1:" + fmt.Sprintf("%d", apiServerPort)
-	config.Insecure = true
-	config.CAData = []byte{}
+	// config, err := clientcmd.BuildConfigFromFlags("", ".kubeconfig")
+	// if err != nil {
+	// 	log.Fatalf("Error building kubeconfig: %v", err)
+	// }
+	// config.Host = "https://127.0.0.1:" + fmt.Sprintf("%d", apiServerPort)
+	// config.Insecure = true
+	// config.CAData = []byte{}
+	k8sClient, err := k8s.NewK8sDynamicClient(".kubeconfig", apiServerPort)
 
 	cephEnabled = true
 
 	if cephEnabled {
-		// nodeName := nodeNameFromIndex(1)
-		// success, err := docker.Exec(cli, nodeContainer(prefix, nodeName), []string{
-		// 	"/bin/bash",
-		// 	"-c",
-		// 	"ssh.sh sudo /bin/bash < /scripts/rook-ceph.sh",
-		// }, os.Stdout)
-		// if err != nil {
-		// 	return err
-		// }
-		// if !success {
-		// 	return fmt.Errorf("provisioning Ceph CSI failed")
-		// }
-		err = utils.K8sApply(config, "/workdir/manifests/ceph/snapshot.storage.k8s.io_volumesnapshots.yaml")
-		if err != nil {
-			panic(err)
-		}
-		err = utils.K8sApply(config, "/workdir/manifests/ceph/snapshot.storage.k8s.io_volumesnapshotcontents.yaml")
-		if err != nil {
-			panic(err)
-		}
-		err = utils.K8sApply(config, "/workdir/manifests/ceph/snapshot.storage.k8s.io_volumesnapshotclasses.yaml")
-		if err != nil {
-			panic(err)
-		}
-		err = utils.K8sApply(config, "/workdir/manifests/ceph/rbac-snapshot-controller.yaml")
-		if err != nil {
-			panic(err)
-		}
-		err = utils.K8sApply(config, "/workdir/manifests/ceph/setup-snapshot-controller.yaml")
+		cephopt := rookceph.NewCephOpt(k8sClient)
+		err = cephopt.Exec()
 		if err != nil {
 			panic(err)
 		}
