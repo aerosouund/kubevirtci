@@ -89,13 +89,14 @@ func K8sApply(config *rest.Config, manifestPath string) error {
 		if err != nil {
 			return fmt.Errorf("Error getting REST mapping: %v", err)
 		}
+		var resourceClient dynamic.ResourceInterface
 
 		ns := obj.GetNamespace()
+		resourceClient = dynamicClient.Resource(mapping.Resource).Namespace(ns)
 		if ns == "" {
-			ns = "default"
+			resourceClient = dynamicClient.Resource(mapping.Resource)
 		}
 
-		resourceClient := dynamicClient.Resource(mapping.Resource).Namespace(ns)
 		_, err = resourceClient.Create(context.TODO(), obj, v1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("Error applying manifest: %v", err)
