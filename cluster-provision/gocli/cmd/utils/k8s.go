@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"os"
 
-	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	crdclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/dynamic"
@@ -60,8 +60,8 @@ func K8sApply(config *rest.Config, manifestPath string) error {
 	}
 
 	yamlDocs := bytes.Split(yamlData, []byte("---\n"))
-	s := scheme.Scheme
-	_ = rbacv1.AddToScheme(s)
+	s := runtime.NewScheme()
+	scheme.AddToScheme(s)
 
 	for i, yamlDoc := range yamlDocs {
 		if len(yamlDoc) == 0 {
