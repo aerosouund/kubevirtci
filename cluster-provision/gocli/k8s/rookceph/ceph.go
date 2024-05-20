@@ -1,20 +1,20 @@
 package rookceph
 
 import (
-	"kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/common"
+	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/common"
 )
 
 type CephOpt struct {
-	client *common.K8sDynamicClient
+	client *k8s.K8sDynamicClient
 }
 
-func NewCephOpt(c *common.K8sDynamicClient) *CephOpt {
+func NewCephOpt(c *k8s.K8sDynamicClient) *CephOpt {
 	return &CephOpt{
 		client: c,
 	}
 }
 
-func (co *CephOpt) Exec() error {
+func (o *CephOpt) Exec() error {
 	manifests := []string{
 		"/workdir/manifests/ceph/snapshot.storage.k8s.io_volumesnapshots.yaml",
 		"/workdir/manifests/ceph/snapshot.storage.k8s.io_volumesnapshotcontents.yaml",
@@ -24,7 +24,7 @@ func (co *CephOpt) Exec() error {
 	}
 
 	for _, manifest := range manifests {
-		err := co.client.Apply(manifest)
+		err := o.client.Apply(manifest)
 		if err != nil {
 			return err
 		}

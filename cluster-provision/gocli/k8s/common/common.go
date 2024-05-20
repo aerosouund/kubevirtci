@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/yaml"
 )
@@ -24,14 +25,18 @@ type K8sDynamicClient struct {
 	client *dynamic.DynamicClient
 }
 
-func NewK8sDynamicClient(configPath string, apiServerPort uint16) (*K8sDynamicClient, error) {
-	config, err := clientcmd.BuildConfigFromFlags("", ".kubeconfig")
+func InitConfig(manifestPath string, apiServerPort uint16) (*rest.Config, error) {
+	config, err := clientcmd.BuildConfigFromFlags("", manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("Error building kubeconfig: %v", err)
 	}
 	config.Host = "https://127.0.0.1:" + fmt.Sprintf("%d", apiServerPort)
 	config.Insecure = true
 	config.CAData = []byte{}
+	return config, nil
+}
+
+func NewDynamicClient(config *rest.Config) (*K8sDynamicClient, error) {
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("Error creating dynamic client: %v", err)

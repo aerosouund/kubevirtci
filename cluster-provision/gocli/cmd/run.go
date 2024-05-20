@@ -731,14 +731,15 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		panic(err)
 	}
 
-	// config, err := clientcmd.BuildConfigFromFlags("", ".kubeconfig")
-	// if err != nil {
-	// 	log.Fatalf("Error building kubeconfig: %v", err)
-	// }
-	// config.Host = "https://127.0.0.1:" + fmt.Sprintf("%d", apiServerPort)
-	// config.Insecure = true
-	// config.CAData = []byte{}
-	k8sClient, err := k8s.NewK8sDynamicClient(".kubeconfig", apiServerPort)
+	config, err := k8s.InitConfig(".kubeconfig", apiServerPort)
+	if err != nil {
+		panic(err)
+	}
+
+	k8sClient, err := k8s.NewDynamicClient(config)
+	if err != nil {
+		panic(err)
+	}
 
 	cephEnabled = true
 
