@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	cephv1 "github.com/aerosouund/rook/pkg/apis/ceph.rook.io/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,6 +58,7 @@ func (c *K8sDynamicClient) Apply(manifestPath string) error {
 		return fmt.Errorf("Error reading YAML file: %v", err)
 
 	}
+	cephv1.Init()
 
 	yamlDocs := bytes.Split(yamlData, []byte("---\n"))
 	for i, yamlDoc := range yamlDocs {
