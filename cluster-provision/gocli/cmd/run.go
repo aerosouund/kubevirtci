@@ -752,6 +752,20 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	cephEnabled = true
+	if cephEnabled {
+		nodeName := nodeNameFromIndex(1)
+		success, err := docker.Exec(cli, nodeContainer(prefix, nodeName), []string{
+			"/bin/bash",
+			"-c",
+			"ssh.sh sudo /bin/bash < /scripts/rook-ceph.sh",
+		}, os.Stdout)
+		if err != nil {
+			return err
+		}
+		if !success {
+			return fmt.Errorf("provisioning Ceph CSI failed")
+		}
+	}
 
 	if cephEnabled {
 		cephopt := rookceph.NewCephOpt(k8sClient)
