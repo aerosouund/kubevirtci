@@ -45,6 +45,7 @@ func NewDynamicClient(config *rest.Config) (*K8sDynamicClient, error) {
 	s := runtime.NewScheme()
 	scheme.AddToScheme(s)
 	apiextensionsv1.AddToScheme(s)
+	cephv1.AddToScheme(s)
 
 	return &K8sDynamicClient{
 		client: dynamicClient,
@@ -58,8 +59,6 @@ func (c *K8sDynamicClient) Apply(manifestPath string) error {
 		return fmt.Errorf("Error reading YAML file: %v", err)
 
 	}
-	cephv1.Init()
-
 	yamlDocs := bytes.Split(yamlData, []byte("---\n"))
 	for i, yamlDoc := range yamlDocs {
 		if len(yamlDoc) == 0 {
