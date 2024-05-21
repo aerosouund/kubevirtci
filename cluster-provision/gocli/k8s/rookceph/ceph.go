@@ -40,7 +40,7 @@ func (o *CephOpt) Exec() error {
 	blockpools, err := o.client.List(schema.GroupVersionKind{
 		Group:   "ceph.rook.io",
 		Version: "v1",
-		Kind:    "cephblockpools"},
+		Kind:    "CephBlockPool"},
 		"rook-ceph")
 	fmt.Println("blockpools: ", blockpools)
 	// for _, bp := range blockpools.Items {
