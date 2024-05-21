@@ -56,6 +56,7 @@ func (o *CephOpt) Exec() error {
 		if err != nil {
 			return err
 		}
+		fmt.Println("got blockpool: ", blockpool)
 
 		if blockpool.Status.Phase == "Ready" {
 			break
