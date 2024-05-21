@@ -63,8 +63,7 @@ func (o *CephOpt) Exec() error {
 		time.Sleep(10 * time.Second)
 	}
 
-	if blockpool.Status.Phase != "Ready" {
-		fmt.Println("block pool has status", blockpool.Status.Phase)
+	if blockpool.Status != nil && blockpool.Status.Phase != "Ready" {
 		return fmt.Errorf("CephBlockPool replica pool did not become ready after %d retries", maxRetries)
 	}
 
