@@ -53,6 +53,26 @@ func NewDynamicClient(config *rest.Config) (*K8sDynamicClient, error) {
 	}, nil
 }
 
+func (c *K8sDynamicClient) List(gvk schema.GroupVersionKind, ns string) (*unstructured.UnstructuredList, error) {
+	restMapper := meta.NewDefaultRESTMapper([]schema.GroupVersion{gvk.GroupVersion()})
+	restMapper.Add(gvk, meta.RESTScopeNamespace)
+	mapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	if err != nil {
+		return nil, err
+	}
+	var resourceClient dynamic.ResourceInterface
+	resourceClient = c.client.Resource(mapping.Resource).Namespace(ns)
+	if ns == "" {
+		resourceClient = c.client.Resource(mapping.Resource)
+	}
+
+	objs, err := resourceClient.List(context.TODO(), v1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return objs, nil
+}
+
 func (c *K8sDynamicClient) Apply(manifestPath string) error {
 	yamlData, err := os.ReadFile(manifestPath)
 	if err != nil {
