@@ -1,8 +1,9 @@
 package rookceph
 
 import (
-	"fmt"
+	"encoding/json"
 
+	cephv1 "github.com/aerosouund/rook/pkg/apis/ceph.rook.io/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/common"
 )
@@ -37,18 +38,27 @@ func (o *CephOpt) Exec() error {
 			return err
 		}
 	}
-	blockpools, err := o.client.List(schema.GroupVersionKind{
-		Group:   "ceph.rook.io",
-		Version: "v1",
-		Kind:    "CephBlockPool"},
-		"rook-ceph")
-	fmt.Println("blockpools: ", blockpools)
-	// for _, bp := range blockpools.Items {
-	// 	fmt.Println("found block pool", bp.GetName())
-	// }
 
-	if err != nil {
-		return err
+	blockpool := &cephv1.CephBlockPool{}
+	for blockpool.Status.Phase != "Ready" {
+		obj, err := o.client.Get(schema.GroupVersionKind{
+			Group:   "ceph.rook.io",
+			Version: "v1",
+			Kind:    "CephBlockPool"},
+			"replicapool",
+			"rook-ceph")
+		var tmp []byte
+
+		tmp, err = obj.MarshalJSON()
+		if err != nil {
+			return err
+		}
+
+		err = json.Unmarshal(tmp, blockpool)
+		if err != nil {
+			return err
+		}
 	}
+
 	return nil
 }

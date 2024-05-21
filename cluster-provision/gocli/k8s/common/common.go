@@ -53,17 +53,23 @@ func NewDynamicClient(config *rest.Config) (*K8sDynamicClient, error) {
 	}, nil
 }
 
-func (c *K8sDynamicClient) List(gvk schema.GroupVersionKind, ns string) (*unstructured.UnstructuredList, error) {
-	restMapper := meta.NewDefaultRESTMapper([]schema.GroupVersion{gvk.GroupVersion()})
-	restMapper.Add(gvk, meta.RESTScopeNamespace)
-	mapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+func (c *K8sDynamicClient) Get(gvk schema.GroupVersionKind, name, ns string) (*unstructured.Unstructured, error) {
+	resourceClient, err := c.initResourceClientForGVKAndNamespace(gvk, ns)
 	if err != nil {
 		return nil, err
 	}
-	var resourceClient dynamic.ResourceInterface
-	resourceClient = c.client.Resource(mapping.Resource).Namespace(ns)
-	if ns == "" {
-		resourceClient = c.client.Resource(mapping.Resource)
+
+	obj, err := resourceClient.Get(context.TODO(), name, v1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return obj, nil
+}
+
+func (c *K8sDynamicClient) List(gvk schema.GroupVersionKind, ns string) (*unstructured.UnstructuredList, error) {
+	resourceClient, err := c.initResourceClientForGVKAndNamespace(gvk, ns)
+	if err != nil {
+		return nil, err
 	}
 
 	objs, err := resourceClient.List(context.TODO(), v1.ListOptions{})
@@ -100,18 +106,9 @@ func (c *K8sDynamicClient) Apply(manifestPath string) error {
 		}
 
 		gvk := obj.GroupVersionKind()
-		restMapper := meta.NewDefaultRESTMapper([]schema.GroupVersion{gvk.GroupVersion()})
-		restMapper.Add(gvk, meta.RESTScopeNamespace)
-		mapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+		resourceClient, err := c.initResourceClientForGVKAndNamespace(gvk, obj.GetNamespace())
 		if err != nil {
-			return fmt.Errorf("Error getting REST mapping: %v", err)
-		}
-		var resourceClient dynamic.ResourceInterface
-
-		ns := obj.GetNamespace()
-		resourceClient = c.client.Resource(mapping.Resource).Namespace(ns)
-		if ns == "" {
-			resourceClient = c.client.Resource(mapping.Resource)
+			return err
 		}
 
 		_, err = resourceClient.Create(context.TODO(), obj, v1.CreateOptions{})
@@ -123,4 +120,19 @@ func (c *K8sDynamicClient) Apply(manifestPath string) error {
 	}
 
 	return nil
+}
+
+func (c *K8sDynamicClient) initResourceClientForGVKAndNamespace(gvk schema.GroupVersionKind, ns string) (dynamic.ResourceInterface, error) {
+	restMapper := meta.NewDefaultRESTMapper([]schema.GroupVersion{gvk.GroupVersion()})
+	restMapper.Add(gvk, meta.RESTScopeNamespace)
+	mapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	if err != nil {
+		return nil, err
+	}
+	var resourceClient dynamic.ResourceInterface
+	resourceClient = c.client.Resource(mapping.Resource).Namespace(ns)
+	if ns == "" {
+		resourceClient = c.client.Resource(mapping.Resource)
+	}
+	return resourceClient, nil
 }
