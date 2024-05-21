@@ -1,9 +1,6 @@
 package rookceph
 
 import (
-	"fmt"
-
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/common"
 )
 
@@ -37,17 +34,17 @@ func (o *CephOpt) Exec() error {
 			return err
 		}
 	}
-	blockpools, err := o.client.List(schema.GroupVersionKind{
-		Group:   "ceph.rook.io",
-		Version: "v1",
-		Kind:    "cephblockpools"},
-		"rook-ceph")
-	for _, bp := range blockpools.Items {
-		fmt.Println("found block pool", bp.GetName())
-	}
+	// blockpools, err := o.client.List(schema.GroupVersionKind{
+	// 	Group:   "ceph.rook.io",
+	// 	Version: "v1",
+	// 	Kind:    "cephblockpools"},
+	// 	"rook-ceph")
+	// for _, bp := range blockpools.Items {
+	// 	fmt.Println("found block pool", bp.GetName())
+	// }
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 	return nil
 }
