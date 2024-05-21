@@ -43,11 +43,11 @@ func (o *NfsCsiOpt) Exec() error {
 
 	for i := 0; i < maxRetries; i++ {
 		obj, err := o.client.Get(schema.GroupVersionKind{
-			Group:   "ceph.rook.io",
+			Group:   "",
 			Version: "v1",
-			Kind:    "CephBlockPool"},
-			"replicapool",
-			"rook-ceph")
+			Kind:    "PersistentVolumeClaim"},
+			"pvc-nfs-dynamic",
+			"nfs-csi")
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, pvc)
 		if err != nil {
 			return err
@@ -58,6 +58,10 @@ func (o *NfsCsiOpt) Exec() error {
 		}
 		fmt.Println("PVC didn't move to Bound phase, sleeping for 10 seconds")
 		time.Sleep(10 * time.Second)
+	}
+
+	if pvc.Status.Phase != "Bound" {
+		return fmt.Errorf("PVC failed to transition to Bound!")
 	}
 
 	err := o.client.Delete(schema.GroupVersionKind{
