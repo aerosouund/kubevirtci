@@ -80,12 +80,11 @@ func (c *K8sDynamicClient) Apply(manifestPath string) error {
 
 	}
 	yamlDocs := bytes.Split(yamlData, []byte("---\n"))
-	for i, yamlDoc := range yamlDocs {
+	for _, yamlDoc := range yamlDocs {
 		if len(yamlDoc) == 0 {
 			continue
 		}
 
-		fmt.Printf("YAML Document %d:\n%s\n", i+1, yamlDoc)
 		jsonData, err := yaml.YAMLToJSON(yamlDoc)
 		if err != nil {
 			fmt.Printf("Error converting YAML to JSON: %v\n", err)
@@ -120,7 +119,7 @@ func (c *K8sDynamicClient) Apply(manifestPath string) error {
 			return fmt.Errorf("Error applying manifest: %v", err)
 		}
 
-		fmt.Printf("Manifest %v applied successfully!\n", manifestPath)
+		fmt.Printf("Object %v applied successfully!\n", obj.GetName())
 	}
 
 	return nil
