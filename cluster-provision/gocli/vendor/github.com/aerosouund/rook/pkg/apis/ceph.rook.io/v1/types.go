@@ -713,7 +713,7 @@ type CephBlockPool struct {
 	metav1.ObjectMeta `json:"metadata"`
 	Spec              NamedBlockPoolSpec `json:"spec"`
 	// +kubebuilder:pruning:PreserveUnknownFields
-	Status *CephBlockPoolStatus `json:"status,omitempty"`
+	Status CephBlockPoolStatus `json:"status,omitempty"`
 }
 
 // CephBlockPoolList is a list of Ceph Storage Pools
