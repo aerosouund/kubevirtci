@@ -29,6 +29,7 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/images"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/common"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/nfscsi"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/rookceph"
 
 	"github.com/alessio/shellescape"
@@ -751,28 +752,21 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		panic(err)
 	}
 
-	cephEnabled = true
-
 	if cephEnabled {
-		cephopt := rookceph.NewCephOpt(k8sClient)
-		err = cephopt.Exec()
+		cephOpt := rookceph.NewCephOpt(k8sClient)
+		err := cephOpt.Exec()
 		if err != nil {
 			panic(err)
 		}
 	}
 
+	nfsCsiEnabled = true
+
 	if nfsCsiEnabled {
-		nodeName := nodeNameFromIndex(1)
-		success, err := docker.Exec(cli, nodeContainer(prefix, nodeName), []string{
-			"/bin/bash",
-			"-c",
-			"ssh.sh sudo /bin/bash < /scripts/nfs-csi.sh",
-		}, os.Stdout)
+		csiOpt := nfscsi.NewNfsCsiOpt(k8sClient)
+		err := csiOpt.Exec()
 		if err != nil {
-			return err
-		}
-		if !success {
-			return fmt.Errorf("deploying NFS CSI storage failed")
+			panic(err)
 		}
 	}
 
