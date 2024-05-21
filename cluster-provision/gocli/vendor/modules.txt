@@ -338,6 +338,11 @@ github.com/openshift/api/security/v1
 github.com/pkg/errors
 # github.com/pkg/sftp v1.13.1
 ## explicit; go 1.15
+# github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.74.0
+## explicit; go 1.21
+github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring
+github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1
+github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1
 # github.com/prometheus/client_golang v1.18.0
 ## explicit; go 1.19
 # github.com/prometheus/client_model v0.5.0
@@ -398,7 +403,7 @@ github.com/spf13/pflag
 ## explicit; go 1.19
 # go.uber.org/zap v1.27.0
 ## explicit; go 1.19
-# golang.org/x/crypto v0.21.0
+# golang.org/x/crypto v0.23.0
 ## explicit; go 1.18
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
@@ -412,7 +417,7 @@ golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/exp v0.0.0-20231127185646-65229373498e
 ## explicit; go 1.20
-# golang.org/x/net v0.23.0
+# golang.org/x/net v0.25.0
 ## explicit; go 1.18
 golang.org/x/net/context
 golang.org/x/net/html
@@ -428,16 +433,16 @@ golang.org/x/oauth2
 golang.org/x/oauth2/internal
 # golang.org/x/sync v0.7.0
 ## explicit; go 1.18
-# golang.org/x/sys v0.18.0
+# golang.org/x/sys v0.20.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.18.0
+# golang.org/x/term v0.20.0
 ## explicit; go 1.18
 golang.org/x/term
-# golang.org/x/text v0.14.0
+# golang.org/x/text v0.15.0
 ## explicit; go 1.18
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap

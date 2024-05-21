@@ -7,7 +7,10 @@ import (
 	"os"
 
 	cephv1 "github.com/aerosouund/rook/pkg/apis/ceph.rook.io/v1"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	monitoringv1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -46,6 +49,8 @@ func NewDynamicClient(config *rest.Config) (*K8sDynamicClient, error) {
 	scheme.AddToScheme(s)
 	apiextensionsv1.AddToScheme(s)
 	cephv1.AddToScheme(s)
+	monitoringv1alpha1.AddToScheme(s)
+	monitoringv1.AddToScheme(s)
 
 	return &K8sDynamicClient{
 		client: dynamicClient,
