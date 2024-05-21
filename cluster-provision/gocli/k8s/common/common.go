@@ -122,6 +122,19 @@ func (c *K8sDynamicClient) Apply(manifestPath string) error {
 	return nil
 }
 
+func (c *K8sDynamicClient) Delete(gvk schema.GroupVersionKind, name, ns string) error {
+	resourceClient, err := c.initResourceClientForGVKAndNamespace(gvk, ns)
+	if err != nil {
+		return err
+	}
+
+	err = resourceClient.Delete(context.TODO(), name, v1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *K8sDynamicClient) initResourceClientForGVKAndNamespace(gvk schema.GroupVersionKind, ns string) (dynamic.ResourceInterface, error) {
 	restMapper := meta.NewDefaultRESTMapper([]schema.GroupVersion{gvk.GroupVersion()})
 	restMapper.Add(gvk, meta.RESTScopeNamespace)
