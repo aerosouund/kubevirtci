@@ -101,7 +101,7 @@ func (c *K8sDynamicClient) Apply(manifestPath string) error {
 		dec := serializer.NewCodecFactory(c.scheme).UniversalDeserializer()
 		_, _, err = dec.Decode(jsonData, nil, obj)
 		if err != nil {
-			fmt.Printf("Error decoding JSON to Unstructured object: %v", err)
+			fmt.Printf("Error decoding JSON to Unstructured object: %v\n", err)
 			continue
 		}
 
