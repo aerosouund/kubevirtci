@@ -42,8 +42,8 @@ func (o *CephOpt) Exec() error {
 	}
 
 	blockpool := &cephv1.CephBlockPool{}
-	maxRetries := 10
-	retryInterval := 5 * time.Second
+	maxRetries := 12
+	retryInterval := 10 * time.Second
 
 	for i := 0; i < maxRetries; i++ {
 		obj, err := o.client.Get(schema.GroupVersionKind{
@@ -60,11 +60,12 @@ func (o *CephOpt) Exec() error {
 		if blockpool.Status != nil && blockpool.Status.Phase != "Ready" {
 			break
 		}
-		fmt.Printf("Ceph pool block didn't move to ready status, sleeping for %d seconds\n", retryInterval)
+		fmt.Println("Ceph pool block didn't move to ready status, sleeping for 5 seconds")
 		time.Sleep(retryInterval)
 	}
 
 	if blockpool.Status.Phase != "Ready" {
+		fmt.Println("block pool has status", blockpool.Status.Phase)
 		return fmt.Errorf("CephBlockPool replica pool did not become ready after %d retries", maxRetries)
 	}
 
