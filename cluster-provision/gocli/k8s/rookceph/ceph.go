@@ -1,9 +1,11 @@
 package rookceph
 
 import (
-	"encoding/json"
+	"fmt"
+	"time"
 
 	cephv1 "github.com/aerosouund/rook/pkg/apis/ceph.rook.io/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/common"
 )
@@ -40,24 +42,30 @@ func (o *CephOpt) Exec() error {
 	}
 
 	blockpool := &cephv1.CephBlockPool{}
-	for blockpool.Status.Phase != "Ready" {
+	maxRetries := 10
+	retryInterval := 5 * time.Second
+
+	for i := 0; i < maxRetries; i++ {
 		obj, err := o.client.Get(schema.GroupVersionKind{
 			Group:   "ceph.rook.io",
 			Version: "v1",
 			Kind:    "CephBlockPool"},
 			"replicapool",
 			"rook-ceph")
-		var tmp []byte
-
-		tmp, err = obj.MarshalJSON()
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, blockpool)
 		if err != nil {
 			return err
 		}
 
-		err = json.Unmarshal(tmp, blockpool)
-		if err != nil {
-			return err
+		if blockpool.Status.Phase == "Ready" {
+			break
 		}
+		fmt.Printf("Ceph pool block didn't move to ready status, sleeping for %d seconds\n", retryInterval)
+		time.Sleep(retryInterval)
+	}
+
+	if blockpool.Status.Phase != "Ready" {
+		return fmt.Errorf("CephBlockPool replica pool did not become ready after %d retries", maxRetries)
 	}
 
 	return nil
