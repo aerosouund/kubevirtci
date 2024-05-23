@@ -28,6 +28,9 @@ import (
 	containers2 "kubevirt.io/kubevirtci/cluster-provision/gocli/containers"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/images"
+	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/common"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/nfscsi"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/rookceph"
 
 	"github.com/alessio/shellescape"
 )
@@ -73,7 +76,7 @@ func NewRunCommand() *cobra.Command {
 		RunE:  run,
 		Args:  cobra.ExactArgs(1),
 	}
-	run.Flags().UintP("nodes", "n", 1, "number of cluster nodes to start")
+	run.Flags().UintP("nodes", "n", 2, "number of cluster nodes to start")
 	run.Flags().UintP("numa", "u", 1, "number of NUMA nodes per node")
 	run.Flags().StringP("memory", "m", "3096M", "amount of ram per node")
 	run.Flags().UintP("cpu", "c", 2, "number of cpu cores per node")
@@ -334,7 +337,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	if len(containerRegistry) > 0 {
-		clusterImage = path.Join(containerRegistry, clusterImage)
+		clusterImage = path.Join(containerRegistry, clusterImage+":2403130317-a3e0778")
 		fmt.Printf("Download the image %s\n", clusterImage)
 		err = docker.ImagePull(cli, ctx, clusterImage, types.ImagePullOptions{})
 		if err != nil {
@@ -358,6 +361,14 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	if err := cli.ContainerStart(ctx, dnsmasq.ID, types.ContainerStartOptions{}); err != nil {
 		return err
 	}
+
+	dnsmasqJSON, err := cli.ContainerInspect(context.Background(), dnsmasq.ID)
+	if err != nil {
+		return err
+	}
+
+	workerSSHPort, err := utils.GetPublicPort(utils.PortSSH, dnsmasqJSON.NetworkSettings.Ports)
+	apiServerPort, err := utils.GetPublicPort(utils.PortAPI, dnsmasqJSON.NetworkSettings.Ports)
 
 	// Pull the registry image
 	err = docker.ImagePull(cli, ctx, utils.DockerRegistryImage, types.ImagePullOptions{})
@@ -557,6 +568,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 		containers <- node.ID
+
 		if err := cli.ContainerStart(ctx, node.ID, types.ContainerStartOptions{}); err != nil {
 			return err
 		}
@@ -705,34 +717,44 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			wg.Done()
 		}(node.ID)
 	}
+	// err = utils.Compile("provision")
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// err = jumpSCP(workerSSHPort, 2, "/workdir/bin/provision")
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	err = copyRemoteFile(workerSSHPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
+	if err != nil {
+		panic(err)
+	}
+
+	config, err := k8s.InitConfig(".kubeconfig", apiServerPort)
+	if err != nil {
+		panic(err)
+	}
+
+	k8sClient, err := k8s.NewDynamicClient(config)
+	if err != nil {
+		panic(err)
+	}
 
 	if cephEnabled {
-		nodeName := nodeNameFromIndex(1)
-		success, err := docker.Exec(cli, nodeContainer(prefix, nodeName), []string{
-			"/bin/bash",
-			"-c",
-			"ssh.sh sudo /bin/bash < /scripts/rook-ceph.sh",
-		}, os.Stdout)
+		cephOpt := rookceph.NewCephOpt(k8sClient)
+		err := cephOpt.Exec()
 		if err != nil {
-			return err
-		}
-		if !success {
-			return fmt.Errorf("provisioning Ceph CSI failed")
+			panic(err)
 		}
 	}
 
 	if nfsCsiEnabled {
-		nodeName := nodeNameFromIndex(1)
-		success, err := docker.Exec(cli, nodeContainer(prefix, nodeName), []string{
-			"/bin/bash",
-			"-c",
-			"ssh.sh sudo /bin/bash < /scripts/nfs-csi.sh",
-		}, os.Stdout)
+		csiOpt := nfscsi.NewNfsCsiOpt(k8sClient)
+		err := csiOpt.Exec()
 		if err != nil {
-			return err
-		}
-		if !success {
-			return fmt.Errorf("deploying NFS CSI storage failed")
+			panic(err)
 		}
 	}
 
