@@ -146,11 +146,28 @@ cgroup_manager = "cgroupfs"`
 			break
 		}
 	}
-	_, err = runCMD("kubeadm init --config " + kubeadmConfigPath + " v5")
+
+	err = os.Setenv("KUBECONFIG", "/etc/kubernetes/admin.conf")
 	if err != nil {
 		panic(err)
 	}
 
+	cmds := []string{
+		"kubeadm init --config " + kubeadmConfigPath + " v5",
+		`kubectl patch deployment coredns -n kube-system -p "$(cat /provision/kubeadm-patches/add-security-context-deployment-patch.yaml)"`,
+		"kubectl create -f " + cniManifest,
+		"kubectl taint nodes node01 node-role.kubernetes.io/control-plane:NoSchedule-",
+		"kubectl create -f /provision/local-volume.yaml",
+		"mkdir -p /var/lib/rook",
+		"chcon -t container_file_t /var/lib/rook",
+	}
+
+	for _, cmd := range cmds {
+		_, err = runCMD(cmd)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 func runCMD(cmd string) (string, error) {
