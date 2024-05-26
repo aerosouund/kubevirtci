@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -64,7 +65,7 @@ rules:
 		if hostname != "" {
 			break
 		}
-		hostname, _ = runCMD("hostnamectl --transient", true)
+		hostname, _ = runCMD("hostnamectl --transient")
 		fmt.Println("transient hostname isn't ready yet, sleeping for 5 seconds")
 		time.Sleep(time.Second * 5)
 	}
@@ -107,7 +108,7 @@ cgroup_manager = "cgroupfs"`
 		if crioActive == "active" {
 			break
 		}
-		crioActive, err = runCMD("systemctl is-active crio", true)
+		crioActive, err = runCMD("systemctl is-active crio")
 		fmt.Println("crio status:", crioActive)
 		time.Sleep(time.Second * 3)
 		// if err != nil {
@@ -164,30 +165,24 @@ cgroup_manager = "cgroupfs"`
 	}
 
 	for _, cmd := range cmds {
-		_, err = runCMD(cmd, true)
+		_, err = runCMD(cmd)
 		if err != nil {
 			panic(err)
 		}
 	}
 }
 
-func runCMD(cmd string, stdOut bool) (string, error) {
-	var stdout, stderr bytes.Buffer
+func runCMD(cmd string) (string, error) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
 
-	command := exec.Command("bash", "-c", cmd)
-	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
-	if !stdOut {
-		command.Stdout = &stdout
-		command.Stderr = &stderr
-	}
+	command := exec.Command("sh", "-c", cmd)
+	command.Stdout = io.MultiWriter(os.Stdout, &stdout)
+	command.Stderr = io.MultiWriter(os.Stderr, &stderr)
 
 	err := command.Run()
 	if err != nil {
 		return "", fmt.Errorf(stderr.String())
-	}
-	if stdOut {
-		return "", nil
 	}
 	return stdout.String(), nil
 }
