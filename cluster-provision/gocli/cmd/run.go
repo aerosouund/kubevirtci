@@ -730,20 +730,20 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	// 	panic(err)
 	// }
 
-	err = jumpSCP(workerSSHPort, 1, "/workdir/scripts/node01.sh")
-	if err != nil {
-		panic(err)
-	}
+	// err = jumpSCP(workerSSHPort, 1, "/workdir/scripts/node01.sh")
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	// _, err = jumpSSH(workerSSHPort, 1, "sudo chmod +x node01", false)
 	// if err != nil {
 	// 	panic(err)
 	// }
 
-	_, err = jumpSSH(workerSSHPort, 1, "sudo bash /home/vagrant/node01.sh", true)
-	if err != nil {
-		panic(err)
-	}
+	// _, err = jumpSSH(workerSSHPort, 1, "sudo bash /home/vagrant/node01.sh", true)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	err = copyRemoteFile(workerSSHPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
 	if err != nil {
