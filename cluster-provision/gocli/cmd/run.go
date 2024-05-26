@@ -692,7 +692,15 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		if success {
-			success, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", fmt.Sprintf("ssh.sh sudo /bin/bash < /scripts/%s.sh", nodeName)}, os.Stdout)
+			err = jumpSCP(workerSSHPort, 1, "/workdir/scripts/node01.sh")
+			if err != nil {
+				panic(err)
+			}
+
+			_, err = jumpSSH(workerSSHPort, 1, "sudo bash /home/vagrant/node01.sh", true)
+			if err != nil {
+				panic(err)
+			}
 		} else {
 			if gpuAddress != "" {
 				// move the assigned PCI device to a vfio-pci driver to prepare for assignment
