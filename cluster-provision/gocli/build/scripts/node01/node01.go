@@ -175,6 +175,8 @@ func runCMD(cmd string, stdOut bool) (string, error) {
 	var stdout, stderr bytes.Buffer
 
 	command := exec.Command("bash", "-c", cmd)
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
 	if !stdOut {
 		command.Stdout = &stdout
 		command.Stderr = &stderr
