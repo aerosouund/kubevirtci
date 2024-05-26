@@ -154,7 +154,7 @@ cgroup_manager = "cgroupfs"`
 	}
 
 	cmds := []string{
-		"kubeadm init --config " + kubeadmConfigPath + " v5",
+		"kubeadm init --config " + kubeadmConfigPath + " -v5",
 		`kubectl patch deployment coredns -n kube-system -p "$(cat /provision/kubeadm-patches/add-security-context-deployment-patch.yaml)"`,
 		"kubectl create -f " + cniManifest,
 		"kubectl taint nodes node01 node-role.kubernetes.io/control-plane:NoSchedule-",
@@ -164,7 +164,7 @@ cgroup_manager = "cgroupfs"`
 	}
 
 	for _, cmd := range cmds {
-		_, err = runCMD(cmd, false)
+		_, err = runCMD(cmd, true)
 		if err != nil {
 			panic(err)
 		}
