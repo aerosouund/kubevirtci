@@ -103,11 +103,13 @@ cgroup_manager = "cgroupfs"`
 	}
 
 	var crioActive string
-	for {
+	for i := 0; i < maxRetries; i++ {
 		if crioActive == "active" {
 			break
 		}
 		crioActive, err = runCMD("systemctl is-active crio")
+		fmt.Println("crio status:", crioActive)
+		time.Sleep(time.Second * 3)
 		// if err != nil {
 		// 	panic(err)
 		// }
@@ -139,6 +141,7 @@ cgroup_manager = "cgroupfs"`
 				}
 			}
 		}
+		fmt.Println("ipv6 not ready, sleeping for 2 seconds")
 		time.Sleep(time.Second * 2)
 		if foundIPV6 {
 			break
