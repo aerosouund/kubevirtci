@@ -68,7 +68,7 @@ func ssh(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func jumpSSH(nodeIdx int, sshPort uint16, cmd string) (string, error) {
+func jumpSSH(sshPort uint16, nodeIdx int, cmd string) (string, error) {
 	signer, err := ssh1.ParsePrivateKey([]byte(sshKey))
 	if err != nil {
 		return "", err
