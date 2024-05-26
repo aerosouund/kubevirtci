@@ -58,13 +58,13 @@ rules:
 		}
 	}
 
-	maxRetries := 10
+	maxRetries := 4
 	var hostname string
 	for i := 0; i < maxRetries; i++ {
 		if hostname != "" {
 			break
 		}
-		hostname, _ = runCMD("hostnamectl --transient")
+		hostname, _ = runCMD("hostnamectl --transient", true)
 		fmt.Println("transient hostname isn't ready yet, sleeping for 5 seconds")
 		time.Sleep(time.Second * 5)
 	}
@@ -107,7 +107,7 @@ cgroup_manager = "cgroupfs"`
 		if crioActive == "active" {
 			break
 		}
-		crioActive, err = runCMD("systemctl is-active crio")
+		crioActive, err = runCMD("systemctl is-active crio", true)
 		fmt.Println("crio status:", crioActive)
 		time.Sleep(time.Second * 3)
 		// if err != nil {
@@ -164,20 +164,24 @@ cgroup_manager = "cgroupfs"`
 	}
 
 	for _, cmd := range cmds {
-		_, err = runCMD(cmd)
+		_, err = runCMD(cmd, false)
 		if err != nil {
 			panic(err)
 		}
 	}
 }
 
-func runCMD(cmd string) (string, error) {
+func runCMD(cmd string, stdOut bool) (string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
 	command := exec.Command(cmd)
-	command.Stdout = &stdout
-	command.Stderr = &stderr
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+	if !stdOut {
+		command.Stdout = &stdout
+		command.Stderr = &stderr
+	}
 
 	err := command.Run()
 	if err != nil {
