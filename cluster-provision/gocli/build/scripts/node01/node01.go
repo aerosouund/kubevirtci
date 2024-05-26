@@ -141,11 +141,11 @@ cgroup_manager = "cgroupfs"`
 				}
 			}
 		}
-		fmt.Println("ipv6 not ready, sleeping for 2 seconds")
-		time.Sleep(time.Second * 2)
 		if foundIPV6 {
 			break
 		}
+		fmt.Println("ipv6 not ready, sleeping for 2 seconds")
+		time.Sleep(time.Second * 2)
 	}
 
 	err = os.Setenv("KUBECONFIG", "/etc/kubernetes/admin.conf")
@@ -172,12 +172,9 @@ cgroup_manager = "cgroupfs"`
 }
 
 func runCMD(cmd string, stdOut bool) (string, error) {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	var stdout, stderr bytes.Buffer
 
-	command := exec.Command(cmd)
-	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
+	command := exec.Command("bash", "-c", cmd)
 	if !stdOut {
 		command.Stdout = &stdout
 		command.Stderr = &stderr
@@ -186,6 +183,9 @@ func runCMD(cmd string, stdOut bool) (string, error) {
 	err := command.Run()
 	if err != nil {
 		return "", fmt.Errorf(stderr.String())
+	}
+	if stdOut {
+		return "", nil
 	}
 	return stdout.String(), nil
 }
