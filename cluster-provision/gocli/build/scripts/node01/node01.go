@@ -64,13 +64,11 @@ rules:
 		if hostname != "" {
 			break
 		}
-		hostname, err = runCMD("hostnamectl --transient")
-		if err != nil {
-			panic(err)
-		}
+		hostname, _ = runCMD("hostnamectl --transient")
 		fmt.Println("transient hostname isn't ready yet, sleeping for 5 seconds")
 		time.Sleep(time.Second * 5)
 	}
+
 	cgroupFile := "/sys/fs/cgroup/cgroup.controllers"
 
 	_, err = os.Stat(cgroupFile)
