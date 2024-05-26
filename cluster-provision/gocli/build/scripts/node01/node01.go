@@ -79,7 +79,7 @@ rules:
 		if err != nil {
 			panic(err)
 		}
-		cgroupConf, err := os.Create("00-cgroupv2.conf")
+		cgroupConf, err := os.Create(crioConfigDir + "/00-cgroupv2.conf")
 		if err != nil {
 			panic(err)
 		}
@@ -87,6 +87,21 @@ rules:
 conmon_cgroup = "pod"
 cgroup_manager = "cgroupfs"`
 		_, err = cgroupConf.WriteString(config)
+		if err != nil {
+			panic(err)
+		}
+
+		_, err = runCMD("sudo systemctl stop kubelet")
+		if err != nil {
+			panic(err)
+		}
+
+		_, err = runCMD("sudo systemctl restart crio")
+		if err != nil {
+			panic(err)
+		}
+
+		_, err = runCMD("sudo systemctl start kubelet")
 		if err != nil {
 			panic(err)
 		}
@@ -105,11 +120,13 @@ cgroup_manager = "cgroupfs"`
 
 	var crioActive string
 	for i := 0; i < maxRetries; i++ {
+
+		crioActive, err = runCMD("systemctl is-active crio")
 		if crioActive == "active" {
 			break
 		}
-		crioActive, err = runCMD("systemctl is-active crio")
-		fmt.Println("crio status:", crioActive)
+
+		fmt.Println("waiting for crio to become active, waiting 3 seconds")
 		time.Sleep(time.Second * 3)
 		// if err != nil {
 		// 	panic(err)
