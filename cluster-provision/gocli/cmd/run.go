@@ -717,21 +717,25 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			wg.Done()
 		}(node.ID)
 	}
-	err = utils.Compile("provision")
+	err = utils.Compile("node01")
 	if err != nil {
 		panic(err)
 	}
 
-	err = jumpSCP(workerSSHPort, 1, "/workdir/bin/provision")
+	err = jumpSCP(workerSSHPort, 1, "/workdir/bin/node01")
 	if err != nil {
 		panic(err)
 	}
 
-	out, err := jumpSSH(workerSSHPort, 1, "echo ammar")
+	_, err = jumpSSH(workerSSHPort, 1, "sudo chmod +x node01")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("command output: ", out)
+
+	_, err = jumpSSH(workerSSHPort, 1, "./node01")
+	if err != nil {
+		panic(err)
+	}
 
 	err = copyRemoteFile(workerSSHPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
 	if err != nil {
