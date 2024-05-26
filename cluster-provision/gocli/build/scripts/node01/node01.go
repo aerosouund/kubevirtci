@@ -108,9 +108,9 @@ cgroup_manager = "cgroupfs"`
 			break
 		}
 		crioActive, err = runCMD("systemctl is-active crio")
-		if err != nil {
-			panic(err)
-		}
+		// if err != nil {
+		// 	panic(err)
+		// }
 	}
 
 	for {
