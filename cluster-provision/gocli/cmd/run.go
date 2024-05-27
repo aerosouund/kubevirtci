@@ -712,7 +712,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 				panic(err)
 			}
 
-			_, err = jumpSSH(workerSSHPort, 1, "sudo bash node01.sh", false)
+			_, err = JumpSSH(workerSSHPort, 1, "sudo bash node01.sh", false)
 			if err != nil {
 				panic(err)
 			}
