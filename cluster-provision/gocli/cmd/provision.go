@@ -248,7 +248,6 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	}
 	if strings.Contains(phases, "k8s") {
 		// copy provider scripts
-		// TODO: Replace these with compile and scp of the binary
 		err = copyDirectory(ctx, cli, node.ID, scripts, "/scripts")
 		if err != nil {
 			return err

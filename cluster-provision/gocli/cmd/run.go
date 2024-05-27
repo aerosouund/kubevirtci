@@ -692,30 +692,25 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		if success {
-			// err = jumpSCP(workerSSHPort, 1, "/workdir/scripts/node01.sh")
+			// err = utils.Compile("node01")
 			// if err != nil {
 			// 	panic(err)
 			// }
 
-			// _, err = JumpSSH(workerSSHPort, 1, "sudo bash node01.sh", true)
-			// if err != nil {
-			// 	panic(err)
-			// }
+			err = jumpSCP(workerSSHPort, 1, "/workdir/scripts/node01.sh")
+			if err != nil {
+				panic(err)
+			}
+
+			_, err = JumpSSH(workerSSHPort, 1, "sudo bash node01.sh", true)
+			if err != nil {
+				panic(err)
+			}
 
 			// _, err = jumpSSH(workerSSHPort, 1, "sudo ./node01", true)
 			// if err != nil {
 			// 	panic(err)
 			// }
-
-			success, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", "scp -r -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 /node01 vagrant@192.168.66.101:/home/vagrant"}, os.Stdout)
-			if err != nil {
-				panic(err)
-			}
-			_, err = JumpSSH(workerSSHPort, 1, "sudo ./node01", true)
-			if err != nil {
-				panic(err)
-			}
-
 		} else {
 			if gpuAddress != "" {
 				// move the assigned PCI device to a vfio-pci driver to prepare for assignment
