@@ -702,25 +702,25 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		if success {
-			err = utils.Compile("node01")
+			// err = utils.Compile("node01")
+			// if err != nil {
+			// 	panic(err)
+			// }
+
+			err = jumpSCP(workerSSHPort, 1, "/workdir/scripts/node01.sh")
 			if err != nil {
 				panic(err)
 			}
 
-			err = jumpSCP(workerSSHPort, 1, "/workdir/bin/node01")
+			_, err = jumpSSH(workerSSHPort, 1, "sudo bash node01.sh", false)
 			if err != nil {
 				panic(err)
 			}
 
-			_, err = jumpSSH(workerSSHPort, 1, "sudo chmod +x node01", false)
-			if err != nil {
-				panic(err)
-			}
-
-			_, err = jumpSSH(workerSSHPort, 1, "sudo ./node01", true)
-			if err != nil {
-				panic(err)
-			}
+			// _, err = jumpSSH(workerSSHPort, 1, "sudo ./node01", true)
+			// if err != nil {
+			// 	panic(err)
+			// }
 		} else {
 			if gpuAddress != "" {
 				// move the assigned PCI device to a vfio-pci driver to prepare for assignment
