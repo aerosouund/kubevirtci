@@ -3,6 +3,7 @@ package cmd
 import (
 	"bufio"
 	"bytes"
+	_ "embed"
 	"errors"
 	"fmt"
 	"os"
