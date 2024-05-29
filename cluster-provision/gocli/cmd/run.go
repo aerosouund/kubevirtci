@@ -80,7 +80,7 @@ func NewRunCommand() *cobra.Command {
 		RunE:  run,
 		Args:  cobra.ExactArgs(1),
 	}
-	run.Flags().UintP("nodes", "n", 2, "number of cluster nodes to start")
+	run.Flags().UintP("nodes", "n", 1, "number of cluster nodes to start")
 	run.Flags().UintP("numa", "u", 1, "number of NUMA nodes per node")
 	run.Flags().StringP("memory", "m", "3096M", "amount of ram per node")
 	run.Flags().UintP("cpu", "c", 2, "number of cpu cores per node")
