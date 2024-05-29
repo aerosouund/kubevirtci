@@ -67,9 +67,6 @@ var nvmeDisks []string
 var scsiDisks []string
 var usbDisks []string
 
-//go:embed scripts/node01.sh
-var node01 []byte
-
 //go:embded scripts/*
 var f embed.FS
 
