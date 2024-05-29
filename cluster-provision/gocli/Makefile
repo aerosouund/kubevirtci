@@ -40,6 +40,10 @@ run-k8s:
 	./build/cli scp k8s-1.28 /etc/kubernetes/admin.conf .kubeconfig
 	export KUBECONFIG=.kubeconfig
 
+.PHONY: rm
+rm:
+	./build/cli rm
+
 
 .PHONY: vendor
 vendor:
