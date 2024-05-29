@@ -31,8 +31,10 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/images"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/common"
-	"kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/nfscsi"
-	"kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/rookceph"
+
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/prometheus"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rookceph"
 
 	"github.com/alessio/shellescape"
 )
@@ -715,7 +717,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 				panic(err)
 			}
 
-			_, err = JumpSSH(workerSSHPort, 1, "sudo bash node01.sh", true)
+			_, err = jumpSSH(workerSSHPort, 1, "sudo bash node01.sh", true)
 			if err != nil {
 				panic(err)
 			}
@@ -732,7 +734,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 				panic(err)
 			}
 
-			_, err = JumpSSH(workerSSHPort, x+1, "sudo bash nodes.sh", true)
+			_, err = jumpSSH(workerSSHPort, x+1, "sudo bash nodes.sh", true)
 			if err != nil {
 				panic(err)
 			}
@@ -799,27 +801,10 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	if prometheusEnabled {
-		nodeName := nodeNameFromIndex(1)
-
-		var params string
-		if prometheusAlertmanagerEnabled {
-			params += "--alertmanager true "
-		}
-
-		if grafanaEnabled {
-			params += "--grafana true "
-		}
-
-		success, err := docker.Exec(cli, nodeContainer(prefix, nodeName), []string{
-			"/bin/bash",
-			"-c",
-			fmt.Sprintf("ssh.sh sudo /bin/bash -s -- %s < /scripts/prometheus.sh", params),
-		}, os.Stdout)
+		prommetheusOpt := prometheus.NewPrometheusOpt(k8sClient, grafanaEnabled, prometheusAlertmanagerEnabled)
+		err = prommetheusOpt.Exec()
 		if err != nil {
-			return err
-		}
-		if !success {
-			return fmt.Errorf("deploying Prometheus operator failed")
+			panic(err)
 		}
 	}
 
