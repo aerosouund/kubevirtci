@@ -68,7 +68,7 @@ var usbDisks []string
 //go:embed scripts/node01.sh
 var node01 []byte
 
-//go:embed manifests/*
+//go:embded scripts/*
 var f embed.FS
 
 type dockerSetting struct {
@@ -700,14 +700,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		if success {
-			// err = utils.Compile("node01")
-			// if err != nil {
-			// 	panic(err)
-			// }
-
-			err = os.WriteFile("node01.sh", node01, 0755)
-
-			err = jumpSCP(workerSSHPort, 1, "node01.sh")
+			err = jumpSCP(workerSSHPort, 1, "scripts/node01.sh")
 			if err != nil {
 				panic(err)
 			}
@@ -716,11 +709,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			if err != nil {
 				panic(err)
 			}
-
-			// _, err = jumpSSH(workerSSHPort, 1, "sudo ./node01", true)
-			// if err != nil {
-			// 	panic(err)
-			// }
 		} else {
 			if gpuAddress != "" {
 				// move the assigned PCI device to a vfio-pci driver to prepare for assignment
@@ -729,7 +717,15 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 					return err
 				}
 			}
-			success, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", "ssh.sh sudo /bin/bash < /scripts/nodes.sh"}, os.Stdout)
+			err = jumpSCP(workerSSHPort, x+1, "scripts/nodes.sh")
+			if err != nil {
+				panic(err)
+			}
+
+			_, err = JumpSSH(workerSSHPort, x+1, "sudo bash nodes.sh", true)
+			if err != nil {
+				panic(err)
+			}
 		}
 
 		if err != nil {
@@ -745,25 +741,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			wg.Done()
 		}(node.ID)
 	}
-	// err = utils.Compile("node01")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// err = jumpSCP(workerSSHPort, 1, "/workdir/scripts/node01.sh")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// _, err = jumpSSH(workerSSHPort, 1, "sudo chmod +x node01", false)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// _, err = jumpSSH(workerSSHPort, 1, "sudo bash /home/vagrant/node01.sh", true)
-	// if err != nil {
-	// 	panic(err)
-	// }
 
 	err = copyRemoteFile(workerSSHPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
 	if err != nil {
@@ -787,7 +764,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			panic(err)
 		}
 	}
-	nfsCsiEnabled = true
 
 	if nfsCsiEnabled {
 		csiOpt := nfscsi.NewNfsCsiOpt(k8sClient)
