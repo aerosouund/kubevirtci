@@ -699,12 +699,12 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		if success {
-			err = jumpSCP(workerSSHPort, 1, "scripts/node01.sh")
+			err = jumpSCP(workerSSHPort, 1, "scripts/nodes.sh")
 			if err != nil {
 				panic(err)
 			}
 
-			_, err = jumpSSH(workerSSHPort, 1, "sudo bash node01.sh", true)
+			_, err = jumpSSH(workerSSHPort, 1, "sudo bash nodes.sh", true)
 			if err != nil {
 				panic(err)
 			}
