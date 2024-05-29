@@ -33,6 +33,14 @@ container: cli
 container-run: container
 	docker run ${KUBEVIRTCI_IMAGE_REPO}/gocli
 
+.PHONY: run-k8s
+run-k8s:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -o $(BIN_DIR)/cli ./cmd/cli
+	./build/cli run k8s-1.28 --background=true --nodes=2
+	./build/cli scp k8s-1.28 /etc/kubernetes/admin.conf .kubeconfig
+	export KUBECONFIG=.kubeconfig
+
+
 .PHONY: vendor
 vendor:
 	$(GO) mod tidy
