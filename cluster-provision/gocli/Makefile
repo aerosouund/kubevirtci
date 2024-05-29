@@ -37,8 +37,11 @@ container-run: container
 run-k8s:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -o $(BIN_DIR)/cli ./cmd/cli
 	./build/cli run k8s-1.28 --background=true --nodes=2
-	./build/cli scp k8s-1.28 /etc/kubernetes/admin.conf .kubeconfig
+	./build/cli scp --prefix kubevirt /etc/kubernetes/admin.conf .kubeconfig
 	export KUBECONFIG=.kubeconfig
+    kubectl config set-cluster kubernetes --server="https://127.0.0.1:$(./build/cli ports --prefix kubevirt k8s)"
+    kubectl config set-cluster kubernetes --insecure-skip-tls-verify=true
+	kubectl get ns
 
 .PHONY: rm
 rm:
