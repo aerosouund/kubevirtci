@@ -7,7 +7,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"path"
@@ -708,16 +707,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 				return fmt.Errorf("provisioning node %s failed", nodeName)
 			}
 		}
-		dirEntries, err := f.ReadDir(".")
-		if err != nil {
-			log.Fatal("Error reading directory:", err)
-		}
-
-		// Print the names of all files and directories in the root directory
-		for _, entry := range dirEntries {
-			fmt.Println(entry.Name())
-		}
-		fmt.Println("read FS")
 
 		if success {
 			err = jumpSCP(workerSSHPort, 1, "scripts/node01.sh")
