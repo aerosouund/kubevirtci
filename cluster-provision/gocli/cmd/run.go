@@ -797,6 +797,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			panic(err)
 		}
 	}
+	nfsCsiEnabled = true
 
 	if nfsCsiEnabled {
 		csiOpt := nfscsi.NewNfsCsiOpt(k8sClient)
