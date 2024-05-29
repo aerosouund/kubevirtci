@@ -1,6 +1,7 @@
 package rookceph
 
 import (
+	"embed"
 	"fmt"
 	"time"
 
@@ -9,6 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/common"
 )
+
+//go:embed manifests/*
+var f embed.FS
 
 type CephOpt struct {
 	client *k8s.K8sDynamicClient
@@ -35,7 +39,7 @@ func (o *CephOpt) Exec() error {
 	}
 
 	for _, manifest := range manifests {
-		err := o.client.Apply(manifest)
+		err := o.client.Apply(f, manifest)
 		if err != nil {
 			return err
 		}
