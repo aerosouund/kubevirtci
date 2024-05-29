@@ -68,7 +68,7 @@ var nvmeDisks []string
 var scsiDisks []string
 var usbDisks []string
 
-//go:embded scripts/*
+//go:embed scripts/*
 var f embed.FS
 
 type dockerSetting struct {
