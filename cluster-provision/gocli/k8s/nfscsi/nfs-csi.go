@@ -1,6 +1,7 @@
 package nfscsi
 
 import (
+	"embed"
 	"fmt"
 	"time"
 
@@ -9,6 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/common"
 )
+
+//go:embed manifests/*
+var f embed.FS
 
 type NfsCsiOpt struct {
 	client *k8s.K8sDynamicClient
@@ -22,18 +26,18 @@ func NewNfsCsiOpt(c *k8s.K8sDynamicClient) *NfsCsiOpt {
 
 func (o *NfsCsiOpt) Exec() error {
 	manifests := []string{
-		"/workdir/manifests/nfs-csi/nfs-service.yaml",
-		"/workdir/manifests/nfs-csi/nfs-server.yaml",
-		"/workdir/manifests/nfs-csi/csi-nfs-controller-rbac.yaml",
-		"/workdir/manifests/nfs-csi/csi-nfs-driverinfo.yaml",
-		"/workdir/manifests/nfs-csi/csi-nfs-controller.yaml",
-		"/workdir/manifests/nfs-csi/csi-nfs-node.yaml",
-		"/workdir/manifests/nfs-csi/csi-nfs-sc.yaml",
-		"/workdir/manifests/nfs-csi/csi-nfs-test-pvc.yaml",
+		"nfs-service.yaml",
+		"nfs-server.yaml",
+		"csi-nfs-controller-rbac.yaml",
+		"csi-nfs-driverinfo.yaml",
+		"csi-nfs-controller.yaml",
+		"csi-nfs-node.yaml",
+		"csi-nfs-sc.yaml",
+		"csi-nfs-test-pvc.yaml",
 	}
 
 	for _, manifest := range manifests {
-		err := o.client.Apply(manifest)
+		err := o.client.Apply(f, manifest)
 		if err != nil {
 			return err
 		}

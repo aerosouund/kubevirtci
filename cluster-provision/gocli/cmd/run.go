@@ -3,6 +3,7 @@ package cmd
 import (
 	"bufio"
 	"bytes"
+	"embed"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -66,6 +67,9 @@ var usbDisks []string
 
 //go:embed scripts/node01.sh
 var node01 []byte
+
+//go:embed manifests/*
+var f embed.FS
 
 type dockerSetting struct {
 	Proxy string
