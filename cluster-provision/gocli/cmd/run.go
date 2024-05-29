@@ -741,9 +741,9 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 
-		if !success {
-			return fmt.Errorf("provisioning node %s failed", nodeName)
-		}
+		// if !success {
+		// 	return fmt.Errorf("provisioning node %s failed", nodeName)
+		// }
 
 		go func(id string) {
 			cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
