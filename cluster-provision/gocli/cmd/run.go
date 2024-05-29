@@ -7,6 +7,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"path"
@@ -707,14 +708,23 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 				return fmt.Errorf("provisioning node %s failed", nodeName)
 			}
 		}
+		dirEntries, err := f.ReadDir("scripts")
+		if err != nil {
+			log.Fatal("Error reading directory:", err)
+		}
+
+		// Print the names of all files in the directory
+		for _, entry := range dirEntries {
+			fmt.Println(entry.Name())
+		}
 
 		if success {
-			err = jumpSCP(workerSSHPort, 1, "scripts/nodes.sh")
+			err = jumpSCP(workerSSHPort, 1, "scripts/node01.sh")
 			if err != nil {
 				panic(err)
 			}
 
-			_, err = jumpSSH(workerSSHPort, 1, "sudo bash nodes.sh", true)
+			_, err = jumpSSH(workerSSHPort, 1, "sudo bash node01.sh", true)
 			if err != nil {
 				panic(err)
 			}
