@@ -64,6 +64,9 @@ var nvmeDisks []string
 var scsiDisks []string
 var usbDisks []string
 
+//go:embed scripts/node01.sh
+var node01 []byte
+
 type dockerSetting struct {
 	Proxy string
 }
@@ -698,8 +701,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			// 	panic(err)
 			// }
 
-			//go:embed scripts/node01.sh
-			var node01 []byte
 			err = os.WriteFile("node01.sh", node01, 0755)
 
 			err = jumpSCP(workerSSHPort, 1, "node01.sh")
