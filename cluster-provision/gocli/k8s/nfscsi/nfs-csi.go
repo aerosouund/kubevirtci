@@ -26,14 +26,14 @@ func NewNfsCsiOpt(c *k8s.K8sDynamicClient) *NfsCsiOpt {
 
 func (o *NfsCsiOpt) Exec() error {
 	manifests := []string{
-		"nfs-service.yaml",
-		"nfs-server.yaml",
-		"csi-nfs-controller-rbac.yaml",
-		"csi-nfs-driverinfo.yaml",
-		"csi-nfs-controller.yaml",
-		"csi-nfs-node.yaml",
-		"csi-nfs-sc.yaml",
-		"csi-nfs-test-pvc.yaml",
+		"manifests/nfs-service.yaml",
+		"manifests/nfs-server.yaml",
+		"manifests/csi-nfs-controller-rbac.yaml",
+		"manifests/csi-nfs-driverinfo.yaml",
+		"manifests/csi-nfs-controller.yaml",
+		"manifests/csi-nfs-node.yaml",
+		"manifests/csi-nfs-sc.yaml",
+		"manifests/csi-nfs-test-pvc.yaml",
 	}
 
 	for _, manifest := range manifests {
