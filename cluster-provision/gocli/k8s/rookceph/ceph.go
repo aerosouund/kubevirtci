@@ -26,16 +26,16 @@ func NewCephOpt(c *k8s.K8sDynamicClient) *CephOpt {
 
 func (o *CephOpt) Exec() error {
 	manifests := []string{
-		"snapshot.storage.k8s.io_volumesnapshots.yaml",
-		"snapshot.storage.k8s.io_volumesnapshotcontents.yaml",
-		"snapshot.storage.k8s.io_volumesnapshotclasses.yaml",
-		"rbac-snapshot-controller.yaml",
-		"setup-snapshot-controller.yaml",
-		"common.yaml",
-		"crds.yaml",
-		"operator.yaml",
-		"cluster-test.yaml",
-		"pool-test.yaml",
+		"manifests/snapshot.storage.k8s.io_volumesnapshots.yaml",
+		"manifests/snapshot.storage.k8s.io_volumesnapshotcontents.yaml",
+		"manifests/snapshot.storage.k8s.io_volumesnapshotclasses.yaml",
+		"manifests/rbac-snapshot-controller.yaml",
+		"manifests/setup-snapshot-controller.yaml",
+		"manifests/common.yaml",
+		"manifests/crds.yaml",
+		"manifests/operator.yaml",
+		"manifests/cluster-test.yaml",
+		"manifests/pool-test.yaml",
 	}
 
 	for _, manifest := range manifests {
