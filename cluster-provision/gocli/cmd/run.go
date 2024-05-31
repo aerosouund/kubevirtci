@@ -30,7 +30,8 @@ import (
 	containers2 "kubevirt.io/kubevirtci/cluster-provision/gocli/containers"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/images"
-	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/common"
+	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
+	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/prometheus"
@@ -709,12 +710,12 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		if success {
-			err = jumpSCP(workerSSHPort, 1, "scripts/node01.sh")
+			err = sshutils.JumpSCP(workerSSHPort, 1, "scripts/node01.sh")
 			if err != nil {
 				panic(err)
 			}
 
-			_, err = jumpSSH(workerSSHPort, 1, "sudo bash node01.sh", true)
+			_, err = sshutils.JumpSSH(workerSSHPort, 1, "sudo bash node01.sh", true)
 			if err != nil {
 				panic(err)
 			}
@@ -726,12 +727,12 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 					return err
 				}
 			}
-			err = jumpSCP(workerSSHPort, x+1, "scripts/nodes.sh")
+			err = sshutils.JumpSCP(workerSSHPort, x+1, "scripts/nodes.sh")
 			if err != nil {
 				panic(err)
 			}
 
-			_, err = jumpSSH(workerSSHPort, x+1, "sudo bash nodes.sh", true)
+			_, err = sshutils.JumpSSH(workerSSHPort, x+1, "sudo bash nodes.sh", true)
 			if err != nil {
 				panic(err)
 			}

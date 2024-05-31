@@ -3,7 +3,7 @@ package prometheus
 import (
 	"embed"
 
-	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/k8s/common"
+	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 )
 
 //go:embed manifests/*
