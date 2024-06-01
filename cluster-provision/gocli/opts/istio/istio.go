@@ -4,6 +4,10 @@ import (
 	"embed"
 	"fmt"
 
+	istiov1alpha1 "istio.io/operator/pkg/apis/istio/v1alpha1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	utils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
@@ -13,10 +17,12 @@ var f embed.FS
 type IstioOpt struct {
 	sshPort     uint16
 	cnaoEnabled bool
+	client      *k8s.K8sDynamicClient
 }
 
-func NewIstioOpt(sshPort uint16, cnaoEnabled bool) *IstioOpt {
+func NewIstioOpt(c *k8s.K8sDynamicClient, sshPort uint16, cnaoEnabled bool) *IstioOpt {
 	return &IstioOpt{
+		client:      c,
 		sshPort:     sshPort,
 		cnaoEnabled: cnaoEnabled,
 	}
@@ -31,9 +37,12 @@ func (o *IstioOpt) Exec() error {
 	if err != nil {
 		return err
 	}
+	err = o.client.Apply(f, "manifests/ns.yaml")
+	if err != nil {
+		return err
+	}
+
 	cmds := []string{
-		"/bin/bash -c /var/lib/kubevirtci/shared_vars.sh",
-		"sudo kubectl --kubeconfig /etc/kubernetes/admin.conf create ns istio-system",
 		"sudo istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
 		fmt.Sprintf("cat <<EOF > /opt/istio/istio-operator-with-cnao.cr.yaml\n%s\nEOF", string(istioCnao)),
 		fmt.Sprintf("cat <<EOF > /opt/istio/istio-operator.cr.yaml\n%s\nEOF", string(istioWithoutCnao)),
@@ -49,11 +58,22 @@ func (o *IstioOpt) Exec() error {
 		confFile = "/opt/istio/istio-operator-with-cnao.cr.yaml"
 	}
 
-	_, err = utils.JumpSSH(o.sshPort, 1,
-		"sudo kubectl --kubeconfig /etc/kubernetes/admin.conf create -f "+confFile,
-		true)
+	err = o.client.Apply(f, confFile)
 	if err != nil {
 		return err
+	}
+
+	operator := &istiov1alpha1.IstioOperator{}
+	maxRetries := 10
+	for i := 0; i < maxRetries; i++ {
+		obj, err := o.client.Get(schema.GroupVersionKind{Group: "install.istio.io",
+			Version: "v1alpha1",
+			Kind:    "IstioOperator"}, "istio-operator", "istio-system")
+
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, operator)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
