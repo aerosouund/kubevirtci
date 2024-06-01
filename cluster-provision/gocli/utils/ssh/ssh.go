@@ -83,10 +83,11 @@ func JumpSSH(sshPort uint16, nodeIdx int, cmd string, stdOut bool) (string, erro
 	var stderr bytes.Buffer
 	var stdout bytes.Buffer
 
-	session.Stderr = &stderr
 	session.Stdout = os.Stdout
+	session.Stderr = os.Stderr
 	if !stdOut {
 		session.Stdout = &stdout
+		session.Stderr = &stderr
 	}
 
 	err = session.Run(cmd)
