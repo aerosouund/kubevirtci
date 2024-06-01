@@ -25,15 +25,15 @@ func (n *Node01Provisioner) Exec() error {
 		"while [[ $(systemctl status crio | grep -c active) -eq 0 ]]; do sleep 2; done",
 		"sudo swapoff -a",
 		"until ip address show dev eth0 | grep global | grep inet6; do sleep 1; done",
-		`sudo kubeadm init --config "$kubeadm_conf" -v5`,
-		`sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf patch deployment coredns -n kube-system -p "$(cat /provision/kubeadm-patches/add-security-context-deployment-patch.yaml)"`, // todo: dont make this depend on the node container
-		`sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f /provision/cni.yaml`,
-		`sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf taint nodes node01 node-role.kubernetes.io/control-plane:NoSchedule-`,
-		`sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf get nodes --no-headers; kubectl_rc=$?; retry_counter=0; while [[ $retry_counter -lt 20 && $kubectl_rc -ne 0 ]]; do sleep 10; echo "Waiting for api server to be available..."; sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf get nodes --no-headers; kubectl_rc=$?; retry_counter=$((retry_counter + 1)); done`,
-		"sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf version",
-		`sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f /provision/local-volume.yaml`,
-		"sudo mkdir -p /var/lib/rook",
-		"sudo chcon -t container_file_t /var/lib/rook",
+		`kubeadm init --config "$kubeadm_conf" -v5`,
+		`kubectl --kubeconfig=/etc/kubernetes/admin.conf patch deployment coredns -n kube-system -p "$(cat /provision/kubeadm-patches/add-security-context-deployment-patch.yaml)"`, // todo: dont make this depend on the node container
+		`kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f /provision/cni.yaml`,
+		`kubectl --kubeconfig=/etc/kubernetes/admin.conf taint nodes node01 node-role.kubernetes.io/control-plane:NoSchedule-`,
+		`kubectl --kubeconfig=/etc/kubernetes/admin.conf get nodes --no-headers; kubectl_rc=$?; retry_counter=0; while [[ $retry_counter -lt 20 && $kubectl_rc -ne 0 ]]; do sleep 10; echo "Waiting for api server to be available..."; sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf get nodes --no-headers; kubectl_rc=$?; retry_counter=$((retry_counter + 1)); done`,
+		"kubectl --kubeconfig=/etc/kubernetes/admin.conf version",
+		`kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f /provision/local-volume.yaml`,
+		"mkdir -p /var/lib/rook",
+		"chcon -t container_file_t /var/lib/rook",
 	}
 	for _, cmd := range cmds {
 		_, err := utils.JumpSSH(n.sshPort, 1, cmd, true)
