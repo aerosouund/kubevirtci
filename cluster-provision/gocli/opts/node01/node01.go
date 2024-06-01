@@ -1,6 +1,10 @@
 package node01
 
-import utils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
+import (
+	"fmt"
+
+	utils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
+)
 
 type Node01Provisioner struct {
 	sshPort uint16
@@ -34,7 +38,7 @@ func (n *Node01Provisioner) Exec() error {
 	for _, cmd := range cmds {
 		_, err := utils.JumpSSH(n.sshPort, 1, cmd, true)
 		if err != nil {
-			return err
+			return fmt.Errorf("error executing %s: %s", cmd, err)
 		}
 	}
 	return nil
