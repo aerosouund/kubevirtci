@@ -22,7 +22,7 @@ func (n *Node01Provisioner) Exec() error {
 		// `[ -f /home/vagrant/enable_audit ] && apiVer=$(head -1 /etc/kubernetes/audit/adv-audit.yaml) && echo "$apiVer" > /etc/kubernetes/audit/adv-audit.yaml && echo -e "kind: Policy\nrules:\n- level: Metadata" >> /etc/kubernetes/audit/adv-audit.yaml`,
 		`timeout=30; interval=5; while ! hostnamectl | grep Transient; do echo "Waiting for dhclient to set the hostname from dnsmasq"; sleep $interval; timeout=$((timeout - interval)); [ $timeout -le 0 ] && exit 1; done`,
 		`sudo mkdir -p /etc/crio/crio.conf.d`,
-		`[ -f /sys/fs/cgroup/cgroup.controllers ] && mkdir -p /etc/crio/crio.conf.d && echo '[crio.runtime]\nconmon_cgroup = "pod"\ncgroup_manager = "cgroupfs"' | sudo tee /etc/crio/crio.conf.d/00-cgroupv2.conf > /dev/null && sed -i 's/--cgroup-driver=systemd/--cgroup-driver=cgroupfs/' /etc/sysconfig/kubelet && systemctl stop kubelet && systemctl restart crio && systemctl start kubelet`,
+		`[ -f /sys/fs/cgroup/cgroup.controllers ] && mkdir -p /etc/crio/crio.conf.d && echo '[crio.runtime]\nconmon_cgroup = "pod"\ncgroup_manager = "cgroupfs"' | sudo tee /etc/crio/crio.conf.d/00-cgroupv2.conf > /dev/null && sudo sed -i 's/--cgroup-driver=systemd/--cgroup-driver=cgroupfs/' /etc/sysconfig/kubelet && systemctl stop kubelet && systemctl restart crio && systemctl start kubelet`,
 		`sudo sed -i 's/--cgroup-driver=systemd/--cgroup-driver=cgroupfs/' /etc/sysconfig/kubelet`,
 		`sudo systemctl stop kubelet && sudo systemctl restart crio && sudo systemctl start kubelet`,
 		"while [[ $(systemctl status crio | grep -c active) -eq 0 ]]; do sleep 2; done",
