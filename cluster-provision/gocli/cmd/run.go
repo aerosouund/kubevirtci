@@ -716,7 +716,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 				return fmt.Errorf("provisioning node %s failed", nodeName)
 			}
 		}
-
+		// todo: remove checking for scripts for node, just do different stuff at index 1
 		if success {
 			// node01, err := f.Open("scripts/node01.sh")
 			// if err != nil {
