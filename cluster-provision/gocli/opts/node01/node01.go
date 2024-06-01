@@ -25,7 +25,7 @@ func (n *Node01Provisioner) Exec() error {
 		"while [[ $(systemctl status crio | grep -c active) -eq 0 ]]; do sleep 2; done",
 		"sudo swapoff -a",
 		"until ip address show dev eth0 | grep global | grep inet6; do sleep 1; done",
-		`kubeadm init --config "$kubeadm_conf" -v5`,
+		`sudo kubeadm init --config "$kubeadm_conf" -v5`,
 		`sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf patch deployment coredns -n kube-system -p "$(cat /provision/kubeadm-patches/add-security-context-deployment-patch.yaml)"`, // todo: dont make this depend on the node container
 		`sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f "$cni_manifest"`,
 		`sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf taint nodes node01 node-role.kubernetes.io/control-plane:NoSchedule-`,
