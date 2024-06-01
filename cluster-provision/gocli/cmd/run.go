@@ -33,7 +33,9 @@ import (
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/istio"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/prometheus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rookceph"
 
@@ -108,6 +110,7 @@ func NewRunCommand() *cobra.Command {
 	run.Flags().String("nfs-data", "", "path to data which should be exposed via nfs to the nodes")
 	run.Flags().Bool("enable-ceph", false, "enables dynamic storage provisioning using Ceph")
 	run.Flags().Bool("enable-istio", false, "deploys Istio service mesh")
+	run.Flags().Bool("enable-cnao", false, "enable network extensions with istio")
 	run.Flags().Bool("enable-nfs-csi", false, "deploys nfs csi dynamic storage")
 	run.Flags().Bool("enable-prometheus", false, "deploys Prometheus operator")
 	run.Flags().Bool("enable-prometheus-alertmanager", false, "deploys Prometheus alertmanager")
@@ -223,6 +226,11 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	istioEnabled, err := cmd.Flags().GetBool("enable-istio")
+	if err != nil {
+		return err
+	}
+
+	cnaoEnabled, err := cmd.Flags().GetBool("enable-cnao")
 	if err != nil {
 		return err
 	}
@@ -381,7 +389,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 
-	workerSSHPort, err := utils.GetPublicPort(utils.PortSSH, dnsmasqJSON.NetworkSettings.Ports)
+	sshPort, err := utils.GetPublicPort(utils.PortSSH, dnsmasqJSON.NetworkSettings.Ports)
 	apiServerPort, err := utils.GetPublicPort(utils.PortAPI, dnsmasqJSON.NetworkSettings.Ports)
 
 	// Pull the registry image
@@ -710,16 +718,21 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		if success {
-			node01, err := f.Open("scripts/node01.sh")
-			if err != nil {
-				panic(err)
-			}
-			err = sshutils.JumpSCP(workerSSHPort, 1, "/home/vagrant/node01.sh", node01)
-			if err != nil {
-				panic(err)
-			}
+			// node01, err := f.Open("scripts/node01.sh")
+			// if err != nil {
+			// 	panic(err)
+			// }
+			// err = sshutils.JumpSCP(sshPort, 1, "/home/vagrant/node01.sh", node01)
+			// if err != nil {
+			// 	panic(err)
+			// }
 
-			_, err = sshutils.JumpSSH(workerSSHPort, 1, "sudo bash node01.sh", true)
+			// _, err = sshutils.JumpSSH(sshPort, 1, "sudo bash node01.sh", true)
+			// if err != nil {
+			// 	panic(err)
+			// }
+			n := node01.NewNode01Provisioner(sshPort)
+			err := n.Exec()
 			if err != nil {
 				panic(err)
 			}
@@ -735,12 +748,12 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			if err != nil {
 				panic(err)
 			}
-			err = sshutils.JumpSCP(workerSSHPort, x+1, "/home/vagrant/nodes.sh", nodesScript)
+			err = sshutils.JumpSCP(sshPort, x+1, "/home/vagrant/nodes.sh", nodesScript)
 			if err != nil {
 				panic(err)
 			}
 
-			_, err = sshutils.JumpSSH(workerSSHPort, x+1, "sudo bash nodes.sh", true)
+			_, err = sshutils.JumpSSH(sshPort, x+1, "sudo bash nodes.sh", true)
 			if err != nil {
 				panic(err)
 			}
@@ -760,7 +773,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}(node.ID)
 	}
 
-	err = copyRemoteFile(workerSSHPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
+	err = copyRemoteFile(sshPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
 	if err != nil {
 		panic(err)
 	}
@@ -792,17 +805,10 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	if istioEnabled {
-		nodeName := nodeNameFromIndex(1)
-		success, err := docker.Exec(cli, nodeContainer(prefix, nodeName), []string{
-			"/bin/bash",
-			"-c",
-			"ssh.sh sudo /bin/bash < /scripts/istio.sh",
-		}, os.Stdout)
+		istioOpt := istio.NewIstioOpt(k8sClient, sshPort, cnaoEnabled)
+		err := istioOpt.Exec()
 		if err != nil {
-			return err
-		}
-		if !success {
-			return fmt.Errorf("deploying Istio service mesh failed")
+			panic(err)
 		}
 	}
 
