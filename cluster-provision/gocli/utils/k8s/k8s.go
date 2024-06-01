@@ -9,7 +9,7 @@ import (
 	cephv1 "github.com/aerosouund/rook/pkg/apis/ceph.rook.io/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	monitoringv1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
-	istiov1alpha1 "istio.io/api/operator/v1alpha1"
+	istiov1alpha1 "istio.io/operator/pkg/apis"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	"k8s.io/apimachinery/pkg/api/meta"
