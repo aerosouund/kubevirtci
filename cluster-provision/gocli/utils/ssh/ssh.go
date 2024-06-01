@@ -90,7 +90,7 @@ func JumpSSH(sshPort uint16, nodeIdx int, cmd string, stdOut bool) (string, erro
 		session.Stderr = &stderr
 	}
 
-	err = session.Run("sudo /bin/bash -c " + cmd)
+	err = session.Run(cmd)
 	if err != nil {
 		return "", fmt.Errorf("Failed to execute command: %v, %v", err, stderr.String())
 	}
