@@ -21,7 +21,7 @@ require (
 	golang.org/x/crypto v0.23.0
 	golang.org/x/net v0.25.0
 	gopkg.in/yaml.v3 v3.0.1
-	istio.io/api v1.22.0-alpha.1.0.20240531152111-1bd7c057ee64
+	istio.io/api v1.22.0
 	k8s.io/api v0.30.1
 	k8s.io/apiextensions-apiserver v0.30.1
 	k8s.io/apimachinery v0.30.1
@@ -64,18 +64,25 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
 	github.com/openshift/api v0.0.0-20240301093301-ce10821dc999 // indirect
 	github.com/rook/rook/pkg/apis v0.0.0-20231204200402-5287527732f7 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
+	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
+	google.golang.org/grpc v1.62.1 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gotest.tools/v3 v3.0.2 // indirect
+	istio.io/operator v0.0.0-20200714085832-f408beefc360 // indirect
+	istio.io/pkg v0.0.0-20191029184635-5c2f5ef63692 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240322212309-b815d8309940 // indirect
 	k8s.io/utils v0.0.0-20240310230437-4693a0247e57 // indirect
+	sigs.k8s.io/controller-runtime v0.17.2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 )
