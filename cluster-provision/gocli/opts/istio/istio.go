@@ -3,6 +3,8 @@ package istio
 import (
 	"embed"
 	"fmt"
+	"log"
+	"time"
 
 	istiov1alpha1 "istio.io/operator/pkg/apis/istio/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -74,6 +76,14 @@ func (o *IstioOpt) Exec() error {
 		if err != nil {
 			return err
 		}
+		if operator.Status.Status == 3 {
+			break
+		}
+		log.Println("Istio operator didn't move to Healthy status, sleeping for 5 seconds")
+		time.Sleep(time.Second * 5)
+	}
+	if operator.Status.Status != 3 {
+		return fmt.Errorf("Istio operator failed to move to Healthy status after max retries")
 	}
 
 	return nil
