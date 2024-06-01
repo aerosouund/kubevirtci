@@ -710,7 +710,11 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		if success {
-			err = sshutils.JumpSCP(workerSSHPort, 1, "scripts/node01.sh")
+			node01, err := f.Open("scripts/node01.sh")
+			if err != nil {
+				panic(err)
+			}
+			err = sshutils.JumpSCP(workerSSHPort, 1, "/home/vagrant/node01.sh", node01)
 			if err != nil {
 				panic(err)
 			}
@@ -727,7 +731,11 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 					return err
 				}
 			}
-			err = sshutils.JumpSCP(workerSSHPort, x+1, "scripts/nodes.sh")
+			nodesScript, err := f.Open("scripts/nodes.sh")
+			if err != nil {
+				panic(err)
+			}
+			err = sshutils.JumpSCP(workerSSHPort, x+1, "/home/vagrant/nodes.sh", nodesScript)
 			if err != nil {
 				panic(err)
 			}

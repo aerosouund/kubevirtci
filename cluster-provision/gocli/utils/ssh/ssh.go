@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"net"
 	"os"
@@ -96,7 +97,7 @@ func JumpSSH(sshPort uint16, nodeIdx int, cmd string, stdOut bool) (string, erro
 }
 
 // todo: replace file by an io reader
-func JumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
+func JumpSCP(sshPort uint16, destNodeIdx int, fileName string, contents fs.File) error {
 	signer, err := ssh.ParsePrivateKey([]byte(sshKey))
 	if err != nil {
 		return err
@@ -139,14 +140,7 @@ func JumpSCP(sshPort uint16, destNodeIdx int, fileName string) error {
 		return err
 	}
 
-	file, err := f.Open(fileName)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	filename := strings.Split(fileName, "/")
-	err = scpClient.CopyFile(context.Background(), file, "/home/vagrant/"+filename[len(filename)-1], "0775")
+	err = scpClient.CopyFile(context.Background(), contents, fileName, "0775")
 	if err != nil {
 		return err
 	}
