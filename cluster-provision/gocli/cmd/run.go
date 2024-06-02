@@ -718,19 +718,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 		// todo: remove checking for scripts for node, just do different stuff at index 1
 		if success {
-			// node01, err := f.Open("scripts/node01.sh")
-			// if err != nil {
-			// 	panic(err)
-			// }
-			// err = sshutils.JumpSCP(sshPort, 1, "/home/vagrant/node01.sh", node01)
-			// if err != nil {
-			// 	panic(err)
-			// }
-
-			// _, err = sshutils.JumpSSH(sshPort, 1, "sudo bash node01.sh", true)
-			// if err != nil {
-			// 	panic(err)
-			// }
 			n := node01.NewNode01Provisioner(sshPort)
 			err := n.Exec()
 			if err != nil {
@@ -763,17 +750,13 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 
-		// if !success {
-		// 	return fmt.Errorf("provisioning node %s failed", nodeName)
-		// }
-
 		go func(id string) {
 			cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 			wg.Done()
 		}(node.ID)
 	}
 
-	err = copyRemoteFile(sshPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
+	err = sshutils.CopyRemoteFile(sshPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
 	if err != nil {
 		panic(err)
 	}
