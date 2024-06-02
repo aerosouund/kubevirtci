@@ -149,7 +149,7 @@ func JumpSCP(sshPort uint16, destNodeIdx int, fileName string, contents fs.File)
 	return nil
 }
 
-func copyRemoteFile(sshPort uint16, remotePath, localPath string) error {
+func CopyRemoteFile(sshPort uint16, remotePath, localPath string) error {
 	signer, err := ssh.ParsePrivateKey([]byte(sshKey))
 	if err != nil {
 		return err
