@@ -30,7 +30,7 @@ func (n *NodesProvisioner) Exec() error {
 	// }
 
 	cmds := []string{
-		"echo 'entering sleep' && sleep 9000000",
+		// "echo 'entering sleep' && sleep 9000000",
 		"source /var/lib/kubevirtci/shared_vars.sh",
 		`timeout=30; interval=5; while ! hostnamectl | grep Transient; do echo "Waiting for dhclient to set the hostname from dnsmasq"; sleep $interval; timeout=$((timeout - interval)); [ $timeout -le 0 ] && exit 1; done`,
 		// `[ -f /sys/fs/cgroup/cgroup.controllers ] && mkdir -p /etc/crio/crio.conf.d && echo '` + string(cgroupv2) + `' | sudo tee /etc/crio/crio.conf.d/00-cgroupv2.conf > /dev/null && sudo sed -i 's/--cgroup-driver=systemd/--cgroup-driver=cgroupfs/' /etc/sysconfig/kubelet && sudo systemctl stop kubelet && sudo systemctl restart crio`,
