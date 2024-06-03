@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/bramvdbogaerde/go-scp"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -89,6 +90,7 @@ func JumpSSH(sshPort uint16, nodeIdx int, cmd string, stdOut bool) (string, erro
 		session.Stdout = &stdout
 		session.Stderr = &stderr
 	}
+	logrus.Info("executing: ", cmd)
 
 	err = session.Run(cmd)
 	if err != nil {
