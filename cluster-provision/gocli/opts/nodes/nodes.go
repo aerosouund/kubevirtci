@@ -4,7 +4,6 @@ import (
 	"embed"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	utils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
@@ -45,7 +44,6 @@ func (n *NodesProvisioner) Exec() error {
 	}
 
 	for _, cmd := range cmds {
-		logrus.Info("executing: ", cmd)
 		_, err := utils.JumpSSH(n.sshPort, n.nodeIdx, cmd, true)
 		if err != nil {
 			return fmt.Errorf("error executing %s: %s", cmd, err)
