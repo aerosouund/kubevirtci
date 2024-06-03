@@ -4,8 +4,7 @@ set -ex
 
 source /var/lib/kubevirtci/shared_vars.sh
 
-echo 'entering sleep'
-sleep 90000000
+
 
 nodeip=
 control_ip=192.168.66.101
@@ -75,6 +74,8 @@ fi
 sudo swapoff -a
 
 until ip address show dev eth0 | grep global | grep inet6; do sleep 1; done
+echo 'entering sleep'
+sleep 90000000
 
 kubeadm join --token abcdef.1234567890123456 ${control_ip}:6443 --ignore-preflight-errors=all --discovery-token-unsafe-skip-ca-verification=true
 
