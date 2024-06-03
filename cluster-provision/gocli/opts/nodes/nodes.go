@@ -1,4 +1,4 @@
-package nodeprovisioner
+package nodes
 
 import (
 	"embed"
