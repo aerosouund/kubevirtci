@@ -36,7 +36,7 @@ func (n *NodesProvisioner) Exec() error {
 		"while [[ $(systemctl status crio | grep -c active) -eq 0 ]]; do sleep 2; done",
 		`echo "KUBELET_EXTRA_ARGS=${KUBELET_CGROUP_ARGS} --fail-swap-on=false ${nodeip} --feature-gates=CPUManager=true,NodeSwap=true --cpu-manager-policy=static --kube-reserved=cpu=250m --system-reserved=cpu=250m" | sudo tee /etc/sysconfig/kubelet > /dev/null`, // todo: add the condition
 		"sudo systemctl daemon-reload && sudo service kubelet restart",
-		"kubelet_rc=$?; [[ $kubelet_rc -ne 0 ]] && rm -rf /var/lib/kubelet/cpu_manager_state && service kubelet restart",
+		// "kubelet_rc=$?; [[ $kubelet_rc -ne 0 ]] && rm -rf /var/lib/kubelet/cpu_manager_state && service kubelet restart",
 		"sudo swapoff -a",
 		"until ip address show dev eth0 | grep global | grep inet6; do sleep 1; done",
 		"sudo kubeadm join --token abcdef.1234567890123456 192.168.66.101:6443 --ignore-preflight-errors=all --discovery-token-unsafe-skip-ca-verification=true",
