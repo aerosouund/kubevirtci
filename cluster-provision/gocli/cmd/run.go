@@ -36,6 +36,7 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/istio"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
+	nodesprovisioner "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nodes"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/prometheus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rookceph"
 
@@ -731,16 +732,21 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 					return err
 				}
 			}
-			nodesScript, err := f.Open("scripts/nodes.sh")
-			if err != nil {
-				panic(err)
-			}
-			err = sshutils.JumpSCP(sshPort, x+1, "/home/vagrant/nodes.sh", nodesScript)
-			if err != nil {
-				panic(err)
-			}
+			// nodesScript, err := f.Open("scripts/nodes.sh")
+			// if err != nil {
+			// 	panic(err)
+			// }
+			// err = sshutils.JumpSCP(sshPort, x+1, "/home/vagrant/nodes.sh", nodesScript)
+			// if err != nil {
+			// 	panic(err)
+			// }
 
-			_, err = sshutils.JumpSSH(sshPort, x+1, "sudo bash nodes.sh", true)
+			// _, err = sshutils.JumpSSH(sshPort, x+1, "sudo bash nodes.sh", true)
+			// if err != nil {
+			// 	panic(err)
+			// }
+			n := nodesprovisioner.NewNodesProvisioner(sshPort, x+1)
+			err = n.Exec()
 			if err != nil {
 				panic(err)
 			}
