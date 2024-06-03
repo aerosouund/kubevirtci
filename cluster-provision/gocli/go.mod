@@ -66,8 +66,10 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
 	github.com/openshift/api v0.0.0-20240301093301-ce10821dc999 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rook/rook/pkg/apis v0.0.0-20231204200402-5287527732f7 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
+	github.com/stretchr/testify v1.9.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
