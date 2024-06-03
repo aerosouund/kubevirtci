@@ -22,7 +22,7 @@ func NewNodesProvisioner(sshPort uint16, nodeIdx int) *NodesProvisioner {
 }
 
 func (n *NodesProvisioner) Exec() error {
-	cgroupv2, err := f.ReadFile("conf/c00-cgroupv2.conf")
+	cgroupv2, err := f.ReadFile("conf/00-cgroupv2.conf")
 	if err != nil {
 		return err
 	}
