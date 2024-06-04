@@ -33,6 +33,7 @@ import (
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/cnao"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/istio"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
@@ -112,6 +113,7 @@ func NewRunCommand() *cobra.Command {
 	run.Flags().Bool("enable-ceph", false, "enables dynamic storage provisioning using Ceph")
 	run.Flags().Bool("enable-istio", false, "deploys Istio service mesh")
 	run.Flags().Bool("enable-cnao", false, "enable network extensions with istio")
+	run.Flags().Bool("deploy-cnao", false, "deploy the network extensions operator")
 	run.Flags().Bool("enable-nfs-csi", false, "deploys nfs csi dynamic storage")
 	run.Flags().Bool("enable-prometheus", false, "deploys Prometheus operator")
 	run.Flags().Bool("enable-prometheus-alertmanager", false, "deploys Prometheus alertmanager")
@@ -232,6 +234,11 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	cnaoEnabled, err := cmd.Flags().GetBool("enable-cnao")
+	if err != nil {
+		return err
+	}
+
+	deployCnao, err := cmd.Flags().GetBool("deploy-cnao")
 	if err != nil {
 		return err
 	}
@@ -776,6 +783,13 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		csiOpt := nfscsi.NewNfsCsiOpt(k8sClient)
 		err := csiOpt.Exec()
 		if err != nil {
+			panic(err)
+		}
+	}
+
+	if deployCnao {
+		cnaoOpt := cnao.NewCnaoOpt(k8sClient)
+		if err := cnaoOpt.Exec(); err != nil {
 			panic(err)
 		}
 	}
