@@ -40,6 +40,7 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
 	nodeprovisioner "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nodes"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/prometheus"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/realtime"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rookceph"
 
 	"github.com/alessio/shellescape"
@@ -670,16 +671,9 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		if realtimeSchedulingEnabled {
-			success, err := docker.Exec(cli, nodeContainer(prefix, nodeName), []string{
-				"/bin/bash",
-				"-c",
-				"ssh.sh sudo /bin/bash < /scripts/realtime.sh",
-			}, os.Stdout)
-			if err != nil {
-				return err
-			}
-			if !success {
-				return errors.New("provisioning kernel to allow unlimited runtime realtime scheduler failed")
+			realtimeOpt := realtime.NewRealtimeOpt(sshPort, x+1)
+			if err := realtimeOpt.Exec(); err != nil {
+				panic(err)
 			}
 		}
 
