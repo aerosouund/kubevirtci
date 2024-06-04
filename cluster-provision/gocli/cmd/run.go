@@ -35,6 +35,7 @@ import (
 
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/cnao"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/istio"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/multus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
 	nodeprovisioner "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nodes"
@@ -114,6 +115,7 @@ func NewRunCommand() *cobra.Command {
 	run.Flags().Bool("enable-istio", false, "deploys Istio service mesh")
 	run.Flags().Bool("enable-cnao", false, "enable network extensions with istio")
 	run.Flags().Bool("deploy-cnao", false, "deploy the network extensions operator")
+	run.Flags().Bool("deploy-multus", false, "deploy multus")
 	run.Flags().Bool("enable-nfs-csi", false, "deploys nfs csi dynamic storage")
 	run.Flags().Bool("enable-prometheus", false, "deploys Prometheus operator")
 	run.Flags().Bool("enable-prometheus-alertmanager", false, "deploys Prometheus alertmanager")
@@ -239,6 +241,11 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	deployCnao, err := cmd.Flags().GetBool("deploy-cnao")
+	if err != nil {
+		return err
+	}
+
+	deployMultus, err := cmd.Flags().GetBool("deploy-multus")
 	if err != nil {
 		return err
 	}
@@ -773,16 +780,21 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 
 	if cephEnabled {
 		cephOpt := rookceph.NewCephOpt(k8sClient)
-		err := cephOpt.Exec()
-		if err != nil {
+		if err := cephOpt.Exec(); err != nil {
 			panic(err)
 		}
 	}
 
 	if nfsCsiEnabled {
 		csiOpt := nfscsi.NewNfsCsiOpt(k8sClient)
-		err := csiOpt.Exec()
-		if err != nil {
+		if err := csiOpt.Exec(); err != nil {
+			panic(err)
+		}
+	}
+
+	if deployMultus {
+		multusOpt := multus.NewMultusOpt(k8sClient)
+		if err := multusOpt.Exec(); err != nil {
 			panic(err)
 		}
 	}
@@ -796,16 +808,14 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 
 	if istioEnabled {
 		istioOpt := istio.NewIstioOpt(k8sClient, sshPort, cnaoEnabled)
-		err := istioOpt.Exec()
-		if err != nil {
+		if err := istioOpt.Exec(); err != nil {
 			panic(err)
 		}
 	}
 
 	if prometheusEnabled {
 		prommetheusOpt := prometheus.NewPrometheusOpt(k8sClient, grafanaEnabled, prometheusAlertmanagerEnabled)
-		err = prommetheusOpt.Exec()
-		if err != nil {
+		if err = prommetheusOpt.Exec(); err != nil {
 			panic(err)
 		}
 	}
