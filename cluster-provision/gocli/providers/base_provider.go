@@ -67,21 +67,3 @@ func NewKubevirtProvider(k8sversion string, options ...KubevirtProviderOption) *
 
 	return bp
 }
-
-func WithNodes(nodes uint) KubevirtProviderOption {
-	return func(c *KubevirtProvider) {
-		c.Nodes = nodes
-	}
-}
-
-func WithNuma(numa uint) KubevirtProviderOption {
-	return func(c *KubevirtProvider) {
-		c.Numa = numa
-	}
-}
-
-func WithMemory(memory string) KubevirtProviderOption {
-	return func(c *KubevirtProvider) {
-		c.Memory = memory
-	}
-}
