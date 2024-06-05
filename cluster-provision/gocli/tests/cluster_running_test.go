@@ -9,10 +9,26 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/providers"
 
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
+
+func TDD(t *testing.T) {
+	kp := providers.NewKubevirtProvider("k8s-1.28")
+	err := kp.Start()
+	assert.NoError(t, err)
+
+	for !kp.IsRunning {
+		// sleep
+		// dont wait forever, after some time abort
+	}
+
+	_, err = kp.Client.List(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Namespaces"}, "")
+	assert.NoError(t, err)
+
+}
 
 func TestClusterRunning(t *testing.T) {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
