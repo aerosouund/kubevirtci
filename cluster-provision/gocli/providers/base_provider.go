@@ -1,55 +1,16 @@
 package providers
 
-type KubevirtProvider struct {
-	Version                      string
-	Nodes                        uint     `flag:"nodes" short:"n"`
-	Numa                         uint     `flag:"numa" short:"u"`
-	Memory                       string   `flag:"memory" short:"m"`
-	CPU                          uint     `flag:"cpu" short:"c"`
-	SecondaryNics                uint     `flag:"secondary-nics"`
-	QemuArgs                     string   `flag:"qemu-args"`
-	KernelArgs                   string   `flag:"kernel-args"`
-	Background                   bool     `flag:"background" short:"b"`
-	Reverse                      bool     `flag:"reverse" short:"r"`
-	RandomPorts                  bool     `flag:"random-ports"`
-	Slim                         bool     `flag:"slim"`
-	VNCPort                      uint     `flag:"vnc-port"`
-	HTTPPort                     uint     `flag:"http-port"`
-	HTTPSPort                    uint     `flag:"https-port"`
-	RegistryPort                 uint     `flag:"registry-port"`
-	OCPort                       uint     `flag:"ocp-port"`
-	K8sPort                      uint     `flag:"k8s-port"`
-	SSHPort                      uint     `flag:"ssh-port"`
-	PrometheusPort               uint     `flag:"prometheus-port"`
-	GrafanaPort                  uint     `flag:"grafana-port"`
-	DNSPort                      uint     `flag:"dns-port"`
-	NFSData                      string   `flag:"nfs-data"`
-	EnableCeph                   bool     `flag:"enable-ceph"`
-	EnableIstio                  bool     `flag:"enable-istio"`
-	EnableCNAO                   bool     `flag:"enable-cnao"`
-	EnableNFSCSI                 bool     `flag:"enable-nfs-csi"`
-	EnablePrometheus             bool     `flag:"enable-prometheus"`
-	EnablePrometheusAlertManager bool     `flag:"enable-prometheus-alertmanager"`
-	EnableGrafana                bool     `flag:"enable-grafana"`
-	DockerProxy                  string   `flag:"docker-proxy"`
-	ContainerRegistry            string   `flag:"container-registry"`
-	ContainerOrg                 string   `flag:"container-org"`
-	ContainerSuffix              string   `flag:"container-suffix"`
-	GPU                          string   `flag:"gpu"`
-	NvmeDisks                    []string `flag:"nvme"`
-	ScsiDisks                    []string `flag:"scsi"`
-	RunEtcdOnMemory              bool     `flag:"run-etcd-on-memory"`
-	EtcdCapacity                 string   `flag:"etcd-capacity"`
-	Hugepages2M                  uint     `flag:"hugepages-2m"`
-	EnableRealtimeScheduler      bool     `flag:"enable-realtime-scheduler"`
-	EnableFIPS                   bool     `flag:"enable-fips"`
-	EnablePSA                    bool     `flag:"enable-psa"`
-	SingleStack                  bool     `flag:"single-stack"`
-	EnableAudit                  bool     `flag:"enable-audit"`
-	USBDisks                     []string `flag:"usb"`
-}
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"path"
 
-type KubevirtProviderOption func(*KubevirtProvider)
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
+)
 
 func NewKubevirtProvider(k8sversion string, options ...KubevirtProviderOption) *KubevirtProvider {
 	bp := &KubevirtProvider{
@@ -67,3 +28,53 @@ func NewKubevirtProvider(k8sversion string, options ...KubevirtProviderOption) *
 
 	return bp
 }
+
+func (kp *KubevirtProvider) SetClient() {}
+
+func (kp *KubevirtProvider) Start() (retErr error) {
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return err
+	}
+
+	b := context.Background()
+	ctx, cancel := context.WithCancel(b)
+
+	stop := make(chan error, 10)
+	containers, _, done := docker.NewCleanupHandler(cli, stop, os.Stdout, false)
+
+	defer func() {
+		stop <- retErr
+		<-done
+	}()
+
+	go func() {
+		interrupt := make(chan os.Signal, 1)
+		signal.Notify(interrupt, os.Interrupt)
+		<-interrupt
+		cancel()
+		stop <- fmt.Errorf("Interrupt received, clean up")
+	}()
+
+	if containerSuffix != "" {
+		kp.Version = fmt.Sprintf("%s/%s%s", kp.ContainerOrg, kp.Version, kp.ContainerSuffix)
+	} else {
+		kp.Version = path.Join(kp.ContainerOrg, kp.Version)
+	}
+
+	if kp.Slim {
+		kp.Version += "-slim"
+	}
+
+	if len(kp.ContainerRegistry) > 0 {
+		kp.Version = path.Join(kp.ContainerRegistry, kp.Version+":2403130317-a3e0778")
+		fmt.Printf("Download the image %s\n", kp.Version)
+		err = docker.ImagePull(cli, ctx, kp.Version, types.ImagePullOptions{})
+		if err != nil {
+			panic(fmt.Sprintf("Failed to download cluster image %s, %s", kp.Version, err))
+		}
+	}
+	return nil
+}
+
+func (kp *KubevirtProvider) Stop() {}
