@@ -1,12 +1,18 @@
 package providers
 
-import k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
+import (
+	"github.com/docker/docker/client"
+	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
+)
 
 type KubevirtProvider struct {
 	IsRunning bool
 	Client    *k8s.K8sDynamicClient
+	Docker    *client.Client
+	DNSMasq   string
 
 	Version string
+	Image   string
 	Nodes   uint   `flag:"nodes" short:"n"`
 	Numa    uint   `flag:"numa" short:"u"`
 	Memory  string `flag:"memory" short:"m"`
@@ -38,9 +44,6 @@ type KubevirtProvider struct {
 	EnablePrometheusAlertManager bool     `flag:"enable-prometheus-alertmanager"`
 	EnableGrafana                bool     `flag:"enable-grafana"`
 	DockerProxy                  string   `flag:"docker-proxy"`
-	ContainerRegistry            string   `flag:"container-registry"`
-	ContainerOrg                 string   `flag:"container-org"`
-	ContainerSuffix              string   `flag:"container-suffix"`
 	GPU                          string   `flag:"gpu"`
 	NvmeDisks                    []string `flag:"nvme"`
 	ScsiDisks                    []string `flag:"scsi"`

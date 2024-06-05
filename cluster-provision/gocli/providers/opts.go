@@ -180,24 +180,6 @@ func WithDockerProxy(dockerProxy string) KubevirtProviderOption {
 	}
 }
 
-func WithContainerRegistry(containerRegistry string) KubevirtProviderOption {
-	return func(c *KubevirtProvider) {
-		c.ContainerRegistry = containerRegistry
-	}
-}
-
-func WithContainerOrg(containerOrg string) KubevirtProviderOption {
-	return func(c *KubevirtProvider) {
-		c.ContainerOrg = containerOrg
-	}
-}
-
-func WithContainerSuffix(containerSuffix string) KubevirtProviderOption {
-	return func(c *KubevirtProvider) {
-		c.ContainerSuffix = containerSuffix
-	}
-}
-
 func WithGPU(gpu string) KubevirtProviderOption {
 	return func(c *KubevirtProvider) {
 		c.GPU = gpu
