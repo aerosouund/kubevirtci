@@ -26,7 +26,6 @@ import (
 
 // 	_, err = kp.Client.List(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Namespaces"}, "")
 // 	assert.NoError(t, err)
-
 // }
 
 func TestClusterRunning(t *testing.T) {

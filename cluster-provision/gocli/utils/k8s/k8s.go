@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -27,7 +28,7 @@ import (
 
 type K8sDynamicClient struct {
 	scheme *runtime.Scheme
-	client *dynamic.DynamicClient
+	client dynamic.Interface
 }
 
 func InitConfig(manifestPath string, apiServerPort uint16) (*rest.Config, error) {
@@ -58,6 +59,24 @@ func NewDynamicClient(config *rest.Config) (*K8sDynamicClient, error) {
 		client: dynamicClient,
 		scheme: s,
 	}, nil
+}
+
+func NewTestClient() *K8sDynamicClient {
+
+	s := runtime.NewScheme()
+	scheme.AddToScheme(s)
+	apiextensionsv1.AddToScheme(s)
+	cephv1.AddToScheme(s)
+	monitoringv1alpha1.AddToScheme(s)
+	monitoringv1.AddToScheme(s)
+	istiov1alpha1.AddToScheme(s)
+
+	dynamicClient := fake.NewSimpleDynamicClient(s)
+
+	return &K8sDynamicClient{
+		client: dynamicClient,
+		scheme: s,
+	}
 }
 
 func (c *K8sDynamicClient) Get(gvk schema.GroupVersionKind, name, ns string) (*unstructured.Unstructured, error) {
