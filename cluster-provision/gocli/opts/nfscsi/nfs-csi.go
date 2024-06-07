@@ -15,10 +15,10 @@ import (
 var f embed.FS
 
 type NfsCsiOpt struct {
-	client *k8s.K8sDynamicClient
+	client k8s.K8sDynamicClient
 }
 
-func NewNfsCsiOpt(c *k8s.K8sDynamicClient) *NfsCsiOpt {
+func NewNfsCsiOpt(c k8s.K8sDynamicClient) *NfsCsiOpt {
 	return &NfsCsiOpt{
 		client: c,
 	}

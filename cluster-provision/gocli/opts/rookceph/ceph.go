@@ -15,10 +15,10 @@ import (
 var f embed.FS
 
 type CephOpt struct {
-	client *k8s.K8sDynamicClient
+	client k8s.K8sDynamicClient
 }
 
-func NewCephOpt(c *k8s.K8sDynamicClient) *CephOpt {
+func NewCephOpt(c k8s.K8sDynamicClient) *CephOpt {
 	return &CephOpt{
 		client: c,
 	}

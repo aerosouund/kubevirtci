@@ -26,7 +26,14 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-type K8sDynamicClient struct {
+type K8sDynamicClient interface {
+	Get(gvk schema.GroupVersionKind, name, ns string) (*unstructured.Unstructured, error)
+	Apply(fs embed.FS, manifestPath string) error
+	List(gvk schema.GroupVersionKind, ns string) (*unstructured.UnstructuredList, error)
+	Delete(gvk schema.GroupVersionKind, name, ns string) error
+}
+
+type K8sDynamicClientImpl struct {
 	scheme *runtime.Scheme
 	client dynamic.Interface
 }
@@ -42,7 +49,7 @@ func InitConfig(manifestPath string, apiServerPort uint16) (*rest.Config, error)
 	return config, nil
 }
 
-func NewDynamicClient(config *rest.Config) (*K8sDynamicClient, error) {
+func NewDynamicClient(config *rest.Config) (K8sDynamicClient, error) {
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("Error creating dynamic client: %v", err)
@@ -55,13 +62,13 @@ func NewDynamicClient(config *rest.Config) (*K8sDynamicClient, error) {
 	monitoringv1.AddToScheme(s)
 	istiov1alpha1.AddToScheme(s)
 
-	return &K8sDynamicClient{
+	return &K8sDynamicClientImpl{
 		client: dynamicClient,
 		scheme: s,
 	}, nil
 }
 
-func NewTestClient() *K8sDynamicClient {
+func NewTestClient() K8sDynamicClient {
 	s := runtime.NewScheme()
 	scheme.AddToScheme(s)
 	apiextensionsv1.AddToScheme(s)
@@ -72,13 +79,13 @@ func NewTestClient() *K8sDynamicClient {
 
 	dynamicClient := fake.NewSimpleDynamicClient(s)
 
-	return &K8sDynamicClient{
+	return &K8sDynamicClientImpl{
 		client: dynamicClient,
 		scheme: s,
 	}
 }
 
-func (c *K8sDynamicClient) Get(gvk schema.GroupVersionKind, name, ns string) (*unstructured.Unstructured, error) {
+func (c *K8sDynamicClientImpl) Get(gvk schema.GroupVersionKind, name, ns string) (*unstructured.Unstructured, error) {
 	resourceClient, err := c.initResourceClientForGVKAndNamespace(gvk, ns)
 	if err != nil {
 		return nil, err
@@ -91,7 +98,7 @@ func (c *K8sDynamicClient) Get(gvk schema.GroupVersionKind, name, ns string) (*u
 	return obj, nil
 }
 
-func (c *K8sDynamicClient) List(gvk schema.GroupVersionKind, ns string) (*unstructured.UnstructuredList, error) {
+func (c *K8sDynamicClientImpl) List(gvk schema.GroupVersionKind, ns string) (*unstructured.UnstructuredList, error) {
 	resourceClient, err := c.initResourceClientForGVKAndNamespace(gvk, ns)
 	if err != nil {
 		return nil, err
@@ -104,7 +111,7 @@ func (c *K8sDynamicClient) List(gvk schema.GroupVersionKind, ns string) (*unstru
 	return objs, nil
 }
 
-func (c *K8sDynamicClient) Apply(fs embed.FS, manifestPath string) error {
+func (c *K8sDynamicClientImpl) Apply(fs embed.FS, manifestPath string) error {
 	yamlData, err := fs.ReadFile(manifestPath)
 	if err != nil {
 		return fmt.Errorf("Error reading YAML file: %v", err)
@@ -147,7 +154,7 @@ func (c *K8sDynamicClient) Apply(fs embed.FS, manifestPath string) error {
 	return nil
 }
 
-func (c *K8sDynamicClient) Delete(gvk schema.GroupVersionKind, name, ns string) error {
+func (c *K8sDynamicClientImpl) Delete(gvk schema.GroupVersionKind, name, ns string) error {
 	resourceClient, err := c.initResourceClientForGVKAndNamespace(gvk, ns)
 	if err != nil {
 		return err
@@ -160,7 +167,7 @@ func (c *K8sDynamicClient) Delete(gvk schema.GroupVersionKind, name, ns string) 
 	return nil
 }
 
-func (c *K8sDynamicClient) initResourceClientForGVKAndNamespace(gvk schema.GroupVersionKind, ns string) (dynamic.ResourceInterface, error) {
+func (c *K8sDynamicClientImpl) initResourceClientForGVKAndNamespace(gvk schema.GroupVersionKind, ns string) (dynamic.ResourceInterface, error) {
 	restMapper := meta.NewDefaultRESTMapper([]schema.GroupVersion{gvk.GroupVersion()})
 	restMapper.Add(gvk, meta.RESTScopeNamespace)
 	mapping, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)

@@ -10,10 +10,10 @@ import (
 var f embed.FS
 
 type MultusOpt struct {
-	client *k8s.K8sDynamicClient
+	client k8s.K8sDynamicClient
 }
 
-func NewMultusOpt(c *k8s.K8sDynamicClient) *MultusOpt {
+func NewMultusOpt(c k8s.K8sDynamicClient) *MultusOpt {
 	return &MultusOpt{
 		client: c,
 	}

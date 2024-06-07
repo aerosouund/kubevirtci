@@ -13,10 +13,10 @@ type PrometheusOpt struct {
 	grafanaEnabled      bool
 	alertmanagerEnabled bool
 
-	client *k8s.K8sDynamicClient
+	client k8s.K8sDynamicClient
 }
 
-func NewPrometheusOpt(c *k8s.K8sDynamicClient, grafanaEnabled, alertmanagerEnabled bool) *PrometheusOpt {
+func NewPrometheusOpt(c k8s.K8sDynamicClient, grafanaEnabled, alertmanagerEnabled bool) *PrometheusOpt {
 	return &PrometheusOpt{
 		grafanaEnabled:      grafanaEnabled,
 		alertmanagerEnabled: alertmanagerEnabled,
