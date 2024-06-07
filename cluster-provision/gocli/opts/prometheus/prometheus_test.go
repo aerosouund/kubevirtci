@@ -1,4 +1,4 @@
-package rookceph
+package prometheus
 
 import (
 	"testing"
@@ -7,9 +7,9 @@ import (
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 )
 
-func TestCephOpt(t *testing.T) {
+func TestPrometheusOpt(t *testing.T) {
 	client := k8s.NewTestClient()
-	opt := NewCephOpt(client)
+	opt := NewPrometheusOpt(client, true, true)
 	err := opt.Exec()
 	assert.NoError(t, err)
 }

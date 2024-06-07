@@ -62,7 +62,6 @@ func NewDynamicClient(config *rest.Config) (*K8sDynamicClient, error) {
 }
 
 func NewTestClient() *K8sDynamicClient {
-
 	s := runtime.NewScheme()
 	scheme.AddToScheme(s)
 	apiextensionsv1.AddToScheme(s)
