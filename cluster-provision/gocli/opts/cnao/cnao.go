@@ -10,10 +10,10 @@ import (
 var f embed.FS
 
 type CnaoOpt struct {
-	client *k8s.K8sDynamicClient
+	client k8s.K8sDynamicClient
 }
 
-func NewCnaoOpt(c *k8s.K8sDynamicClient) *CnaoOpt {
+func NewCnaoOpt(c k8s.K8sDynamicClient) *CnaoOpt {
 	return &CnaoOpt{
 		client: c,
 	}

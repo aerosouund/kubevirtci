@@ -19,10 +19,10 @@ var f embed.FS
 type IstioOpt struct {
 	sshPort     uint16
 	cnaoEnabled bool
-	client      *k8s.K8sDynamicClient
+	client      k8s.K8sDynamicClient
 }
 
-func NewIstioOpt(c *k8s.K8sDynamicClient, sshPort uint16, cnaoEnabled bool) *IstioOpt {
+func NewIstioOpt(c k8s.K8sDynamicClient, sshPort uint16, cnaoEnabled bool) *IstioOpt {
 	return &IstioOpt{
 		client:      c,
 		sshPort:     sshPort,
