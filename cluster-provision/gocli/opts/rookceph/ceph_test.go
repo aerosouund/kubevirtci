@@ -5,15 +5,35 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	kubevirtcimocks "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/mock"
 )
 
 func TestCephOpt(t *testing.T) {
 	mockK8sClient := kubevirtcimocks.NewMockK8sDynamicClient(gomock.NewController(t))
 
-	// obj := unstructured.Unstructured{
-	// 	Object: make(map[string]interface{}),
-	// }
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "ceph.rook.io/v1",
+			"kind":       "CephBlockPool",
+			"metadata": map[string]interface{}{
+				"creationTimestamp": "2024-06-07T12:40:04Z",
+				"generation":        1,
+				"managedFields":     []map[string]interface{}{},
+				"name":              "replicapool",
+				"namespace":         "rook-ceph",
+			},
+			"status": map[string]interface{}{
+				"phase": "Ready",
+			},
+			"spec": map[string]interface{}{
+				"replicated": map[string]interface{}{
+					"size": 1,
+				},
+			},
+		},
+	}
 
 	opt := NewCephOpt(mockK8sClient)
 	mockK8sClient.EXPECT().Apply(gomock.Any(), "manifests/snapshot.storage.k8s.io_volumesnapshots.yaml").Return(nil)
@@ -26,6 +46,13 @@ func TestCephOpt(t *testing.T) {
 	mockK8sClient.EXPECT().Apply(gomock.Any(), "manifests/operator.yaml").Return(nil)
 	mockK8sClient.EXPECT().Apply(gomock.Any(), "manifests/cluster-test.yaml").Return(nil)
 	mockK8sClient.EXPECT().Apply(gomock.Any(), "manifests/pool-test.yaml").Return(nil)
+
+	mockK8sClient.EXPECT().Get(schema.GroupVersionKind{
+		Group:   "ceph.rook.io",
+		Version: "v1",
+		Kind:    "CephBlockPool"},
+		"replicapool",
+		"rook-ceph").Return(obj, nil)
 
 	err := opt.Exec()
 	assert.NoError(t, err)
