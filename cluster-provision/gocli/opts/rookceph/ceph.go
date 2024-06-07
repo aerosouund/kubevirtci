@@ -56,7 +56,6 @@ func (o *CephOpt) Exec() error {
 			"replicapool",
 			"rook-ceph")
 
-		fmt.Println("the object:", obj)
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, blockpool)
 		if err != nil {
 			return err
@@ -65,6 +64,7 @@ func (o *CephOpt) Exec() error {
 		if blockpool.Status != nil && blockpool.Status.Phase == "Ready" {
 			break
 		}
+		fmt.Println(blockpool)
 		fmt.Println("Ceph pool block didn't move to ready status, sleeping for 10 seconds")
 		time.Sleep(10 * time.Second)
 	}
