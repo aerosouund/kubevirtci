@@ -630,6 +630,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 
+		// turn to opt
 		if fipsEnabled {
 			success, err := docker.Exec(cli, nodeContainer(prefix, nodeName), []string{
 				"/bin/bash", "-c", "ssh.sh sudo fips-mode-setup --enable && ( ssh.sh sudo reboot || true )",
@@ -646,6 +647,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			}
 		}
 
+		// turn to opt
 		if dockerProxy != "" {
 			//if dockerProxy has value, generate a shell script`/script/docker-proxy.sh` which can be applied to set proxy settings
 			proxyConfig, err := getDockerProxyConfig(dockerProxy)
@@ -661,6 +663,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			}
 		}
 
+		// turn to opt
 		if runEtcdOnMemory {
 			logrus.Infof("Creating in-memory mount for etcd data on node %s", nodeName)
 			err = prepareEtcdDataMount(nodeContainer(prefix, nodeName), etcdDataDir, etcdDataMountSize)
@@ -683,6 +686,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return fmt.Errorf("checking for matching provision script for node %s failed", nodeName)
 		}
 
+		// turn to opt
 		for _, s := range soundcardPCIIDs {
 			// move the VM sound cards to a vfio-pci driver to prepare for assignment
 			err = prepareDeviceForAssignment(cli, nodeContainer(prefix, nodeName), s, "")
@@ -691,6 +695,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			}
 		}
 
+		// turn to opt
 		if singleStack {
 			ok, err := docker.Exec(cli, nodeContainer(prefix, nodeName),
 				[]string{"/bin/bash", "-c", "ssh.sh touch /home/vagrant/single_stack"}, os.Stdout)
@@ -703,6 +708,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			}
 		}
 
+		// turn to opt
 		if enableAudit {
 			ok, err := docker.Exec(cli, nodeContainer(prefix, nodeName),
 				[]string{"/bin/bash", "-c", "ssh.sh touch /home/vagrant/enable_audit"}, os.Stdout)
@@ -715,6 +721,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			}
 		}
 
+		// turn to opt
 		if psaEnabled {
 			success, err := docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", "ssh.sh sudo /bin/bash < /scripts/psa.sh"}, os.Stdout)
 			if err != nil {
@@ -808,8 +815,8 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	if prometheusEnabled {
-		prommetheusOpt := prometheus.NewPrometheusOpt(k8sClient, grafanaEnabled, prometheusAlertmanagerEnabled)
-		if err = prommetheusOpt.Exec(); err != nil {
+		prometheusOpt := prometheus.NewPrometheusOpt(k8sClient, grafanaEnabled, prometheusAlertmanagerEnabled)
+		if err = prometheusOpt.Exec(); err != nil {
 			panic(err)
 		}
 	}

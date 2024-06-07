@@ -61,8 +61,8 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 		return err
 	}
 
-	sshPort, err := utils.GetPublicPort(utils.PortSSH, dnsmasqJSON.NetworkSettings.Ports)
-	apiServerPort, err := utils.GetPublicPort(utils.PortAPI, dnsmasqJSON.NetworkSettings.Ports)
+	_, err = utils.GetPublicPort(utils.PortSSH, dnsmasqJSON.NetworkSettings.Ports)
+	_, err = utils.GetPublicPort(utils.PortAPI, dnsmasqJSON.NetworkSettings.Ports)
 
 	registry, err := kp.RunRegistry(ctx)
 	if err != nil {
@@ -92,7 +92,6 @@ func (kp *KubevirtProvider) RunDNSMasq(ctx context.Context, portMap nat.PortMap)
 				Target: "/lib/modules",
 			},
 		}
-
 	}
 
 	dnsmasq, err := kp.Docker.ContainerCreate(ctx, &container.Config{
@@ -160,13 +159,12 @@ func (kp *KubevirtProvider) RunNFSGanesha(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// Pull the ganesha image
+
 	err = docker.ImagePull(kp.Docker, ctx, utils.NFSGaneshaImage, types.ImagePullOptions{})
 	if err != nil {
 		panic(err)
 	}
 
-	// Start the ganesha image
 	nfsGanesha, err := kp.Docker.ContainerCreate(ctx, &container.Config{
 		Image: utils.NFSGaneshaImage,
 	}, &container.HostConfig{
