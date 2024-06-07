@@ -55,6 +55,8 @@ func (o *CephOpt) Exec() error {
 			Kind:    "CephBlockPool"},
 			"replicapool",
 			"rook-ceph")
+
+		fmt.Println("the object:", obj)
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, blockpool)
 		if err != nil {
 			return err
