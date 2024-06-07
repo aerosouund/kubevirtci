@@ -12,17 +12,13 @@ import (
 
 func TestCephOpt(t *testing.T) {
 	mockK8sClient := kubevirtcimocks.NewMockK8sDynamicClient(gomock.NewController(t))
-
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "ceph.rook.io/v1",
 			"kind":       "CephBlockPool",
 			"metadata": map[string]interface{}{
-				"creationTimestamp": "2024-06-07T12:40:04Z",
-				"generation":        1,
-				"managedFields":     []map[string]interface{}{},
-				"name":              "replicapool",
-				"namespace":         "rook-ceph",
+				"name":      "replicapool",
+				"namespace": "rook-ceph",
 			},
 			"status": map[string]interface{}{
 				"phase": "Ready",
@@ -46,7 +42,6 @@ func TestCephOpt(t *testing.T) {
 	mockK8sClient.EXPECT().Apply(gomock.Any(), "manifests/operator.yaml").Return(nil)
 	mockK8sClient.EXPECT().Apply(gomock.Any(), "manifests/cluster-test.yaml").Return(nil)
 	mockK8sClient.EXPECT().Apply(gomock.Any(), "manifests/pool-test.yaml").Return(nil)
-
 	mockK8sClient.EXPECT().Get(schema.GroupVersionKind{
 		Group:   "ceph.rook.io",
 		Version: "v1",
