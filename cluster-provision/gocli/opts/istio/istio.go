@@ -45,7 +45,7 @@ func (o *IstioOpt) Exec() error {
 	}
 
 	cmds := []string{
-		"sudo istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
+		"istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
 		fmt.Sprintf("cat <<EOF > /opt/istio/istio-operator-with-cnao.cr.yaml\n%s\nEOF", string(istioCnao)),
 		fmt.Sprintf("cat <<EOF > /opt/istio/istio-operator.cr.yaml\n%s\nEOF", string(istioWithoutCnao)),
 	}
