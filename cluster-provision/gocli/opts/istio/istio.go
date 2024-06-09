@@ -50,7 +50,7 @@ func (o *IstioOpt) Exec() error {
 		fmt.Sprintf("cat <<EOF > /opt/istio/istio-operator.cr.yaml\n%s\nEOF", string(istioWithoutCnao)),
 	}
 	for _, cmd := range cmds {
-		_, err := utils.JumpSSH(o.sshPort, 1, cmd, true)
+		_, err := utils.JumpSSH(o.sshPort, 1, cmd, true, true)
 		if err != nil {
 			return err
 		}

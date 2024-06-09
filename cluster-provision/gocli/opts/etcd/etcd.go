@@ -30,7 +30,7 @@ func (o *EtcdInMemOpt) Exec() error {
 		fmt.Sprintf("sudo mount -t tmpfs -o size=%s tmpfs /var/lib/etcd", o.etcdSize),
 	}
 	for _, cmd := range cmds {
-		if _, err := utils.JumpSSH(o.sshPort, o.nodeIdx, cmd, true); err != nil {
+		if _, err := utils.JumpSSH(o.sshPort, o.nodeIdx, cmd, true, true); err != nil {
 			return err
 		}
 	}
