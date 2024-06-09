@@ -45,14 +45,18 @@ kda/AoGANWrLCz708y7VYgAtW2Uf1DPOIYMdvo6fxIB5i9ZfISgcJ/bbCUkFrhoH
 NE5OgEXk2wVfZczCZpigBKbKZHNYcelXtTt/nP3rsCuGcM4h53s=
 -----END RSA PRIVATE KEY-----`
 
-func JumpSSH(sshPort uint16, nodeIdx int, cmd string, stdOut bool) (string, error) {
+func JumpSSH(sshPort uint16, nodeIdx int, cmd string, root, stdOut bool) (string, error) {
 	signer, err := ssh.ParsePrivateKey([]byte(sshKey))
 	if err != nil {
 		return "", err
 	}
+	u := "vagrant"
+	if root {
+		u = "root"
+	}
 
 	config := &ssh.ClientConfig{
-		User: "vagrant",
+		User: u,
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
