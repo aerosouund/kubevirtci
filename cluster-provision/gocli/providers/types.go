@@ -18,23 +18,24 @@ type KubevirtProvider struct {
 	Memory  string `flag:"memory" short:"m"`
 	CPU     uint   `flag:"cpu" short:"c"`
 
-	SecondaryNics                uint     `flag:"secondary-nics"`
-	QemuArgs                     string   `flag:"qemu-args"`
-	KernelArgs                   string   `flag:"kernel-args"`
-	Background                   bool     `flag:"background" short:"b"`
-	Reverse                      bool     `flag:"reverse" short:"r"`
-	RandomPorts                  bool     `flag:"random-ports"`
-	Slim                         bool     `flag:"slim"`
-	VNCPort                      uint     `flag:"vnc-port"`
-	HTTPPort                     uint     `flag:"http-port"`
-	HTTPSPort                    uint     `flag:"https-port"`
-	RegistryPort                 uint     `flag:"registry-port"`
-	OCPort                       uint     `flag:"ocp-port"`
-	K8sPort                      uint     `flag:"k8s-port"`
-	SSHPort                      uint     `flag:"ssh-port"`
-	PrometheusPort               uint     `flag:"prometheus-port"`
-	GrafanaPort                  uint     `flag:"grafana-port"`
-	DNSPort                      uint     `flag:"dns-port"`
+	SecondaryNics                uint   `flag:"secondary-nics"`
+	QemuArgs                     string `flag:"qemu-args"`
+	KernelArgs                   string `flag:"kernel-args"`
+	Background                   bool   `flag:"background" short:"b"`
+	Reverse                      bool   `flag:"reverse" short:"r"`
+	RandomPorts                  bool   `flag:"random-ports"`
+	Slim                         bool   `flag:"slim"`
+	VNCPort                      uint16 `flag:"vnc-port"`
+	HTTPPort                     uint16 `flag:"http-port"`
+	HTTPSPort                    uint16 `flag:"https-port"`
+	RegistryPort                 uint16 `flag:"registry-port"`
+	OCPort                       uint16 `flag:"ocp-port"`
+	K8sPort                      uint16 `flag:"k8s-port"`
+	SSHPort                      uint16 `flag:"ssh-port"`
+	PrometheusPort               uint16 `flag:"prometheus-port"`
+	GrafanaPort                  uint16 `flag:"grafana-port"`
+	DNSPort                      uint16 `flag:"dns-port"`
+	APIServerPort                uint16
 	NFSData                      string   `flag:"nfs-data"`
 	EnableCeph                   bool     `flag:"enable-ceph"`
 	EnableIstio                  bool     `flag:"enable-istio"`
