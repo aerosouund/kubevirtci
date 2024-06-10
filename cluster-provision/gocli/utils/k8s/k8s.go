@@ -11,6 +11,7 @@ import (
 	monitoringv1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
 	istiov1alpha1 "istio.io/operator/pkg/apis"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	admissionv1 "k8s.io/pod-security-admission/admission/api/v1"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,6 +62,7 @@ func NewDynamicClient(config *rest.Config) (K8sDynamicClient, error) {
 	monitoringv1alpha1.AddToScheme(s)
 	monitoringv1.AddToScheme(s)
 	istiov1alpha1.AddToScheme(s)
+	admissionv1.AddToScheme(s)
 
 	return &K8sDynamicClientImpl{
 		client: dynamicClient,
