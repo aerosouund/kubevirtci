@@ -59,7 +59,7 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 
 	go kp.handleInterrupt(cancel, stop)
 
-	dnsmasq, err := kp.RunDNSMasq(ctx, portMap)
+	dnsmasq, err := kp.runDNSMasq(ctx, portMap)
 	if err != nil {
 		return err
 	}
@@ -88,21 +88,21 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 	}
 	_, err = utils.GetPublicPort(utils.PortAPI, dnsmasqJSON.NetworkSettings.Ports)
 
-	registry, err := kp.RunRegistry(ctx)
+	registry, err := kp.runRegistry(ctx)
 	if err != nil {
 		return err
 	}
 	containers <- registry
 
 	if kp.NFSData != "" {
-		nfsGanesha, err := kp.RunNFSGanesha(ctx)
+		nfsGanesha, err := kp.runNFSGanesha(ctx)
 		if err != nil {
 			return nil
 		}
 		containers <- nfsGanesha
 	}
 
-	nodeIds, err := kp.RunNodes(ctx)
+	nodeIds, err := kp.runNodes(ctx)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 	return nil
 }
 
-func (kp *KubevirtProvider) RunDNSMasq(ctx context.Context, portMap nat.PortMap) (string, error) {
+func (kp *KubevirtProvider) runDNSMasq(ctx context.Context, portMap nat.PortMap) (string, error) {
 	dnsmasqMounts := []mount.Mount{}
 	_, err := os.Stat("/lib/modules")
 	if err == nil {
@@ -164,7 +164,7 @@ func (kp *KubevirtProvider) RunDNSMasq(ctx context.Context, portMap nat.PortMap)
 	return dnsmasq.ID, nil
 }
 
-func (kp *KubevirtProvider) RunRegistry(ctx context.Context) (string, error) {
+func (kp *KubevirtProvider) runRegistry(ctx context.Context) (string, error) {
 	err := docker.ImagePull(kp.Docker, ctx, utils.DockerRegistryImage, types.ImagePullOptions{})
 	if err != nil {
 		return "", err
@@ -186,7 +186,7 @@ func (kp *KubevirtProvider) RunRegistry(ctx context.Context) (string, error) {
 	return registry.ID, nil
 }
 
-func (kp *KubevirtProvider) RunNFSGanesha(ctx context.Context) (string, error) {
+func (kp *KubevirtProvider) runNFSGanesha(ctx context.Context) (string, error) {
 	nfsData, err := filepath.Abs(kp.NFSData)
 	if err != nil {
 		return "", err
@@ -220,7 +220,7 @@ func (kp *KubevirtProvider) RunNFSGanesha(ctx context.Context) (string, error) {
 	return nfsGanesha.ID, nil
 }
 
-func (kp *KubevirtProvider) RunNodes(ctx context.Context) ([]string, error) {
+func (kp *KubevirtProvider) runNodes(ctx context.Context) ([]string, error) {
 	wg := sync.WaitGroup{}
 	wg.Add(int(kp.Nodes))
 	containerIDs := []string{}
