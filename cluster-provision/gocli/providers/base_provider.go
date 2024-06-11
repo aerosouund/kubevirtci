@@ -2,7 +2,6 @@ package providers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -22,10 +21,14 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
+	bindvfio "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/bind-vfio"
+	dockerproxy "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/docker-proxy"
 	etcdinmemory "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/etcd"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
 	nodeprovisioner "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nodes"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/psa"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/realtime"
+	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
 func NewKubevirtProvider(k8sversion string, image string, cli *client.Client, options ...KubevirtProviderOption) *KubevirtProvider {
@@ -286,14 +289,8 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context) ([]string, error) {
 
 		// turn to opt
 		if kp.EnableFIPS {
-			success, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{
-				"/bin/bash", "-c", "ssh.sh sudo fips-mode-setup --enable && ( ssh.sh sudo reboot || true )",
-			}, os.Stdout)
-			if err != nil {
+			if _, err := sshutils.JumpSSH(kp.SSHPort, 1, "fips-mode-setup --enable && ( ssh.sh sudo reboot || true )", true, true); err != nil {
 				return nil, err
-			}
-			if !success {
-				return nil, errors.New("failed to enable FIPS and/or reboot")
 			}
 			err = kp.waitForVMToBeUp(kp.Version, nodeName)
 			if err != nil {
@@ -304,17 +301,10 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context) ([]string, error) {
 		// turn to opt
 		if kp.DockerProxy != "" {
 			//if dockerProxy has value, generate a shell script`/script/docker-proxy.sh` which can be applied to set proxy settings
-			// proxyConfig, err := getDockerProxyConfig(dockerProxy)
-			// if err != nil {
-			// 	return nil, fmt.Errorf("parsing proxy settings for node %s failed", nodeName)
-			// }
-			// success, err = docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"/bin/bash", "-c", fmt.Sprintf("cat <<EOF >/scripts/docker-proxy.sh %s", proxyConfig)}, os.Stdout)
-			// if err != nil {
-			// 	return nil, fmt.Errorf("write failed for proxy provision script for node %s", nodeName)
-			// }
-			// if success {
-			// 	success, err = docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"/bin/bash", "-c", fmt.Sprintf("ssh.sh sudo /bin/bash < /scripts/docker-proxy.sh")}, os.Stdout)
-			// }
+			proxyOpt := dockerproxy.NewDockerProxyOpt(kp.SSHPort, kp.DockerProxy, x)
+			if err := proxyOpt.Exec(); err != nil {
+				return nil, err
+			}
 		}
 
 		// turn to opt
@@ -341,7 +331,10 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context) ([]string, error) {
 		// turn to opt
 		for _, s := range []string{"8086:2668", "8086:2415"} {
 			// move the VM sound cards to a vfio-pci driver to prepare for assignment
-			_ = s
+			bindVfioOpt := bindvfio.NewBindVfioOpt(kp.SSHPort, x, s)
+			if err := bindVfioOpt.Exec(); err != nil {
+				return nil, err
+			}
 			// turn to opt
 			// err = prepareDeviceForAssignment(kp.Docker, kp.nodeContainer(kp.Version, nodeName), s, "")
 			// if err != nil {
@@ -351,39 +344,23 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context) ([]string, error) {
 
 		// turn to opt
 		if kp.SingleStack {
-			ok, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName),
-				[]string{"/bin/bash", "-c", "ssh.sh touch /home/vagrant/single_stack"}, os.Stdout)
-			if err != nil {
+			if _, err := sshutils.JumpSSH(kp.SSHPort, 1, "touch /home/vagrant/single_stack", true, true); err != nil {
 				return nil, err
-			}
-
-			if !ok {
-				return nil, fmt.Errorf("provisioning node %s failed (setting singleStack phase)", nodeName)
 			}
 		}
 
 		// turn to opt
 		if kp.EnableAudit {
-			ok, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName),
-				[]string{"/bin/bash", "-c", "ssh.sh touch /home/vagrant/enable_audit"}, os.Stdout) // replace with jump ssh
-			if err != nil {
+			if _, err := sshutils.JumpSSH(kp.SSHPort, 1, "touch /home/vagrant/enable_audit", true, true); err != nil {
 				return nil, err
-			}
-
-			if !ok {
-				return nil, fmt.Errorf("provisioning node %s failed (setting enableAudit phase)", nodeName)
 			}
 		}
 
 		// turn to opt
 		if kp.EnablePSA {
-			success, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"/bin/bash", "-c", "ssh.sh sudo /bin/bash < /scripts/psa.sh"}, os.Stdout)
-			if err != nil {
+			psaOpt := psa.NewPsaOpt(kp.SSHPort)
+			if err := psaOpt.Exec(); err != nil {
 				return nil, err
-			}
-
-			if !success {
-				return nil, fmt.Errorf("provisioning node %s failed", nodeName)
 			}
 		}
 		// todo: remove checking for scripts for node, just do different stuff at index 1
