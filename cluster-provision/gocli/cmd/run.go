@@ -787,7 +787,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		panic(err)
 	}
 
-	cephEnabled = true
 	if cephEnabled {
 		cephOpt := rookceph.NewCephOpt(k8sClient)
 		if err := cephOpt.Exec(); err != nil {
