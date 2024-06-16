@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -33,6 +34,10 @@ func setKubeContext(cmd *cobra.Command, args []string) error {
 	// }
 
 	prefix, err := cmd.Flags().GetString("prefix")
+	if err != nil {
+		return err
+	}
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
 	}
