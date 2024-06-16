@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"os"
-	"os/exec"
 
 	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
@@ -106,9 +105,7 @@ func setKubeContext(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// add to kubeconfig
-	exportCmd := exec.Command("export", "KUBECONFIG=$KUBECONFIG:/tmp/.kubeconfig") // assumption that the os is linux
-	err = exportCmd.Run()
+	err = os.Setenv("KUBECONFIG", "$KUBECONFIG:/tmp/.kubeconfig")
 	if err != nil {
 		return err
 	}
