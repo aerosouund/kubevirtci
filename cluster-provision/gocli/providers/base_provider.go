@@ -1,7 +1,9 @@
 package providers
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -49,6 +51,26 @@ func NewKubevirtProvider(k8sversion string, image string, cli *client.Client, op
 	}
 
 	return bp
+}
+
+func NewFromRunning(dnsmasqPrefix string) (*KubevirtProvider, error) {
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return nil, err
+	}
+
+	containers, err := docker.GetPrefixedContainers(cli, dnsmasqPrefix+"-dnsmasq")
+	var buf bytes.Buffer
+
+	_, err = docker.Exec(cli, containers[0].ID, []string{"cat", "provider.json"}, &buf)
+	kp := &KubevirtProvider{}
+
+	err = json.Unmarshal(buf.Bytes(), kp)
+	if err != nil {
+		return nil, err
+	}
+
+	return kp, nil
 }
 
 func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc, portMap nat.PortMap) (retErr error) {
@@ -111,6 +133,10 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 	}
 	for _, node := range nodeIds {
 		containers <- node
+	}
+	err = kp.persistProvider()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -503,6 +529,19 @@ func (kp *KubevirtProvider) prepareQemuCmd(x int) string {
 		strings.Join(vmArgsUSBDisks, " "),
 		strings.Join(additionalArgs, " "),
 	)
+}
+
+func (kp *KubevirtProvider) persistProvider() error {
+	providerJson, err := json.MarshalIndent(kp, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	_, err = docker.Exec(kp.Docker, kp.DNSMasq, []string{"echo", fmt.Sprintf("%s", providerJson), "> provider.json"}, os.Stdout)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // func (kp *KubevirtProvider) Stop() {}
