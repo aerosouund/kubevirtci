@@ -73,18 +73,18 @@ func setKubeContext(cmd *cobra.Command, args []string) error {
 	}
 
 	clusters := make(map[string]*clientcmdapi.Cluster)
-	clusters["default-cluster"] = &clientcmdapi.Cluster{
+	clusters["kubevirtci"] = &clientcmdapi.Cluster{
 		Server:                   conf.Host,
 		CertificateAuthorityData: []byte{},
 		InsecureSkipTLSVerify:    true,
 	}
 	contexts := make(map[string]*clientcmdapi.Context)
 	contexts["default-context"] = &clientcmdapi.Context{
-		Cluster:  "default-cluster",
-		AuthInfo: "default-user",
+		Cluster:  "kubevirtci",
+		AuthInfo: "kubevirtci-admin",
 	}
 	authinfos := make(map[string]*clientcmdapi.AuthInfo)
-	authinfos["default-user"] = &clientcmdapi.AuthInfo{
+	authinfos["kubevirtci-admin"] = &clientcmdapi.AuthInfo{
 		ClientCertificateData: conf.CertData,
 		ClientKeyData:         conf.KeyData,
 	}
