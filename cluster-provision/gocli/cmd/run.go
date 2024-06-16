@@ -631,7 +631,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 
-		rootkey := rootkey.NewRootKey(sshPort, x)
+		rootkey := rootkey.NewRootKey(sshPort, x+1)
 		if err = rootkey.Exec(); err != nil {
 			return err
 		}
