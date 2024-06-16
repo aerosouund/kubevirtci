@@ -79,7 +79,7 @@ func setKubeContext(cmd *cobra.Command, args []string) error {
 		InsecureSkipTLSVerify:    true,
 	}
 	contexts := make(map[string]*clientcmdapi.Context)
-	contexts["default-context"] = &clientcmdapi.Context{
+	contexts["kubevirtci-context"] = &clientcmdapi.Context{
 		Cluster:  "kubevirtci",
 		AuthInfo: "kubevirtci-admin",
 	}
@@ -93,7 +93,7 @@ func setKubeContext(cmd *cobra.Command, args []string) error {
 		APIVersion:     "v1",
 		Clusters:       clusters,
 		Contexts:       contexts,
-		CurrentContext: "default-context",
+		CurrentContext: "kubevirtci-context",
 		AuthInfos:      authinfos,
 	}
 	kubeConfigFile, err := os.Create("/tmp/.kubeconfig")
