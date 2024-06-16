@@ -106,7 +106,7 @@ func setKubeContext(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = os.Setenv("KUBECONFIG", "$KUBECONFIG:/tmp/.kubeconfig")
+	err = os.Setenv("KUBECONFIG", "/tmp/.kubeconfig")
 	if err != nil {
 		return err
 	}
