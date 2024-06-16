@@ -44,6 +44,10 @@ run-k8s:
 	# kubectl config set-cluster kubernetes --insecure-skip-tls-verify=true
 	# kubectl get ns
 
+.PHONY: set-context
+set-context:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -o $(BIN_DIR)/cli ./cmd/cli
+	./build/cli set-context --prefix=kubevirt
 
 .PHONY: rm
 rm:
