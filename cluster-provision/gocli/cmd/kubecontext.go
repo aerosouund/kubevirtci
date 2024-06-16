@@ -62,7 +62,7 @@ func setKubeContext(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = sshutils.CopyRemoteFile(sshPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
+	err = sshutils.CopyRemoteFile(sshPort, "/etc/kubernetes/admin.conf", ".tempkubeconfig")
 	if err != nil {
 		return err
 	}
