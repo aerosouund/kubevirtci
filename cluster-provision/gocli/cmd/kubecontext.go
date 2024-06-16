@@ -75,7 +75,8 @@ func setKubeContext(cmd *cobra.Command, args []string) error {
 	clusters := make(map[string]*clientcmdapi.Cluster)
 	clusters["default-cluster"] = &clientcmdapi.Cluster{
 		Server:                   conf.Host,
-		CertificateAuthorityData: conf.CAData,
+		CertificateAuthorityData: []byte{},
+		InsecureSkipTLSVerify:    true,
 	}
 	contexts := make(map[string]*clientcmdapi.Context)
 	contexts["default-context"] = &clientcmdapi.Context{
