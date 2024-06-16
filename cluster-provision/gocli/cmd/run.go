@@ -42,7 +42,6 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/prometheus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/realtime"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rookceph"
-	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rootkey"
 
 	"github.com/alessio/shellescape"
 )
@@ -631,10 +630,10 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 
-		rootkey := rootkey.NewRootKey(sshPort, x)
-		if err = rootkey.Exec(); err != nil {
-			return err
-		}
+		// rootkey := rootkey.NewRootKey(sshPort, x)
+		// if err = rootkey.Exec(); err != nil {
+		// 	return err
+		// }
 
 		fmt.Println("added key to root user")
 
