@@ -636,6 +636,8 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 
+		fmt.Println("added key to root user")
+
 		// turn to opt
 		if fipsEnabled {
 			success, err := docker.Exec(cli, nodeContainer(prefix, nodeName), []string{
