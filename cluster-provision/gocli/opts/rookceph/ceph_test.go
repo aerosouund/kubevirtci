@@ -6,9 +6,33 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	kubevirtcimocks "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/mock"
 )
+
+func TestWithFakeClient(t *testing.T) {
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "ceph.rook.io/v1",
+			"kind":       "CephBlockPool",
+			"metadata": map[string]interface{}{
+				"name":      "replicapool",
+				"namespace": "rook-ceph",
+			},
+			"status": map[string]interface{}{
+				"phase": "Ready",
+			},
+			"spec": map[string]interface{}{},
+		},
+	}
+
+	testClient := k8s.NewTestClient([]runtime.Object{obj})
+	opt := NewCephOpt(testClient)
+	err := opt.Exec()
+	assert.NoError(t, err)
+}
 
 func TestCephOpt(t *testing.T) {
 	mockK8sClient := kubevirtcimocks.NewMockK8sDynamicClient(gomock.NewController(t))
