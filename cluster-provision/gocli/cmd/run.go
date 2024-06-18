@@ -389,7 +389,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		SecondaryNicsCount: secondaryNics,
 		RandomPorts:        randomPorts,
 		PortMap:            portMap,
-		Prefix:             prefix,
+		Prefix:             prefix, // is this needed or is it just equal to cluster ?
 		NodeCount:          nodes,
 	})
 	if err != nil {
