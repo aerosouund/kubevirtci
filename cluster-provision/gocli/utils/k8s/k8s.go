@@ -70,7 +70,7 @@ func NewDynamicClient(config *rest.Config) (K8sDynamicClient, error) {
 	}, nil
 }
 
-func NewTestClient() K8sDynamicClient {
+func NewTestClient(objs []runtime.Object) K8sDynamicClient {
 	s := runtime.NewScheme()
 	scheme.AddToScheme(s)
 	apiextensionsv1.AddToScheme(s)
@@ -79,7 +79,7 @@ func NewTestClient() K8sDynamicClient {
 	monitoringv1.AddToScheme(s)
 	istiov1alpha1.AddToScheme(s)
 
-	dynamicClient := fake.NewSimpleDynamicClient(s)
+	dynamicClient := fake.NewSimpleDynamicClient(s, objs...)
 
 	return &K8sDynamicClientImpl{
 		client: dynamicClient,
