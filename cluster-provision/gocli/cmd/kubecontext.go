@@ -105,6 +105,7 @@ func setKubeContext(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	// todo: account for an existing kubeconfig
 
 	err = os.Setenv("KUBECONFIG", "/tmp/.kubeconfig")
 	if err != nil {

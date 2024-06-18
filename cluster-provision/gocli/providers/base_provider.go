@@ -34,6 +34,7 @@ import (
 )
 
 func NewKubevirtProvider(k8sversion string, image string, cli *client.Client, options ...KubevirtProviderOption) *KubevirtProvider {
+	// this is not needed since it will be overriden by the f;ags anyway
 	bp := &KubevirtProvider{
 		Version:     k8sversion,
 		Nodes:       1,
