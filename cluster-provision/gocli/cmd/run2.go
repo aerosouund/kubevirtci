@@ -137,7 +137,7 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 
 	var clusterImage string
 	if containerSuffix != "" {
-		clusterImage = fmt.Sprintf("%s/%s/%s%s", containerRegistry, containerOrg, cluster, containerSuffix)
+		clusterImage = fmt.Sprintf("%s/%s/%s:%s", containerRegistry, containerOrg, cluster, containerSuffix) // change default suffix to latest
 	} else {
 		clusterImage = fmt.Sprintf("%s/%s/%s:latest", containerRegistry, containerOrg, cluster)
 	}
