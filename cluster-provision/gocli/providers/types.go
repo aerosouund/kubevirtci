@@ -6,10 +6,9 @@ import (
 )
 
 type KubevirtProvider struct {
-	IsRunning bool
-	Client    *k8s.K8sDynamicClient
-	Docker    *client.Client
-	DNSMasq   string
+	Client  *k8s.K8sDynamicClient `json:"-"`
+	Docker  *client.Client        `json:"-"`
+	DNSMasq string                `json:"dnsmasq"`
 
 	Version string `json:"version"`
 	Image   string `json:"image"`
