@@ -91,8 +91,14 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 			}
 			opts = append(opts, flagConfig.ProviderOptFunc(flagVal))
 
-		case "uint", "uint8", "uint16", "uint32", "uint64":
+		case "uint", "uint8", "uint32", "uint64":
 			flagVal, err := flags.GetUint(flagName)
+			if err != nil {
+				return err
+			}
+			opts = append(opts, flagConfig.ProviderOptFunc(flagVal))
+		case "uint16":
+			flagVal, err := flags.GetUint16(flagName)
 			if err != nil {
 				return err
 			}
