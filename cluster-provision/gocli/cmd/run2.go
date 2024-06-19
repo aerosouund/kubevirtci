@@ -57,7 +57,7 @@ func NewRun2Command() *cobra.Command {
 	run.Flags().String("docker-proxy", "", "sets network proxy for docker daemon")
 	run.Flags().String("container-registry", "quay.io", "the registry to pull cluster container from")
 	run.Flags().String("container-org", "kubevirtci", "the organization at the registry to pull the container from")
-	run.Flags().String("container-suffix", "", "Override container suffix stored at the cli binary")
+	run.Flags().String("container-suffix", "2403130317-a3e0778", "Override container suffix stored at the cli binary")
 	run.Flags().String("gpu", "", "pci address of a GPU to assign to a node")
 	run.Flags().StringArrayVar(&nvmeDisks, "nvme", []string{}, "size of the emulate NVMe disk to pass to the node")
 	run.Flags().StringArrayVar(&scsiDisks, "scsi", []string{}, "size of the emulate SCSI disk to pass to the node")
@@ -91,7 +91,7 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 			}
 			opts = append(opts, flagConfig.ProviderOptFunc(flagVal))
 
-		case "uint", "uint8", "uint32", "uint64":
+		case "uint":
 			flagVal, err := flags.GetUint(flagName)
 			if err != nil {
 				return err
@@ -118,7 +118,7 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 	utils.AppendTCPIfExplicit(portMap, utils.PortGrafana, cmd.Flags(), "grafana-port")
 	utils.AppendUDPIfExplicit(portMap, utils.PortDNS, cmd.Flags(), "dns-port")
 
-	cluster := args[0]
+	k8sVersion := args[0]
 
 	containerRegistry, err := cmd.Flags().GetString("container-registry")
 	if err != nil {
@@ -139,28 +139,29 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 	if err != nil {
 		return err
 	}
-
-	b := context.Background()
-	ctx, _ := context.WithCancel(b)
-
-	var clusterImage string
-	if containerSuffix != "" {
-		clusterImage = fmt.Sprintf("%s/%s/%s:%s", containerRegistry, containerOrg, cluster, containerSuffix) // change default suffix to latest
-	} else {
-		clusterImage = fmt.Sprintf("%s/%s/%s:latest", containerRegistry, containerOrg, cluster)
+	slim, err := cmd.Flags().GetBool("slim")
+	if err != nil {
+		return err
 	}
 
-	// if slim {
-	// 	clusterImage += "-slim"
-	// }
+	clusterImage := fmt.Sprintf("%s/%s/%s:%s", containerRegistry, containerOrg, k8sVersion, containerSuffix)
 
+	if slim {
+		clusterImage += "-slim"
+	}
+
+	b := context.Background()
+	ctx, cancel := context.WithCancel(b)
 	err = docker.ImagePull(cli, ctx, clusterImage, types.ImagePullOptions{})
 	if err != nil {
 		panic(fmt.Sprintf("Failed to download cluster image %s, %s", clusterImage, err))
-	}
 
-	kp := providers.NewKubevirtProvider(cluster, clusterImage, cli, opts...)
-	fmt.Printf("the provider struct: %+v\n", kp)
+	}
+	kp := providers.NewKubevirtProvider(k8sVersion, clusterImage, cli, opts...)
+	err = kp.Start(ctx, cancel, portMap)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
