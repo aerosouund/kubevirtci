@@ -386,7 +386,7 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context) ([]string, error) {
 		// turn to opt
 		for _, s := range []string{"8086:2668", "8086:2415"} {
 			// move the VM sound cards to a vfio-pci driver to prepare for assignment
-			bindVfioOpt := bindvfio.NewBindVfioOpt(kp.SSHPort, x, s)
+			bindVfioOpt := bindvfio.NewBindVfioOpt(kp.SSHPort, x+1, s)
 			if err := bindVfioOpt.Exec(); err != nil {
 				return nil, err
 			}
