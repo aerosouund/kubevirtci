@@ -37,6 +37,7 @@ func NewRootCommand() *cobra.Command {
 		NewSCPCommand(),
 		NewProvisionManagerCommand(),
 		NewSetContextCommand(),
+		NewRun2Command(),
 	)
 
 	return root
