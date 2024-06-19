@@ -556,7 +556,7 @@ func (kp *KubevirtProvider) prepareQemuCmd(x int) string {
 }
 
 func (kp *KubevirtProvider) persistProvider() error {
-	providerJson, err := json.MarshalIndent(kp, "", "  ")
+	providerJson, err := json.Marshal(kp)
 	if err != nil {
 		return err
 	}
