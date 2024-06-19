@@ -127,7 +127,7 @@ var FlagMap = map[string]FlagConfig{
 		FlagType:        "uint16",
 		ProviderOptFunc: WithRegistryPort,
 	},
-	"oc-port": {
+	"ocp-port": {
 		FlagType:        "uint16",
 		ProviderOptFunc: WithOCPort,
 	},
@@ -191,11 +191,11 @@ var FlagMap = map[string]FlagConfig{
 		FlagType:        "string",
 		ProviderOptFunc: WithGPU,
 	},
-	"nvme-disks": {
+	"nvme": {
 		FlagType:        "[]string",
 		ProviderOptFunc: WithNvmeDisks,
 	},
-	"scsi-disks": {
+	"scsi": {
 		FlagType:        "[]string",
 		ProviderOptFunc: WithScsiDisks,
 	},
@@ -231,7 +231,7 @@ var FlagMap = map[string]FlagConfig{
 		FlagType:        "bool",
 		ProviderOptFunc: WithEnableAudit,
 	},
-	"usb-disks": {
+	"usb": {
 		FlagType:        "[]string",
 		ProviderOptFunc: WithUSBDisks,
 	},
