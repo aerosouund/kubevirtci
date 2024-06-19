@@ -289,10 +289,14 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context) ([]string, error) {
 			},
 			Cmd: []string{"/bin/bash", "-c", qemuCMD},
 		}
+		var deviceMappings []container.DeviceMapping
 
-		deviceMappings, err := kp.prepareDeviceMappings()
-		if err != nil {
-			return nil, err
+		if kp.GPU != "" && x == int(kp.Nodes)-1 {
+			dm, err := kp.prepareDeviceMappings()
+			if err != nil {
+				return nil, err
+			}
+			deviceMappings = dm
 		}
 
 		if kp.EnableCeph {
