@@ -153,7 +153,7 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 	// }
 
 	kp := providers.NewKubevirtProvider(cluster, clusterImage, cli, opts...)
-	fmt.Println("the provider struct: ", kp)
+	fmt.Printf("the provider struct: %+v\n", kp)
 
 	return nil
 }
@@ -170,7 +170,7 @@ func printStruct(s interface{}) {
 		field := typ.Field(i)
 		value := val.Field(i)
 
-		fmt.Println("starting kv provider with config: ")
+		fmt.Print("starting kv provider with config: ")
 		fmt.Printf("%s: %v\n", field.Name, value.Interface())
 	}
 }
