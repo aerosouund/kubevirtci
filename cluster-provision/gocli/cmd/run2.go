@@ -3,7 +3,6 @@ package cmd
 import (
 	_ "embed"
 	"fmt"
-	"path"
 	"reflect"
 
 	"github.com/docker/docker/client"
@@ -140,7 +139,7 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 	if containerSuffix != "" {
 		clusterImage = fmt.Sprintf("%s/%s/%s%s", containerRegistry, containerOrg, cluster, containerSuffix)
 	} else {
-		clusterImage = path.Join(containerOrg, cluster)
+		clusterImage = fmt.Sprintf("%s/%s/%s:latest", containerRegistry, containerOrg, cluster)
 	}
 
 	// if slim {
