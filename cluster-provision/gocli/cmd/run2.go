@@ -3,30 +3,24 @@ package cmd
 import (
 	_ "embed"
 	"fmt"
+	"path"
+	"reflect"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/providers"
-	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
-	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
-
-	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/cnao"
-	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/istio"
-	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/multus"
-	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
-	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/prometheus"
-	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rookceph"
 )
 
 // NewRunCommand returns command that runs given cluster
 func NewRun2Command() *cobra.Command {
 
 	run := &cobra.Command{
-		Use:   "run",
+		Use:   "run2",
 		Short: "run starts a given cluster",
 		RunE:  run,
 		Args:  cobra.ExactArgs(1),
@@ -83,34 +77,30 @@ func NewRun2Command() *cobra.Command {
 
 func run2(cmd *cobra.Command, args []string) (retErr error) {
 	opts := []providers.KubevirtProviderOption{}
-	prefix, err := cmd.Flags().GetString("prefix")
-	if err != nil {
-		return err
-	}
+	flags := cmd.Flags()
+	for flagName, flagConfig := range providers.FlagMap {
+		switch flagConfig.FlagType {
+		case "string":
+			flagVal, err := flags.GetString(flagName)
+			if err != nil {
+				return err
+			}
+			opts = append(opts, flagConfig.ProviderOptFunc(flagVal))
+		case "bool":
+			flagVal, err := flags.GetBool(flagName)
+			if err != nil {
+				return err
+			}
+			opts = append(opts, flagConfig.ProviderOptFunc(flagVal))
 
-	nodes, err := cmd.Flags().GetUint("nodes")
-	if err != nil {
-		return err
+		case "uint", "uint8", "uint16", "uint32", "uint64":
+			flagVal, err := flags.GetUint(flagName)
+			if err != nil {
+				return err
+			}
+			opts = append(opts, flagConfig.ProviderOptFunc(flagVal))
+		}
 	}
-	opts = append(opts, providers.WithNodes(nodes))
-
-	memory, err := cmd.Flags().GetString("memory")
-	if err != nil {
-		return err
-	}
-	resource.MustParse(memory)
-
-	randomPorts, err := cmd.Flags().GetBool("random-ports")
-	if err != nil {
-		return err
-	}
-	opts = append(opts, providers.WithRandomPorts(randomPorts))
-
-	slim, err := cmd.Flags().GetBool("slim")
-	if err != nil {
-		return err
-	}
-	opts = append(opts, providers.WithSlim(slim))
 
 	portMap := nat.PortMap{}
 	utils.AppendTCPIfExplicit(portMap, utils.PortSSH, cmd.Flags(), "ssh-port")
@@ -124,97 +114,9 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 	utils.AppendTCPIfExplicit(portMap, utils.PortGrafana, cmd.Flags(), "grafana-port")
 	utils.AppendUDPIfExplicit(portMap, utils.PortDNS, cmd.Flags(), "dns-port")
 
-	qemuArgs, err := cmd.Flags().GetString("qemu-args")
-	if err != nil {
-		return err
-	}
-	kernelArgs, err := cmd.Flags().GetString("kernel-args")
-	if err != nil {
-		return err
-	}
-
-	cpu, err := cmd.Flags().GetUint("cpu")
-	if err != nil {
-		return err
-	}
-
-	numa, err := cmd.Flags().GetUint("numa")
-	if err != nil {
-		return err
-	}
-
-	secondaryNics, err := cmd.Flags().GetUint("secondary-nics")
-	if err != nil {
-		return err
-	}
-
-	nfsData, err := cmd.Flags().GetString("nfs-data")
-	if err != nil {
-		return err
-	}
-
-	dockerProxy, err := cmd.Flags().GetString("docker-proxy")
-	if err != nil {
-		return err
-	}
-
-	cephEnabled, err := cmd.Flags().GetBool("enable-ceph")
-	if err != nil {
-		return err
-	}
-
-	nfsCsiEnabled, err := cmd.Flags().GetBool("enable-nfs-csi")
-	if err != nil {
-		return err
-	}
-
-	istioEnabled, err := cmd.Flags().GetBool("enable-istio")
-	if err != nil {
-		return err
-	}
-
-	cnaoEnabled, err := cmd.Flags().GetBool("enable-cnao")
-	if err != nil {
-		return err
-	}
-
-	deployCnao, err := cmd.Flags().GetBool("deploy-cnao")
-	if err != nil {
-		return err
-	}
-
-	deployMultus, err := cmd.Flags().GetBool("deploy-multus")
-	if err != nil {
-		return err
-	}
-
-	prometheusEnabled, err := cmd.Flags().GetBool("enable-prometheus")
-	if err != nil {
-		return err
-	}
-
-	prometheusAlertmanagerEnabled, err := cmd.Flags().GetBool("enable-prometheus-alertmanager")
-	if err != nil {
-		return err
-	}
-
-	grafanaEnabled, err := cmd.Flags().GetBool("enable-grafana")
-	if err != nil {
-		return err
-	}
-
 	cluster := args[0]
 
-	background, err := cmd.Flags().GetBool("background")
-	if err != nil {
-		return err
-	}
-
 	containerRegistry, err := cmd.Flags().GetString("container-registry")
-	if err != nil {
-		return err
-	}
-	gpuAddress, err := cmd.Flags().GetString("gpu")
 	if err != nil {
 		return err
 	}
@@ -229,109 +131,49 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 
-	runEtcdOnMemory, err := cmd.Flags().GetBool("run-etcd-on-memory")
-	if err != nil {
-		return err
-	}
-
-	etcdDataMountSize, err := cmd.Flags().GetString("etcd-capacity")
-	if err != nil {
-		return err
-	}
-	resource.MustParse(etcdDataMountSize)
-
-	hugepages2Mcount, err := cmd.Flags().GetUint("hugepages-2m")
-	if err != nil {
-		return err
-	}
-	realtimeSchedulingEnabled, err := cmd.Flags().GetBool("enable-realtime-scheduler")
-	if err != nil {
-		return err
-	}
-	psaEnabled, err := cmd.Flags().GetBool("enable-psa")
-	if err != nil {
-		return err
-	}
-	singleStack, err := cmd.Flags().GetBool("single-stack")
-	if err != nil {
-		return err
-	}
-	enableAudit, err := cmd.Flags().GetBool("enable-audit")
-	if err != nil {
-		return err
-	}
-	fipsEnabled, err := cmd.Flags().GetBool("enable-fips")
-	if err != nil {
-		return err
-	}
-
 	cli, err = client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
 	}
-	image := fmt.Sprintf("")
 
 	b := context.Background()
-	ctx, cancel := context.WithCancel(b)
-	kp := providers.NewKubevirtProvider("", "", cli, opts...)
-	err = kp.Start(ctx, cancel, portMap)
+	ctx, _ := context.WithCancel(b)
 
-	err = sshutils.CopyRemoteFile(kp.SSHPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
+	var clusterImage string
+	if containerSuffix != "" {
+		clusterImage = fmt.Sprintf("%s/%s/%s%s", containerRegistry, containerOrg, cluster, containerSuffix)
+	} else {
+		clusterImage = path.Join(containerOrg, cluster)
+	}
+
+	// if slim {
+	// 	clusterImage += "-slim"
+	// }
+
+	err = docker.ImagePull(cli, ctx, clusterImage, types.ImagePullOptions{})
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("Failed to download cluster image %s, %s", clusterImage, err))
 	}
 
-	config, err := k8s.InitConfig(".kubeconfig", kp.APIServerPort)
-	if err != nil {
-		panic(err)
-	}
-
-	k8sClient, err := k8s.NewDynamicClient(config)
-	if err != nil {
-		panic(err)
-	}
-
-	if cephEnabled {
-		cephOpt := rookceph.NewCephOpt(k8sClient)
-		if err := cephOpt.Exec(); err != nil {
-			panic(err)
-		}
-	}
-
-	if nfsCsiEnabled {
-		csiOpt := nfscsi.NewNfsCsiOpt(k8sClient)
-		if err := csiOpt.Exec(); err != nil {
-			panic(err)
-		}
-	}
-
-	if deployMultus {
-		multusOpt := multus.NewMultusOpt(k8sClient)
-		if err := multusOpt.Exec(); err != nil {
-			panic(err)
-		}
-	}
-
-	if deployCnao {
-		cnaoOpt := cnao.NewCnaoOpt(k8sClient)
-		if err := cnaoOpt.Exec(); err != nil {
-			panic(err)
-		}
-	}
-
-	if istioEnabled {
-		istioOpt := istio.NewIstioOpt(k8sClient, kp.SSHPort, cnaoEnabled)
-		if err := istioOpt.Exec(); err != nil {
-			panic(err)
-		}
-	}
-
-	if prometheusEnabled {
-		prometheusOpt := prometheus.NewPrometheusOpt(k8sClient, grafanaEnabled, prometheusAlertmanagerEnabled)
-		if err = prometheusOpt.Exec(); err != nil {
-			panic(err)
-		}
-	}
+	kp := providers.NewKubevirtProvider(cluster, clusterImage, cli, opts...)
+	printStruct(kp)
 
 	return nil
+}
+
+func printStruct(s interface{}) {
+	// Get the type of the struct
+	typ := reflect.TypeOf(s)
+	// Get the value of the struct
+	val := reflect.ValueOf(s)
+
+	// Iterate over the fields of the struct
+	for i := 0; i < typ.NumField(); i++ {
+		// Get the field and value
+		field := typ.Field(i)
+		value := val.Field(i)
+
+		fmt.Println("starting kv provider with config: ")
+		fmt.Printf("%s: %v\n", field.Name, value.Interface())
+	}
 }

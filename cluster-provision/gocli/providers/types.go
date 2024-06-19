@@ -59,4 +59,180 @@ type KubevirtProvider struct {
 	USBDisks                     []string `flag:"usb" json:"usb"`
 }
 
-type KubevirtProviderOption func(*KubevirtProvider)
+type KubevirtProviderOption func(c *KubevirtProvider)
+
+type FlagConfig struct {
+	FlagType        string
+	ProviderOptFunc func(interface{}) KubevirtProviderOption
+}
+
+var FlagMap = map[string]FlagConfig{
+	"nodes": {
+		FlagType:        "uint",
+		ProviderOptFunc: WithNodes,
+	},
+	"numa": {
+		FlagType:        "uint",
+		ProviderOptFunc: WithNuma,
+	},
+	"memory": {
+		FlagType:        "string",
+		ProviderOptFunc: WithMemory,
+	},
+	"cpu": {
+		FlagType:        "uint",
+		ProviderOptFunc: WithCPU,
+	},
+	"secondary-nics": {
+		FlagType:        "uint",
+		ProviderOptFunc: WithSecondaryNics,
+	},
+	"qemu-args": {
+		FlagType:        "string",
+		ProviderOptFunc: WithQemuArgs,
+	},
+	"kernel-args": {
+		FlagType:        "string",
+		ProviderOptFunc: WithKernelArgs,
+	},
+	"background": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithBackground,
+	},
+	"reverse": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithReverse,
+	},
+	"random-ports": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithRandomPorts,
+	},
+	"slim": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithSlim,
+	},
+	"vnc-port": {
+		FlagType:        "uint16",
+		ProviderOptFunc: WithVNCPort,
+	},
+	"http-port": {
+		FlagType:        "uint16",
+		ProviderOptFunc: WithHTTPPort,
+	},
+	"https-port": {
+		FlagType:        "uint16",
+		ProviderOptFunc: WithHTTPSPort,
+	},
+	"registry-port": {
+		FlagType:        "uint16",
+		ProviderOptFunc: WithRegistryPort,
+	},
+	"oc-port": {
+		FlagType:        "uint16",
+		ProviderOptFunc: WithOCPort,
+	},
+	"k8s-port": {
+		FlagType:        "uint16",
+		ProviderOptFunc: WithK8sPort,
+	},
+	"ssh-port": {
+		FlagType:        "uint16",
+		ProviderOptFunc: WithSSHPort,
+	},
+	"prometheus-port": {
+		FlagType:        "uint16",
+		ProviderOptFunc: WithPrometheusPort,
+	},
+	"grafana-port": {
+		FlagType:        "uint16",
+		ProviderOptFunc: WithGrafanaPort,
+	},
+	"dns-port": {
+		FlagType:        "uint16",
+		ProviderOptFunc: WithDNSPort,
+	},
+	"nfs-data": {
+		FlagType:        "string",
+		ProviderOptFunc: WithNFSData,
+	},
+	"enable-ceph": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithEnableCeph,
+	},
+	"enable-istio": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithEnableIstio,
+	},
+	"enable-cnao": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithEnableCNAO,
+	},
+	"enable-nfscsi": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithEnableNFSCSI,
+	},
+	"enable-prometheus": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithEnablePrometheus,
+	},
+	"enable-prometheus-alert-manager": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithEnablePrometheusAlertManager,
+	},
+	"enable-grafana": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithEnableGrafana,
+	},
+	"docker-proxy": {
+		FlagType:        "string",
+		ProviderOptFunc: WithDockerProxy,
+	},
+	"gpu": {
+		FlagType:        "string",
+		ProviderOptFunc: WithGPU,
+	},
+	"nvme-disks": {
+		FlagType:        "[]string",
+		ProviderOptFunc: WithNvmeDisks,
+	},
+	"scsi-disks": {
+		FlagType:        "[]string",
+		ProviderOptFunc: WithScsiDisks,
+	},
+	"run-etcd-on-memory": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithRunEtcdOnMemory,
+	},
+	"etcd-capacity": {
+		FlagType:        "string",
+		ProviderOptFunc: WithEtcdCapacity,
+	},
+	"hugepages-2m": {
+		FlagType:        "uint",
+		ProviderOptFunc: WithHugepages2M,
+	},
+	"enable-realtime-scheduler": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithEnableRealtimeScheduler,
+	},
+	"enable-fips": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithEnableFIPS,
+	},
+	"enable-psa": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithEnablePSA,
+	},
+	"single-stack": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithSingleStack,
+	},
+	"enable-audit": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithEnableAudit,
+	},
+	"usb-disks": {
+		FlagType:        "[]string",
+		ProviderOptFunc: WithUSBDisks,
+	},
+}
