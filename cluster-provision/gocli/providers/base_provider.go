@@ -565,7 +565,7 @@ func (kp *KubevirtProvider) persistProvider() error {
 		return err
 	}
 
-	_, err = docker.Exec(kp.Docker, kp.DNSMasq, []string{"echo", fmt.Sprintf("%s", providerJson), "> provider.json"}, os.Stdout)
+	_, err = docker.Exec(kp.Docker, kp.DNSMasq, []string{"tee", fmt.Sprintf("%s", providerJson), " provider.json > /dev/null"}, os.Stdout)
 	if err != nil {
 		return err
 	}
