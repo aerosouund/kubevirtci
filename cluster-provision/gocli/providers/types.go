@@ -175,7 +175,7 @@ var FlagMap = map[string]FlagConfig{
 		FlagType:        "bool",
 		ProviderOptFunc: WithEnablePrometheus,
 	},
-	"enable-prometheus-alert-manager": {
+	"enable-prometheus-alertmanager": {
 		FlagType:        "bool",
 		ProviderOptFunc: WithEnablePrometheusAlertManager,
 	},
