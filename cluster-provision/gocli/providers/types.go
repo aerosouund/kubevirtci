@@ -167,7 +167,7 @@ var FlagMap = map[string]FlagConfig{
 		FlagType:        "bool",
 		ProviderOptFunc: WithEnableCNAO,
 	},
-	"enable-nfscsi": {
+	"enable-nfs-csi": {
 		FlagType:        "bool",
 		ProviderOptFunc: WithEnableNFSCSI,
 	},
