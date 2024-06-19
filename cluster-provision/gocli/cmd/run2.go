@@ -22,7 +22,7 @@ func NewRun2Command() *cobra.Command {
 	run := &cobra.Command{
 		Use:   "run2",
 		Short: "run starts a given cluster",
-		RunE:  run,
+		RunE:  run2,
 		Args:  cobra.ExactArgs(1),
 	}
 	run.Flags().UintP("nodes", "n", 1, "number of cluster nodes to start")
