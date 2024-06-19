@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"reflect"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -158,21 +157,4 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 	fmt.Printf("the provider struct: %+v\n", kp)
 
 	return nil
-}
-
-func printStruct(s interface{}) {
-	// Get the type of the struct
-	typ := reflect.TypeOf(s)
-	// Get the value of the struct
-	val := reflect.ValueOf(s)
-
-	// Iterate over the fields of the struct
-	for i := 0; i < typ.NumField(); i++ {
-		// Get the field and value
-		field := typ.Field(i)
-		value := val.Field(i)
-
-		fmt.Print("starting kv provider with config: ")
-		fmt.Printf("%s: %v\n", field.Name, value.Interface())
-	}
 }
