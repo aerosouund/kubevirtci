@@ -30,6 +30,7 @@ import (
 	nodeprovisioner "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nodes"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/psa"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/realtime"
+	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
@@ -135,6 +136,23 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 	for _, node := range nodeIds {
 		containers <- node
 	}
+
+	err = sshutils.CopyRemoteFile(kp.SSHPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
+	if err != nil {
+		panic(err)
+	}
+
+	config, err := k8s.InitConfig(".kubeconfig", kp.APIServerPort)
+	if err != nil {
+		panic(err)
+	}
+
+	k8sClient, err := k8s.NewDynamicClient(config)
+	if err != nil {
+		panic(err)
+	}
+	kp.Client = &k8sClient
+
 	err = kp.persistProvider()
 	if err != nil {
 		return err
