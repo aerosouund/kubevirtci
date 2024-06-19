@@ -23,7 +23,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
-	bindvfio "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/bind-vfio"
 	dockerproxy "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/docker-proxy"
 	etcdinmemory "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/etcd"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
@@ -384,18 +383,18 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context) ([]string, error) {
 			return nil, fmt.Errorf("checking for matching provision script for node %s failed", nodeName)
 		}
 		// turn to opt
-		for _, s := range []string{"8086:2668", "8086:2415"} {
-			// move the VM sound cards to a vfio-pci driver to prepare for assignment
-			bindVfioOpt := bindvfio.NewBindVfioOpt(kp.SSHPort, x+1, s)
-			if err := bindVfioOpt.Exec(); err != nil {
-				return nil, err
-			}
-			// turn to opt
-			// err = prepareDeviceForAssignment(kp.Docker, kp.nodeContainer(kp.Version, nodeName), s, "")
-			// if err != nil {
-			// 	return nil, err
-			// }
-		}
+		// for _, s := range []string{"8086:2668", "8086:2415"} {
+		// 	// move the VM sound cards to a vfio-pci driver to prepare for assignment
+		// 	bindVfioOpt := bindvfio.NewBindVfioOpt(kp.SSHPort, x+1, s)
+		// 	if err := bindVfioOpt.Exec(); err != nil {
+		// 		return nil, err
+		// 	}
+		// 	// turn to opt
+		// 	// err = prepareDeviceForAssignment(kp.Docker, kp.nodeContainer(kp.Version, nodeName), s, "")
+		// 	// if err != nil {
+		// 	// 	return nil, err
+		// 	// }
+		// }
 
 		// turn to opt
 		if kp.SingleStack {
