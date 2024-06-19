@@ -30,6 +30,7 @@ import (
 	nodeprovisioner "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nodes"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/psa"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/realtime"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rootkey"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
@@ -333,6 +334,11 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context) ([]string, error) {
 
 		err = kp.waitForVMToBeUp(kp.Version, nodeName)
 		if err != nil {
+			return nil, err
+		}
+
+		rootkey := rootkey.NewRootKey(kp.SSHPort, x+1)
+		if err = rootkey.Exec(); err != nil {
 			return nil, err
 		}
 
