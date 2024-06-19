@@ -1,14 +1,17 @@
 package cmd
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"reflect"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/spf13/cobra"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/providers"
 )
 
@@ -132,8 +135,8 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 
-	// b := context.Background()
-	// ctx, _ := context.WithCancel(b)
+	b := context.Background()
+	ctx, _ := context.WithCancel(b)
 
 	var clusterImage string
 	if containerSuffix != "" {
@@ -146,10 +149,10 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 	// 	clusterImage += "-slim"
 	// }
 
-	// err = docker.ImagePull(cli, ctx, clusterImage, types.ImagePullOptions{})
-	// if err != nil {
-	// 	panic(fmt.Sprintf("Failed to download cluster image %s, %s", clusterImage, err))
-	// }
+	err = docker.ImagePull(cli, ctx, clusterImage, types.ImagePullOptions{})
+	if err != nil {
+		panic(fmt.Sprintf("Failed to download cluster image %s, %s", clusterImage, err))
+	}
 
 	kp := providers.NewKubevirtProvider(cluster, clusterImage, cli, opts...)
 	fmt.Printf("the provider struct: %+v\n", kp)
