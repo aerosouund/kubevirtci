@@ -38,6 +38,7 @@ func (o *BindVfioOpt) Exec() error {
 	if err != nil {
 		return err
 	}
+	driver = strings.TrimSuffix(driver, "\n")
 
 	cmds := []string{
 		"if [[ ! -d /sys/bus/pci/devices/" + pciDevId + " ]]; then echo 'Error: PCI address does not exist!' && exit 1; fi",
