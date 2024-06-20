@@ -45,13 +45,13 @@ func (o *IstioOpt) Exec() error {
 	}
 
 	cmds := []string{
-		"istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
+		"/opt/istio-1.15.0/bin/istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
 		"echo '" + string(istioCnao) + "' | sudo tee /opt/istio/istio-operator-with-cnao.cr.yaml > /dev/null",
 		"echo '" + string(istioWithoutCnao) + "' | sudo tee /opt/istio/istio-operator.cr.yaml > /dev/null",
 	}
 	for _, cmd := range cmds {
 		if _, err := utils.JumpSSH(o.sshPort, 1, cmd, true, true); err != nil {
-			return nil
+			return err
 		}
 	}
 	confFile := "/opt/istio/istio-operator.cr.yaml"
