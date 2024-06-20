@@ -36,6 +36,7 @@ import (
 	bindvfio "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/bind-vfio"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/cnao"
 	dockerproxy "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/docker-proxy"
+	etcdinmemory "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/etcd"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/istio"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/multus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
@@ -667,18 +668,20 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		// turn to opt
-		// TESTING
+		runEtcdOnMemory = true
 		if runEtcdOnMemory {
 			logrus.Infof("Creating in-memory mount for etcd data on node %s", nodeName)
-			err = prepareEtcdDataMount(nodeContainer(prefix, nodeName), etcdDataDir, etcdDataMountSize)
-			if err != nil {
-				logrus.Errorf("failed to create mount for etcd data on node %s: %v", nodeName, err)
+			// err = prepareEtcdDataMount(nodeContainer(prefix, nodeName), etcdDataDir, etcdDataMountSize)
+			// if err != nil {
+			// 	logrus.Errorf("failed to create mount for etcd data on node %s: %v", nodeName, err)
+			// 	return err
+			// }
+			etcd := etcdinmemory.NewEtcdInMemOpt(sshPort, x+1, etcdDataMountSize)
+			if err := etcd.Exec(); err != nil {
 				return err
 			}
 		}
 
-		// TESTING
-		realtimeSchedulingEnabled = true
 		if realtimeSchedulingEnabled {
 			realtimeOpt := realtime.NewRealtimeOpt(sshPort, x+1)
 			if err := realtimeOpt.Exec(); err != nil {
