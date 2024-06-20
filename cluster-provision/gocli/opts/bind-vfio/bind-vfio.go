@@ -29,7 +29,6 @@ func (o *BindVfioOpt) Exec() error {
 	}
 
 	pciDevId := strings.Split(addr, " ")[0]
-	fmt.Println("pci addr :", addr, pciDevId)
 
 	devSysfsPath := "/sys/bus/pci/devices/" + pciDevId
 	driverPath := devSysfsPath + "/driver"
