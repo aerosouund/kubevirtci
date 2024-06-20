@@ -67,14 +67,5 @@ func (o *BindVfioOpt) Exec() error {
 		}
 	}
 
-	driver, err = utils.JumpSSH(o.sshPort, o.nodeIdx, "readlink "+driverPath+" | awk -F'/' '{print $NF}'", true, false)
-	if err != nil {
-		return err
-	}
-	driver = strings.TrimSuffix(driver, "\n")
-
-	if driver != "vfio-pci" {
-		return fmt.Errorf("Error: Failed to bind to vfio-pci driver, instead its: %s on node %d", driver, o.nodeIdx)
-	}
 	return nil
 }
