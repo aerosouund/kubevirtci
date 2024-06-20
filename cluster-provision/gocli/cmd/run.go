@@ -669,6 +669,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		// turn to opt
+		// TESTING
 		if runEtcdOnMemory {
 			logrus.Infof("Creating in-memory mount for etcd data on node %s", nodeName)
 			err = prepareEtcdDataMount(nodeContainer(prefix, nodeName), etcdDataDir, etcdDataMountSize)
@@ -678,6 +679,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			}
 		}
 
+		// TESTING
 		if realtimeSchedulingEnabled {
 			realtimeOpt := realtime.NewRealtimeOpt(sshPort, x+1)
 			if err := realtimeOpt.Exec(); err != nil {
@@ -732,6 +734,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 
 		// turn to opt
 		// TESTING
+		psaEnabled = true
 		if psaEnabled {
 			psaOpt := psa.NewPsaOpt(sshPort)
 			if err := psaOpt.Exec(); err != nil {
@@ -816,6 +819,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 	}
 
+	// TESTING
 	if istioEnabled {
 		istioOpt := istio.NewIstioOpt(k8sClient, sshPort, cnaoEnabled)
 		if err := istioOpt.Exec(); err != nil {
