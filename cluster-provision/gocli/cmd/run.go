@@ -33,13 +33,16 @@ import (
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 
+	bindvfio "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/bind-vfio"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/cnao"
+	dockerproxy "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/docker-proxy"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/istio"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/multus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
 	nodeprovisioner "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nodes"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/prometheus"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/psa"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/realtime"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rookceph"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rootkey"
@@ -656,18 +659,12 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		// turn to opt
+		// TESTING
 		if dockerProxy != "" {
 			//if dockerProxy has value, generate a shell script`/script/docker-proxy.sh` which can be applied to set proxy settings
-			proxyConfig, err := getDockerProxyConfig(dockerProxy)
-			if err != nil {
-				return fmt.Errorf("parsing proxy settings for node %s failed", nodeName)
-			}
-			success, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", fmt.Sprintf("cat <<EOF >/scripts/docker-proxy.sh %s", proxyConfig)}, os.Stdout)
-			if err != nil {
-				return fmt.Errorf("write failed for proxy provision script for node %s", nodeName)
-			}
-			if success {
-				success, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", fmt.Sprintf("ssh.sh sudo /bin/bash < /scripts/docker-proxy.sh")}, os.Stdout)
+			dpOpt := dockerproxy.NewDockerProxyOpt(sshPort, dockerProxy, x+1)
+			if err := dpOpt.Exec(); err != nil {
+				return err
 			}
 		}
 
@@ -697,8 +694,12 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		// turn to opt
 		for _, s := range soundcardPCIIDs {
 			// move the VM sound cards to a vfio-pci driver to prepare for assignment
-			err = prepareDeviceForAssignment(cli, nodeContainer(prefix, nodeName), s, "")
-			if err != nil {
+			// err = prepareDeviceForAssignment(cli, nodeContainer(prefix, nodeName), s, "")
+			// if err != nil {
+			// 	return err
+			// }
+			bindVfioOpt := bindvfio.NewBindVfioOpt(sshPort, x+1, s)
+			if err := bindVfioOpt.Exec(); err != nil {
 				return err
 			}
 		}
@@ -730,14 +731,11 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		// turn to opt
+		// TESTING
 		if psaEnabled {
-			success, err := docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", "ssh.sh sudo /bin/bash < /scripts/psa.sh"}, os.Stdout)
-			if err != nil {
+			psaOpt := psa.NewPsaOpt(sshPort)
+			if err := psaOpt.Exec(); err != nil {
 				return err
-			}
-
-			if !success {
-				return fmt.Errorf("provisioning node %s failed", nodeName)
 			}
 		}
 		// todo: remove checking for scripts for node, just do different stuff at index 1
