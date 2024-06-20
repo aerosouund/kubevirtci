@@ -35,24 +35,16 @@ import (
 )
 
 func NewKubevirtProvider(k8sversion string, image string, cli *client.Client, options ...KubevirtProviderOption) *KubevirtProvider {
-	// this is not needed since it will be overriden by the f;ags anyway
-	bp := &KubevirtProvider{
-		Version:     k8sversion,
-		Nodes:       1,
-		Numa:        1,
-		Memory:      "3096M",
-		CPU:         2,
-		Background:  true,
-		Image:       image,
-		RandomPorts: true,
-		Docker:      cli,
+	kp := &KubevirtProvider{
+		Background: true,
+		Docker:     cli,
 	}
 
 	for _, option := range options {
-		option(bp)
+		option(kp)
 	}
 
-	return bp
+	return kp
 }
 
 func NewFromRunning(dnsmasqPrefix string) (*KubevirtProvider, error) {
