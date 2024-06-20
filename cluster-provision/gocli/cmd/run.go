@@ -668,6 +668,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		// TESTING
+		realtimeSchedulingEnabled = true
 		if realtimeSchedulingEnabled {
 			realtimeOpt := realtime.NewRealtimeOpt(sshPort, x+1)
 			if err := realtimeOpt.Exec(); err != nil {
