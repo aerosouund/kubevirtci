@@ -22,7 +22,7 @@ func NewBindVfioOpt(sshPort uint16, nodeIdx int, id string) *BindVfioOpt {
 }
 
 func (o *BindVfioOpt) Exec() error {
-	addr, err := utils.JumpSSH(o.sshPort, o.nodeIdx, `lspci -D -d `+o.pciID, true, true)
+	addr, err := utils.JumpSSH(o.sshPort, o.nodeIdx, "lspci -D -d "+o.pciID, true, false)
 	if err != nil {
 		return err
 	}
@@ -34,7 +34,7 @@ func (o *BindVfioOpt) Exec() error {
 	driverPath := devSysfsPath + "/driver"
 	driverOverride := devSysfsPath + "/driver_override"
 
-	driver, err := utils.JumpSSH(o.sshPort, o.nodeIdx, "readlink "+driverPath+" | awk -F'/' '{print $NF}'", true, true)
+	driver, err := utils.JumpSSH(o.sshPort, o.nodeIdx, "readlink "+driverPath+" | awk -F'/' '{print $NF}'", true, false)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (o *BindVfioOpt) Exec() error {
 		}
 	}
 
-	newDriver, err := utils.JumpSSH(o.sshPort, o.nodeIdx, "readlink "+driverPath+" | awk -F'/' '{print $NF}'", true, true)
+	newDriver, err := utils.JumpSSH(o.sshPort, o.nodeIdx, "readlink "+driverPath+" | awk -F'/' '{print $NF}'", true, false)
 	if err != nil {
 		return err
 	}
