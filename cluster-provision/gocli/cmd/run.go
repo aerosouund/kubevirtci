@@ -747,9 +747,12 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			}
 		} else {
 			if gpuAddress != "" {
-				// move the assigned PCI device to a vfio-pci driver to prepare for assignment
-				err = prepareDeviceForAssignment(cli, nodeContainer(prefix, nodeName), "", gpuAddress)
+				gpuDeviceID, err := getDevicePCIID(gpuAddress)
 				if err != nil {
+					return err
+				}
+				bindVfioOpt := bindvfio.NewBindVfioOpt(sshPort, x+1, gpuDeviceID)
+				if err := bindVfioOpt.Exec(); err != nil {
 					return err
 				}
 			}
