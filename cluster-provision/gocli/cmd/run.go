@@ -700,7 +700,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			// }
 			bindVfioOpt := bindvfio.NewBindVfioOpt(sshPort, x+1, s)
 			if err := bindVfioOpt.Exec(); err != nil {
-				fmt.Println("pci error :", err)
+				return err
 			}
 		}
 
