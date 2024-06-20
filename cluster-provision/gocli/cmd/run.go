@@ -639,8 +639,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 
-		fmt.Println("added key to root user")
-
 		// turn to opt
 		if fipsEnabled {
 			success, err := docker.Exec(cli, nodeContainer(prefix, nodeName), []string{
@@ -733,8 +731,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		// turn to opt
-		// TESTING
-		psaEnabled = true
 		if psaEnabled {
 			psaOpt := psa.NewPsaOpt(sshPort)
 			if err := psaOpt.Exec(); err != nil {

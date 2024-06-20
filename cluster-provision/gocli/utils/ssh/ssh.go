@@ -94,7 +94,7 @@ func JumpSSH(sshPort uint16, nodeIdx int, cmd string, root, stdOut bool) (string
 		session.Stdout = &stdout
 		session.Stderr = &stderr
 	}
-	logrus.Info("executing: ", cmd)
+	logrus.Infof("[node %d]: %s\n", nodeIdx, cmd)
 
 	err = session.Run(cmd)
 	if err != nil {
