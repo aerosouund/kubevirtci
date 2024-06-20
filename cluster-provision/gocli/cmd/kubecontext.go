@@ -27,7 +27,7 @@ func NewSetContextCommand() *cobra.Command {
 
 // still use the old method of reading the port but code the new one too
 func setKubeContext(cmd *cobra.Command, args []string) error {
-	// kp, err := providers.NewFromRunning("kubevirt")
+	// kp, err := providers.NewFromRunning(prefix)
 	// if err != nil {
 	// 	return err
 	// }
