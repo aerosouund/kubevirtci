@@ -41,9 +41,9 @@ func (o *BindVfioOpt) Exec() error {
 	driver = strings.TrimSuffix(driver, "\n")
 
 	cmds := []string{
+		"modprobe -i vfio-pci",
 		"if [[ ! -d /sys/bus/pci/devices/" + pciDevId + " ]]; then echo 'Error: PCI address does not exist!' && exit 1; fi",
 		"if [[ ! -d /sys/bus/pci/devices/" + pciDevId + "/iommu/ ]]; then echo 'Error: No vIOMMU found in the VM' && exit 1; fi",
-		"modprobe -i vfio-pci",
 		"[[ '" + driver + "' != 'vfio-pci' ]] && echo " + pciDevId + " > " + driverPath + "/unbind && echo 'vfio-pci' > " + driverOverride + " && echo " + pciDevId + " > /sys/bus/pci/drivers/vfio-pci/bind",
 	}
 
