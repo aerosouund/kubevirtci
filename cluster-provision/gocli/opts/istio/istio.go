@@ -45,7 +45,7 @@ func (o *IstioOpt) Exec() error {
 	}
 
 	cmds := []string{
-		"/bin/bash -c /var/lib/kubevirtci/shared_vars.sh",
+		"source /var/lib/kubevirtci/shared_vars.sh",
 		"/opt/istio-1.15.0/bin/istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
 		"echo '" + string(istioCnao) + "' | sudo tee /opt/istio/istio-operator-with-cnao.cr.yaml > /dev/null",
 		"echo '" + string(istioWithoutCnao) + "' | sudo tee /opt/istio/istio-operator.cr.yaml > /dev/null",
