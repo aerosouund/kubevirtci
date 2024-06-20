@@ -36,6 +36,8 @@ import (
 
 func NewKubevirtProvider(k8sversion string, image string, cli *client.Client, options ...KubevirtProviderOption) *KubevirtProvider {
 	kp := &KubevirtProvider{
+		Image:      image,
+		Version:    k8sversion,
 		Background: true,
 		Docker:     cli,
 	}
@@ -73,7 +75,6 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 
 	defer func() {
 		stop <- retErr
-		panic(retErr)
 		<-done
 	}()
 
@@ -195,12 +196,9 @@ func (kp *KubevirtProvider) runDNSMasq(ctx context.Context, portMap nat.PortMap)
 		},
 		Mounts: dnsmasqMounts,
 	}, nil, nil, kp.Version+"-dnsmasq")
-	if err != nil {
-		panic(err)
-	}
 
 	if err := kp.Docker.ContainerStart(ctx, dnsmasq.ID, types.ContainerStartOptions{}); err != nil {
-		panic(err)
+		return "", err
 	}
 	return dnsmasq.ID, nil
 }
