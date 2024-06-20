@@ -195,9 +195,12 @@ func (kp *KubevirtProvider) runDNSMasq(ctx context.Context, portMap nat.PortMap)
 		},
 		Mounts: dnsmasqMounts,
 	}, nil, nil, kp.Version+"-dnsmasq")
+	if err != nil {
+		panic(err)
+	}
 
 	if err := kp.Docker.ContainerStart(ctx, dnsmasq.ID, types.ContainerStartOptions{}); err != nil {
-		return "", err
+		panic(err)
 	}
 	return dnsmasq.ID, nil
 }
