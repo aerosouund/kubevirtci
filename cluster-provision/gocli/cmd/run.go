@@ -33,7 +33,6 @@ import (
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 
-	bindvfio "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/bind-vfio"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/cnao"
 	dockerproxy "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/docker-proxy"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/istio"
@@ -694,14 +693,14 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		// turn to opt
 		for _, s := range soundcardPCIIDs {
 			// move the VM sound cards to a vfio-pci driver to prepare for assignment
-			// err = prepareDeviceForAssignment(cli, nodeContainer(prefix, nodeName), s, "")
-			// if err != nil {
-			// 	return err
-			// }
-			bindVfioOpt := bindvfio.NewBindVfioOpt(sshPort, x+1, s)
-			if err := bindVfioOpt.Exec(); err != nil {
-				fmt.Println("pci error :", err)
+			err = prepareDeviceForAssignment(cli, nodeContainer(prefix, nodeName), s, "")
+			if err != nil {
+				return err
 			}
+			// bindVfioOpt := bindvfio.NewBindVfioOpt(sshPort, x+1, s)
+			// if err := bindVfioOpt.Exec(); err != nil {
+			// 	fmt.Println("pci error :", err)
+			// }
 		}
 
 		// turn to opt
