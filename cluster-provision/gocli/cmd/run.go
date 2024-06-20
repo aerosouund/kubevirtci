@@ -668,7 +668,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		// turn to opt
-		runEtcdOnMemory = true
 		if runEtcdOnMemory {
 			logrus.Infof("Creating in-memory mount for etcd data on node %s", nodeName)
 			// err = prepareEtcdDataMount(nodeContainer(prefix, nodeName), etcdDataDir, etcdDataMountSize)
@@ -819,7 +818,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 	}
 
-	// TESTING
+	istioEnabled = true
 	if istioEnabled {
 		istioOpt := istio.NewIstioOpt(k8sClient, sshPort, cnaoEnabled)
 		if err := istioOpt.Exec(); err != nil {
