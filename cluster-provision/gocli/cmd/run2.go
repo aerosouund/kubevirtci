@@ -5,10 +5,12 @@ import (
 	_ "embed"
 	"fmt"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/spf13/cobra"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/providers"
 )
 
@@ -150,7 +152,7 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 
 	b := context.Background()
 	ctx, cancel := context.WithCancel(b)
-	// err = docker.ImagePull(cli, ctx, clusterImage, types.ImagePullOptions{})
+	err = docker.ImagePull(cli, ctx, clusterImage, types.ImagePullOptions{})
 	if err != nil {
 		panic(fmt.Sprintf("Failed to download cluster image %s, %s", clusterImage, err))
 

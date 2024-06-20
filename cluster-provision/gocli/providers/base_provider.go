@@ -73,6 +73,7 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 
 	defer func() {
 		stop <- retErr
+		panic(retErr)
 		<-done
 	}()
 
