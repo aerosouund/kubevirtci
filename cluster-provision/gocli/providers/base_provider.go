@@ -368,7 +368,6 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 		}
 
 		//check if we have a special provision script
-		success, err = docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"/bin/bash", "-c", fmt.Sprintf("test -f /scripts/%s.sh", nodeName)}, os.Stdout)
 		if err != nil {
 			return fmt.Errorf("checking for matching provision script for node %s failed", nodeName)
 		}
@@ -408,7 +407,7 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			}
 		}
 		// todo: remove checking for scripts for node, just do different stuff at index 1
-		if success {
+		if x+1 == 1 {
 			n := node01.NewNode01Provisioner(uint16(kp.SSHPort))
 			err := n.Exec()
 			if err != nil {
