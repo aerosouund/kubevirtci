@@ -31,11 +31,11 @@ func NewIstioOpt(c k8s.K8sDynamicClient, sshPort uint16, cnaoEnabled bool) *Isti
 }
 
 func (o *IstioOpt) Exec() error {
-	istioCnao, err := f.ReadFile("manifests/istio-operator-with-cnao.yaml")
+	istioCnao, err := f.ReadFile("manifests/istio-operator-with-cnao.cr.yaml")
 	if err != nil {
 		return err
 	}
-	istioWithoutCnao, err := f.ReadFile("manifests/istio-operator-with-cnao.yaml")
+	istioWithoutCnao, err := f.ReadFile("manifests/istio-operator.cr.yaml")
 	if err != nil {
 		return err
 	}
