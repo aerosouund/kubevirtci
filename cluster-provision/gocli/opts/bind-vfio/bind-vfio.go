@@ -57,8 +57,10 @@ func (o *BindVfioOpt) Exec() error {
 	if err != nil {
 		return err
 	}
+	newDriver = strings.TrimSuffix(newDriver, "\n")
+
 	if newDriver != "vfio-pci" {
-		return fmt.Errorf("Error: Failed to bind to vfio-pci driver")
+		return fmt.Errorf("Error: Failed to bind to vfio-pci driver, instead its: %s", newDriver)
 	}
 	return nil
 }
