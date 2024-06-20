@@ -3,6 +3,7 @@ package bindvfio
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	utils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
@@ -40,8 +41,21 @@ func (o *BindVfioOpt) Exec() error {
 	}
 	driver = strings.TrimSuffix(driver, "\n")
 
+	if _, err := utils.JumpSSH(o.sshPort, o.nodeIdx, "modprobe -i vfio-pci", true, false); err != nil {
+		return fmt.Errorf("Error loading vfio-pci module: %v", err)
+	}
+
+	for i := 0; i < 10; i++ {
+		if _, err := utils.JumpSSH(o.sshPort, o.nodeIdx, "ls /sys/bus/pci/drivers/vfio-pci", true, false); err != nil {
+			fmt.Println("module not loaded properly, sleeping 1 second and trying again")
+			time.Sleep(time.Second * 1)
+			utils.JumpSSH(o.sshPort, o.nodeIdx, "modprobe -i vfio-pci", true, false)
+		} else {
+			break
+		}
+	}
+
 	cmds := []string{
-		"modprobe -i vfio-pci",
 		"if [[ ! -d /sys/bus/pci/devices/" + pciDevId + " ]]; then echo 'Error: PCI address does not exist!' && exit 1; fi",
 		"if [[ ! -d /sys/bus/pci/devices/" + pciDevId + "/iommu/ ]]; then echo 'Error: No vIOMMU found in the VM' && exit 1; fi",
 		"[[ '" + driver + "' != 'vfio-pci' ]] && echo " + pciDevId + " > " + driverPath + "/unbind && echo 'vfio-pci' > " + driverOverride + " && echo " + pciDevId + " > /sys/bus/pci/drivers/vfio-pci/bind",
