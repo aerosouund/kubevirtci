@@ -70,7 +70,7 @@ func (o *IstioOpt) Exec() error {
 		if err != nil {
 			return err
 		}
-		if operator.Status.Status == 3 {
+		if operator.Status != nil && operator.Status.Status == 3 {
 			break
 		}
 		log.Println("Istio operator didn't move to Healthy status, sleeping for 5 seconds")
