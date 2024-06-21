@@ -40,9 +40,8 @@ func (o *IstioOpt) Exec() error {
 	}
 
 	cmds := []string{
-		`echo 'export PATH=/opt/istio-` + o.version + `/bin:$PATH' >> /var/lib/kubevirtci/shared_vars.sh`,
 		"source /var/lib/kubevirtci/shared_vars.sh",
-		"istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
+		"PATH=/opt/istio-" + o.version + "/bin:$PATH istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
 	}
 	for _, cmd := range cmds {
 		if _, err := utils.JumpSSH(o.sshPort, 1, cmd, true, true); err != nil {
