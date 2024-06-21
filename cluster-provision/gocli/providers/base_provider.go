@@ -25,12 +25,18 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	bindvfio "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/bind-vfio"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/cnao"
 	dockerproxy "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/docker-proxy"
 	etcdinmemory "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/etcd"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/istio"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/multus"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
 	nodeprovisioner "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nodes"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/prometheus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/psa"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/realtime"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rookceph"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rootkey"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
@@ -144,7 +150,7 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 	if err != nil {
 		panic(err)
 	}
-	kp.Client = &k8sClient
+	kp.Client = k8sClient
 
 	err = kp.persistProvider()
 	if err != nil {
@@ -418,6 +424,10 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			}
 		}
 
+		if err = kp.runK8sOpts(); err != nil {
+			return err
+		}
+
 		go func(id string) {
 			kp.Docker.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 			wg.Done()
@@ -566,6 +576,52 @@ func (kp *KubevirtProvider) getDevicePCIID(pciAddress string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("no pci_id is found")
+}
+
+// todo: write this as a map
+func (kp *KubevirtProvider) runK8sOpts() error {
+	if kp.EnableCeph {
+		cephOpt := rookceph.NewCephOpt(kp.Client)
+		if err := cephOpt.Exec(); err != nil {
+			return err
+		}
+	}
+
+	if kp.EnableNFSCSI {
+		csiOpt := nfscsi.NewNfsCsiOpt(kp.Client)
+		if err := csiOpt.Exec(); err != nil {
+			return err
+		}
+	}
+
+	if kp.EnableMultus {
+		multusOpt := multus.NewMultusOpt(kp.Client)
+		if err := multusOpt.Exec(); err != nil {
+			return err
+		}
+	}
+
+	if kp.EnableCNAO {
+		cnaoOpt := cnao.NewCnaoOpt(kp.Client)
+		if err := cnaoOpt.Exec(); err != nil {
+			return err
+		}
+	}
+
+	if kp.EnableIstio {
+		istioOpt := istio.NewIstioOpt(kp.Client, kp.SSHPort, kp.EnableCNAO)
+		if err := istioOpt.Exec(); err != nil {
+			return err
+		}
+	}
+
+	if kp.EnablePrometheus {
+		prometheusOpt := prometheus.NewPrometheusOpt(kp.Client, kp.EnableGrafana, kp.EnablePrometheusAlertManager)
+		if err := prometheusOpt.Exec(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (kp *KubevirtProvider) getPCIDeviceIOMMUGroup(address string) (string, error) {

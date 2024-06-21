@@ -173,6 +173,11 @@ func WithEnableGrafana(enableGrafana interface{}) KubevirtProviderOption {
 		c.EnableGrafana = enableGrafana.(bool)
 	}
 }
+func WithMultus(multus interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.EnableMultus = multus.(bool)
+	}
+}
 
 func WithDockerProxy(dockerProxy interface{}) KubevirtProviderOption {
 	return func(c *KubevirtProvider) {
