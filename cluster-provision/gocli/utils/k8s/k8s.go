@@ -9,6 +9,7 @@ import (
 	cephv1 "github.com/aerosouund/rook/pkg/apis/ceph.rook.io/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	monitoringv1alpha1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1alpha1"
+	"github.com/sirupsen/logrus"
 	istiov1alpha1 "istio.io/operator/pkg/apis"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	admissionv1 "k8s.io/pod-security-admission/admission/api/v1"
@@ -167,7 +168,7 @@ func (c *K8sDynamicClientImpl) Apply(fs embed.FS, manifestPath string) error {
 			return fmt.Errorf("Error applying manifest: %v", err)
 		}
 
-		fmt.Printf("Object %v applied successfully!\n", obj.GetName())
+		logrus.Infof("Object %v applied successfully!\n", obj.GetName())
 	}
 
 	return nil
