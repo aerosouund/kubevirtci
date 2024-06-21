@@ -103,7 +103,6 @@ func JumpSSH(sshPort uint16, nodeIdx int, cmd string, root, stdOut bool) (string
 	return stdout.String(), nil
 }
 
-// todo: replace file by an io reader
 func JumpSCP(sshPort uint16, destNodeIdx int, fileName string, contents fs.File) error {
 	signer, err := ssh.ParsePrivateKey([]byte(sshKey))
 	if err != nil {
