@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -60,7 +61,7 @@ func (o *NfsCsiOpt) Exec() error {
 		if pvc.Status.Phase == "Bound" {
 			break
 		}
-		fmt.Println("PVC didn't move to Bound phase, sleeping for 10 seconds")
+		logrus.Info("PVC didn't move to Bound phase, sleeping for 10 seconds")
 		time.Sleep(10 * time.Second)
 	}
 
