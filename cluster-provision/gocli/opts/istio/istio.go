@@ -3,9 +3,9 @@ package istio
 import (
 	"embed"
 	"fmt"
-	"log"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	istiov1alpha1 "istio.io/operator/pkg/apis/istio/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -73,7 +73,7 @@ func (o *IstioOpt) Exec() error {
 		if operator.Status != nil && operator.Status.Status == 3 {
 			break
 		}
-		log.Println("Istio operator didn't move to Healthy status, sleeping for 5 seconds")
+		logrus.Info("Istio operator didn't move to Healthy status, sleeping for 5 seconds")
 		time.Sleep(time.Second * 5)
 	}
 	if operator.Status.Status != 3 {
