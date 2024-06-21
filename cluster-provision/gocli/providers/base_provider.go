@@ -64,10 +64,16 @@ func NewFromRunning(dnsmasqPrefix string) (*KubevirtProvider, error) {
 	}
 
 	containers, err := docker.GetPrefixedContainers(cli, dnsmasqPrefix+"-dnsmasq")
-	var buf bytes.Buffer
+	if err != nil {
+		return nil, err
+	}
 
+	if len(containers) == 0 {
+		return nil, fmt.Errorf("No running provider has the prefix %s", dnsmasqPrefix)
+	}
+
+	var buf bytes.Buffer
 	_, err = docker.Exec(cli, containers[0].ID, []string{"cat", "provider.json"}, &buf)
-	fmt.Println(string(buf.Bytes()))
 	kp := &KubevirtProvider{}
 
 	err = json.Unmarshal(buf.Bytes(), kp)

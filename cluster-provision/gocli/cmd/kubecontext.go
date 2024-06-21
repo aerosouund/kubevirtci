@@ -23,7 +23,6 @@ func NewSetContextCommand() *cobra.Command {
 
 }
 
-// still use the old method of reading the port but code the new one too
 func setKubeContext(cmd *cobra.Command, args []string) error {
 	prefix := args[0]
 	kp, err := providers.NewFromRunning(prefix)
@@ -31,40 +30,11 @@ func setKubeContext(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// cli, err := client.NewClientWithOpts(client.FromEnv)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// containers, err := docker.GetPrefixedContainers(cli, prefix+"-dnsmasq")
-	// if err != nil {
-	// 	return err
-	// }
-	// if len(containers) == 0 {
-	// 	return fmt.Errorf("No provider is running with such prefix")
-	// }
-
-	// container, err := cli.ContainerInspect(context.Background(), containers[0].ID)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// apiServerPort, err := utils.GetPublicPort(utils.PortAPI, container.NetworkSettings.Ports)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// sshPort, err := utils.GetPublicPort(utils.PortSSH, container.NetworkSettings.Ports)
-	// if err != nil {
-	// 	return err
-	// }
-
 	err = sshutils.CopyRemoteFile(kp.SSHPort, "/etc/kubernetes/admin.conf", ".tempkubeconfig")
 	if err != nil {
 		return err
 	}
 
-	// err = utils.CopyRemoteFile(kp.SSHPort, "/etc/kubernetes/admin.conf", ".tempkubeconfig")
 	conf, err := k8s.InitConfig(".tempkubeconfig", kp.APIServerPort)
 	if err != nil {
 		return err
@@ -104,7 +74,6 @@ func setKubeContext(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	// todo: account for an existing kubeconfig
-
 	err = os.Setenv("KUBECONFIG", "/tmp/.kubeconfig")
 	if err != nil {
 		return err
