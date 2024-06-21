@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"os/exec"
 
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
@@ -74,7 +75,10 @@ func setKubeContext(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	// todo: account for an existing kubeconfig
-	err = os.Setenv("KUBECONFIG", "/tmp/.kubeconfig")
+	setenv := exec.Command("sh", "-c", "export KUBECONFIG=$KUBECONFIG:/tmp/.kubeconfig")
+	setenv.Stdout = os.Stdout
+	setenv.Stderr = os.Stderr
+	err = setenv.Run()
 	if err != nil {
 		return err
 	}
