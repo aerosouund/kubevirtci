@@ -122,7 +122,6 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 		}
 		kp.APIServerPort = port
 	}
-	_, err = utils.GetPublicPort(utils.PortAPI, dnsmasqJSON.NetworkSettings.Ports)
 
 	registry, err := kp.runRegistry(ctx)
 	if err != nil {

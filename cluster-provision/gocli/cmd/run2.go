@@ -14,9 +14,7 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/providers"
 )
 
-// NewRunCommand returns command that runs given cluster
 func NewRun2Command() *cobra.Command {
-
 	run := &cobra.Command{
 		Use:   "run2",
 		Short: "run starts a given cluster",
