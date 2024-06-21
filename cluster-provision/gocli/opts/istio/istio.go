@@ -79,6 +79,7 @@ func (o *IstioOpt) Exec() error {
 	if operator.Status.Status != 3 {
 		return fmt.Errorf("Istio operator failed to move to Healthy status after max retries")
 	}
+	logrus.Info("Istio operator is now ready!")
 
 	return nil
 }
