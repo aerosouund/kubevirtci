@@ -168,7 +168,7 @@ func (c *K8sDynamicClientImpl) Apply(fs embed.FS, manifestPath string) error {
 			return fmt.Errorf("Error applying manifest: %v", err)
 		}
 
-		logrus.Infof("Object %v applied successfully!\n", obj.GetName())
+		logrus.Infof("Object %v applied successfully from manifest %s!\n", obj.GetName(), manifestPath)
 	}
 
 	return nil
