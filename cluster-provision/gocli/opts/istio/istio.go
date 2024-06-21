@@ -38,6 +38,7 @@ func (o *IstioOpt) Exec() error {
 	}
 
 	cmds := []string{
+		"echo PATH=$ISTIO_BIN_DIR:$PATH >> /var/lib/kubevirtci/shared_vars.sh ",
 		"source /var/lib/kubevirtci/shared_vars.sh",
 		"istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
 	}
