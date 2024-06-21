@@ -73,8 +73,8 @@ func (o *IstioOpt) Exec() error {
 		if operator.Status != nil && operator.Status.Status == 3 {
 			break
 		}
-		logrus.Info("Istio operator didn't move to Healthy status, sleeping for 5 seconds")
-		time.Sleep(time.Second * 5)
+		logrus.Info("Istio operator didn't move to Healthy status, sleeping for 10 seconds")
+		time.Sleep(time.Second * 10)
 	}
 	if operator.Status.Status != 3 {
 		return fmt.Errorf("Istio operator failed to move to Healthy status after max retries")
