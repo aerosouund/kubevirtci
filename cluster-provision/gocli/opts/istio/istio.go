@@ -50,19 +50,11 @@ func (o *IstioOpt) Exec() error {
 	}
 
 	if o.cnaoEnabled {
-		istioCnao, err := f.ReadFile("manifests/istio-operator-with-cnao.cr.yaml")
-		if err != nil {
-			return err
-		}
-		if err = o.client.Apply(f, string(istioCnao)); err != nil {
+		if err = o.client.Apply(f, "manifests/istio-operator-with-cnao.cr.yaml"); err != nil {
 			return err
 		}
 	} else {
-		istioWithoutCnao, err := f.ReadFile("manifests/istio-operator.cr.yaml")
-		if err != nil {
-			return err
-		}
-		if err = o.client.Apply(f, string(istioWithoutCnao)); err != nil {
+		if err = o.client.Apply(f, "manifests/istio-operator.cr.yaml"); err != nil {
 			return err
 		}
 	}
