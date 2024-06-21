@@ -56,7 +56,7 @@ func InitConfig(manifestPath string, apiServerPort uint16) (*rest.Config, error)
 	return config, nil
 }
 
-func NewDynamicClient(config *rest.Config) (K8sDynamicClient, error) {
+func NewDynamicClient(config *rest.Config) (*K8sDynamicClientImpl, error) {
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("Error creating dynamic client: %v", err)
