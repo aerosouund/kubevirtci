@@ -658,8 +658,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		// turn to opt
-		// TESTING
-		dockerProxy = "true"
 		if dockerProxy != "" {
 			//if dockerProxy has value, generate a shell script`/script/docker-proxy.sh` which can be applied to set proxy settings
 			dpOpt := dockerproxy.NewDockerProxyOpt(sshPort, dockerProxy, x+1)
@@ -668,7 +666,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			}
 		}
 
-		// turn to opt
 		if runEtcdOnMemory {
 			logrus.Infof("Creating in-memory mount for etcd data on node %s", nodeName)
 			// err = prepareEtcdDataMount(nodeContainer(prefix, nodeName), etcdDataDir, etcdDataMountSize)

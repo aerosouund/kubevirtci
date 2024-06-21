@@ -59,7 +59,7 @@ func NewRun2Command() *cobra.Command {
 	run.Flags().String("container-org", "kubevirtci", "the organization at the registry to pull the container from")
 	run.Flags().String("container-suffix", "2403130317-a3e0778", "Override container suffix stored at the cli binary")
 	run.Flags().String("gpu", "", "pci address of a GPU to assign to a node")
-	run.Flags().StringArrayVar(&nvmeDisks, "nvme", []string{}, "size of the emulate NVMe disk to pass to the node")
+	run.Flags().StringArrayVar(&nvmeDisks, "nvme", []string{}, "size of the emulate NVMe disk to pass to the node") // todo: parse array of string var
 	run.Flags().StringArrayVar(&scsiDisks, "scsi", []string{}, "size of the emulate SCSI disk to pass to the node")
 	run.Flags().Bool("run-etcd-on-memory", false, "configure etcd to run on RAM memory, etcd data will not be persistent")
 	run.Flags().String("etcd-capacity", "512M", "set etcd data mount size.\nthis flag takes affect only when 'run-etcd-on-memory' is specified")
