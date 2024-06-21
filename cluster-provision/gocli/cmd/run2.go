@@ -119,6 +119,13 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 	utils.AppendUDPIfExplicit(portMap, utils.PortDNS, cmd.Flags(), "dns-port")
 
 	k8sVersion := args[0]
+	allowedK8sVersions := []string{"k8s-1.28", "k8s-1.29", "k8s-1.30"}
+	for _, v := range allowedK8sVersions {
+		if k8sVersion == v {
+			break
+		}
+		return fmt.Errorf("Invalid k8s version passed, please use one of k8s-1.28, k8s-1.29 or k8s-1.30")
+	}
 
 	containerRegistry, err := cmd.Flags().GetString("container-registry")
 	if err != nil {
