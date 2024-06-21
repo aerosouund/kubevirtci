@@ -20,6 +20,7 @@ type IstioOpt struct {
 	sshPort     uint16
 	cnaoEnabled bool
 	client      k8s.K8sDynamicClient
+	version     string
 }
 
 func NewIstioOpt(c k8s.K8sDynamicClient, sshPort uint16, cnaoEnabled bool) *IstioOpt {
@@ -27,6 +28,7 @@ func NewIstioOpt(c k8s.K8sDynamicClient, sshPort uint16, cnaoEnabled bool) *Isti
 		client:      c,
 		sshPort:     sshPort,
 		cnaoEnabled: cnaoEnabled,
+		version:     "1.15.0",
 	}
 }
 
@@ -38,7 +40,7 @@ func (o *IstioOpt) Exec() error {
 	}
 
 	cmds := []string{
-		"echo PATH=$ISTIO_BIN_DIR:$PATH >> /var/lib/kubevirtci/shared_vars.sh ",
+		"echo PATH=/opt/istio-" + o.version + "/bin:$PATH >> /var/lib/kubevirtci/shared_vars.sh",
 		"source /var/lib/kubevirtci/shared_vars.sh",
 		"istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
 	}
