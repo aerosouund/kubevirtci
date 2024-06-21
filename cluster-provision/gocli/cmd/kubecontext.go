@@ -1,15 +1,12 @@
 package cmd
 
 import (
-	"context"
 	"os"
 
-	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-	utils "kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
-	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/providers"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
@@ -27,47 +24,47 @@ func NewSetContextCommand() *cobra.Command {
 
 // still use the old method of reading the port but code the new one too
 func setKubeContext(cmd *cobra.Command, args []string) error {
-	// kp, err := providers.NewFromRunning(prefix)
+	prefix := args[0]
+	kp, err := providers.NewFromRunning(prefix)
+	if err != nil {
+		return err
+	}
+
+	// cli, err := client.NewClientWithOpts(client.FromEnv)
 	// if err != nil {
 	// 	return err
 	// }
 
-	prefix, err := cmd.Flags().GetString("prefix")
-	if err != nil {
-		return err
-	}
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return err
-	}
+	// containers, err := docker.GetPrefixedContainers(cli, prefix+"-dnsmasq")
+	// if err != nil {
+	// 	return err
+	// }
+	// if len(containers) == 0 {
+	// 	return fmt.Errorf("No provider is running with such prefix")
+	// }
 
-	containers, err := docker.GetPrefixedContainers(cli, prefix+"-dnsmasq")
-	if err != nil {
-		return err
-	}
+	// container, err := cli.ContainerInspect(context.Background(), containers[0].ID)
+	// if err != nil {
+	// 	return err
+	// }
 
-	container, err := cli.ContainerInspect(context.Background(), containers[0].ID)
-	if err != nil {
-		return err
-	}
+	// apiServerPort, err := utils.GetPublicPort(utils.PortAPI, container.NetworkSettings.Ports)
+	// if err != nil {
+	// 	return err
+	// }
 
-	apiServerPort, err := utils.GetPublicPort(utils.PortAPI, container.NetworkSettings.Ports)
-	if err != nil {
-		return err
-	}
+	// sshPort, err := utils.GetPublicPort(utils.PortSSH, container.NetworkSettings.Ports)
+	// if err != nil {
+	// 	return err
+	// }
 
-	sshPort, err := utils.GetPublicPort(utils.PortSSH, container.NetworkSettings.Ports)
-	if err != nil {
-		return err
-	}
-
-	err = sshutils.CopyRemoteFile(sshPort, "/etc/kubernetes/admin.conf", ".tempkubeconfig")
+	err = sshutils.CopyRemoteFile(kp.SSHPort, "/etc/kubernetes/admin.conf", ".tempkubeconfig")
 	if err != nil {
 		return err
 	}
 
 	// err = utils.CopyRemoteFile(kp.SSHPort, "/etc/kubernetes/admin.conf", ".tempkubeconfig")
-	conf, err := k8s.InitConfig(".tempkubeconfig", apiServerPort)
+	conf, err := k8s.InitConfig(".tempkubeconfig", kp.APIServerPort)
 	if err != nil {
 		return err
 	}
