@@ -157,7 +157,7 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 		panic(fmt.Sprintf("Failed to download cluster image %s, %s", clusterImage, err))
 
 	}
-	kp := providers.NewKubevirtProvider(k8sVersion, clusterImage, cli, opts...)
+	kp := providers.NewKubevirtProvider(k8sVersion, clusterImage, cli, opts)
 	err = kp.Start(ctx, cancel, portMap)
 	if err != nil {
 		return err

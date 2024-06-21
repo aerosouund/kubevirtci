@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -23,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
+	bindvfio "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/bind-vfio"
 	dockerproxy "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/docker-proxy"
 	etcdinmemory "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/etcd"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
@@ -34,7 +36,7 @@ import (
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
-func NewKubevirtProvider(k8sversion string, image string, cli *client.Client, options ...KubevirtProviderOption) *KubevirtProvider {
+func NewKubevirtProvider(k8sversion string, image string, cli *client.Client, options []KubevirtProviderOption) *KubevirtProvider {
 	kp := &KubevirtProvider{
 		Image:      image,
 		Version:    k8sversion,
@@ -287,6 +289,7 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 				return err
 			}
 			deviceMappings = dm
+			// kp.QemuArgs = fmt.Sprintf("%s -device vfio-pci,host=%s", kp.QemuArgs, gpuAddress)
 		}
 
 		if kp.EnableCeph {
@@ -331,9 +334,8 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			return err
 		}
 
-		// turn to opt
 		if kp.EnableFIPS {
-			if _, err := sshutils.JumpSSH(kp.SSHPort, 1, "fips-mode-setup --enable && ( ssh.sh sudo reboot || true )", true, true); err != nil {
+			if _, err := sshutils.JumpSSH(kp.SSHPort, x+1, "fips-mode-setup --enable && ( ssh.sh sudo reboot || true )", true, true); err != nil {
 				return err
 			}
 			err = kp.waitForVMToBeUp(kp.Version, nodeName)
@@ -345,16 +347,15 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 		// turn to opt
 		if kp.DockerProxy != "" {
 			//if dockerProxy has value, generate a shell script`/script/docker-proxy.sh` which can be applied to set proxy settings
-			proxyOpt := dockerproxy.NewDockerProxyOpt(kp.SSHPort, kp.DockerProxy, x)
+			proxyOpt := dockerproxy.NewDockerProxyOpt(kp.SSHPort, kp.DockerProxy, x+1)
 			if err := proxyOpt.Exec(); err != nil {
 				return err
 			}
 		}
 
-		// turn to opt
 		if kp.RunEtcdOnMemory {
 			logrus.Infof("Creating in-memory mount for etcd data on node %s", nodeName)
-			etcdOpt := etcdinmemory.NewEtcdInMemOpt(kp.SSHPort, x, kp.EtcdCapacity)
+			etcdOpt := etcdinmemory.NewEtcdInMemOpt(kp.SSHPort, x+1, kp.EtcdCapacity)
 			if err = etcdOpt.Exec(); err != nil {
 				return err
 			}
@@ -363,74 +364,58 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 		if kp.EnableRealtimeScheduler {
 			realtimeOpt := realtime.NewRealtimeOpt(kp.SSHPort, x+1)
 			if err := realtimeOpt.Exec(); err != nil {
-				panic(err)
+				return err
 			}
 		}
 
-		//check if we have a special provision script
-		if err != nil {
-			return fmt.Errorf("checking for matching provision script for node %s failed", nodeName)
+		// turn to opt
+		for _, s := range []string{"8086:2668", "8086:2415"} {
+			// move the VM sound cards to a vfio-pci driver to prepare for assignment
+			bindVfioOpt := bindvfio.NewBindVfioOpt(kp.SSHPort, x+1, s)
+			if err := bindVfioOpt.Exec(); err != nil {
+				return err
+			}
 		}
-		// turn to opt
-		// for _, s := range []string{"8086:2668", "8086:2415"} {
-		// 	// move the VM sound cards to a vfio-pci driver to prepare for assignment
-		// 	bindVfioOpt := bindvfio.NewBindVfioOpt(kp.SSHPort, x+1, s)
-		// 	if err := bindVfioOpt.Exec(); err != nil {
-		// 		return nil, err
-		// 	}
-		// 	// turn to opt
-		// 	// err = prepareDeviceForAssignment(kp.Docker, kp.nodeContainer(kp.Version, nodeName), s, "")
-		// 	// if err != nil {
-		// 	// 	return nil, err
-		// 	// }
-		// }
 
-		// turn to opt
 		if kp.SingleStack {
 			if _, err := sshutils.JumpSSH(kp.SSHPort, 1, "touch /home/vagrant/single_stack", true, true); err != nil {
 				return err
 			}
 		}
 
-		// turn to opt
 		if kp.EnableAudit {
 			if _, err := sshutils.JumpSSH(kp.SSHPort, 1, "touch /home/vagrant/enable_audit", true, true); err != nil {
 				return err
 			}
 		}
 
-		// turn to opt
 		if kp.EnablePSA {
 			psaOpt := psa.NewPsaOpt(kp.SSHPort)
 			if err := psaOpt.Exec(); err != nil {
 				return err
 			}
 		}
-		// todo: remove checking for scripts for node, just do different stuff at index 1
 		if x+1 == 1 {
 			n := node01.NewNode01Provisioner(uint16(kp.SSHPort))
 			err := n.Exec()
 			if err != nil {
-				panic(err)
+				return err
 			}
 		} else {
 			if kp.GPU != "" {
-				// move the assigned PCI device to a vfio-pci driver to prepare for assignment
-				// turn to opt
-				// err = kp.prepareDeviceForAssignment(kp.Docker, kp.nodeContainer(kp.Version, nodeName), "", kp.GPU)
-				// if err != nil {
-				// 	return nil, err
-				// }
+				gpuDeviceID, err := kp.getDevicePCIID(kp.GPU)
+				if err != nil {
+					return err
+				}
+				bindVfioOpt := bindvfio.NewBindVfioOpt(kp.SSHPort, x+1, gpuDeviceID)
+				if err := bindVfioOpt.Exec(); err != nil {
+					return err
+				}
 			}
 			n := nodeprovisioner.NewNodesProvisioner(kp.SSHPort, x+1)
-			err = n.Exec()
-			if err != nil {
-				panic(err)
+			if err = n.Exec(); err != nil {
+				return err
 			}
-		}
-
-		if err != nil {
-			return err
 		}
 
 		go func(id string) {
@@ -443,11 +428,11 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 }
 
 func (kp *KubevirtProvider) prepareDeviceMappings() ([]container.DeviceMapping, error) {
-	iommu_group, err := kp.getPCIDeviceIOMMUGroup(kp.GPU)
+	iommuGroup, err := kp.getPCIDeviceIOMMUGroup(kp.GPU)
 	if err != nil {
 		return nil, err
 	}
-	vfioDevice := fmt.Sprintf("/dev/vfio/%s", iommu_group)
+	vfioDevice := fmt.Sprintf("/dev/vfio/%s", iommuGroup)
 	return []container.DeviceMapping{
 		{
 			PathOnHost:        "/dev/vfio/vfio",
@@ -563,6 +548,25 @@ func (kp *KubevirtProvider) persistProvider() error {
 }
 
 // func (kp *KubevirtProvider) Stop() {}
+
+func (kp *KubevirtProvider) getDevicePCIID(pciAddress string) (string, error) {
+	file, err := os.Open(filepath.Join("/sys/bus/pci/devices", pciAddress, "uevent"))
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "PCI_ID") {
+			equal := strings.Index(line, "=")
+			value := strings.TrimSpace(line[equal+1:])
+			return strings.ToLower(value), nil
+		}
+	}
+	return "", fmt.Errorf("no pci_id is found")
+}
 
 func (kp *KubevirtProvider) getPCIDeviceIOMMUGroup(address string) (string, error) {
 	iommuLink := filepath.Join("/sys/bus/pci/devices", address, "iommu_group")

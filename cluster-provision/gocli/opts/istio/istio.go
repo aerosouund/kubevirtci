@@ -33,7 +33,6 @@ func NewIstioOpt(c k8s.K8sDynamicClient, sshPort uint16, cnaoEnabled bool) *Isti
 }
 
 func (o *IstioOpt) Exec() error {
-
 	err := o.client.Apply(f, "manifests/ns.yaml")
 	if err != nil {
 		return err

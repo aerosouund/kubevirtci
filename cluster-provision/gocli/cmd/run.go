@@ -659,6 +659,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 
 		// turn to opt
 		// TESTING
+		dockerProxy = "true"
 		if dockerProxy != "" {
 			//if dockerProxy has value, generate a shell script`/script/docker-proxy.sh` which can be applied to set proxy settings
 			dpOpt := dockerproxy.NewDockerProxyOpt(sshPort, dockerProxy, x+1)
@@ -697,10 +698,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		// turn to opt
 		for _, s := range soundcardPCIIDs {
 			// move the VM sound cards to a vfio-pci driver to prepare for assignment
-			// err = prepareDeviceForAssignment(cli, nodeContainer(prefix, nodeName), s, "")
-			// if err != nil {
-			// 	return err
-			// }
 			bindVfioOpt := bindvfio.NewBindVfioOpt(sshPort, x+1, s)
 			if err := bindVfioOpt.Exec(); err != nil {
 				return err
@@ -818,7 +815,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 	}
 
-	istioEnabled = true
 	if istioEnabled {
 		istioOpt := istio.NewIstioOpt(k8sClient, sshPort, cnaoEnabled)
 		if err := istioOpt.Exec(); err != nil {
