@@ -75,7 +75,7 @@ func setKubeContext(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	// todo: account for an existing kubeconfig
-	setenv := exec.Command("sh", "-c", "export KUBECONFIG=$KUBECONFIG:/tmp/.kubeconfig")
+	setenv := exec.Command("sh", "-c", "export KUBECONFIG=$KUBECONFIG:/tmp/.kubeconfig >> /etc/environment")
 	setenv.Stdout = os.Stdout
 	setenv.Stderr = os.Stderr
 	err = setenv.Run()
