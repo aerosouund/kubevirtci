@@ -77,6 +77,7 @@ func (o *NfsCsiOpt) Exec() error {
 	if err != nil {
 		return err
 	}
+	logrus.Info("NFS CSI installed successfully!")
 
 	return nil
 }
