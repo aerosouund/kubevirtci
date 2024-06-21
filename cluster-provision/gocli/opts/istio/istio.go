@@ -31,38 +31,38 @@ func NewIstioOpt(c k8s.K8sDynamicClient, sshPort uint16, cnaoEnabled bool) *Isti
 }
 
 func (o *IstioOpt) Exec() error {
-	istioCnao, err := f.ReadFile("manifests/istio-operator-with-cnao.cr.yaml")
-	if err != nil {
-		return err
-	}
-	istioWithoutCnao, err := f.ReadFile("manifests/istio-operator.cr.yaml")
-	if err != nil {
-		return err
-	}
-	err = o.client.Apply(f, "manifests/ns.yaml")
+
+	err := o.client.Apply(f, "manifests/ns.yaml")
 	if err != nil {
 		return err
 	}
 
 	cmds := []string{
 		"source /var/lib/kubevirtci/shared_vars.sh",
-		"/opt/istio-1.15.0/bin/istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
-		"echo '" + string(istioCnao) + "' | sudo tee /opt/istio/istio-operator-with-cnao.cr.yaml > /dev/null",
-		"echo '" + string(istioWithoutCnao) + "' | sudo tee /opt/istio/istio-operator.cr.yaml > /dev/null",
+		"istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
 	}
 	for _, cmd := range cmds {
 		if _, err := utils.JumpSSH(o.sshPort, 1, cmd, true, true); err != nil {
 			return err
 		}
 	}
-	confFile := "/opt/istio/istio-operator.cr.yaml"
-	if o.cnaoEnabled {
-		confFile = "/opt/istio/istio-operator-with-cnao.cr.yaml"
-	}
 
-	err = o.client.Apply(f, confFile)
-	if err != nil {
-		return err
+	if o.cnaoEnabled {
+		istioCnao, err := f.ReadFile("manifests/istio-operator-with-cnao.cr.yaml")
+		if err != nil {
+			return err
+		}
+		if err = o.client.Apply(f, string(istioCnao)); err != nil {
+			return err
+		}
+	} else {
+		istioWithoutCnao, err := f.ReadFile("manifests/istio-operator.cr.yaml")
+		if err != nil {
+			return err
+		}
+		if err = o.client.Apply(f, string(istioWithoutCnao)); err != nil {
+			return err
+		}
 	}
 
 	operator := &istiov1alpha1.IstioOperator{}
