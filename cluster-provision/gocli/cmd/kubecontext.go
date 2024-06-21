@@ -16,6 +16,7 @@ func NewSetContextCommand() *cobra.Command {
 		Use:   "set-context",
 		Short: "adds the cluster created by cluster up to your kube context for your own use",
 		RunE:  setKubeContext,
+		Args:  cobra.ExactArgs(1),
 	}
 
 	return ctxCmd
