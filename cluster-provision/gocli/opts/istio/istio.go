@@ -40,7 +40,7 @@ func (o *IstioOpt) Exec() error {
 	}
 
 	cmds := []string{
-		"echo PATH=/opt/istio-" + o.version + "/bin:$PATH >> /var/lib/kubevirtci/shared_vars.sh",
+		`echo 'export PATH=/opt/istio-` + o.version + `/bin:$PATH' >> /var/lib/kubevirtci/shared_vars.sh`,
 		"source /var/lib/kubevirtci/shared_vars.sh",
 		"istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
 	}
