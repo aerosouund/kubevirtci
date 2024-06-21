@@ -152,6 +152,10 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 	}
 	kp.Client = k8sClient
 
+	if err = kp.runK8sOpts(); err != nil {
+		return err
+	}
+
 	err = kp.persistProvider()
 	if err != nil {
 		return err
@@ -422,10 +426,6 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			if err = n.Exec(); err != nil {
 				return err
 			}
-		}
-
-		if err = kp.runK8sOpts(); err != nil {
-			return err
 		}
 
 		go func(id string) {
