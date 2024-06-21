@@ -6,9 +6,9 @@ import (
 )
 
 type KubevirtProvider struct {
-	Client  *k8s.K8sDynamicClient `json:"-"`
-	Docker  *client.Client        `json:"-"`
-	DNSMasq string                `json:"dnsmasq"`
+	Client  k8s.K8sDynamicClient `json:"-"`
+	Docker  *client.Client       `json:"-"`
+	DNSMasq string               `json:"dnsmasq"`
 
 	Version string `json:"version"`
 	Image   string `json:"image"`
@@ -43,6 +43,7 @@ type KubevirtProvider struct {
 	EnablePrometheus             bool     `flag:"enable-prometheus" json:"enable_prometheus"`
 	EnablePrometheusAlertManager bool     `flag:"enable-prometheus-alertmanager" json:"enable_prometheus_alertmanager"`
 	EnableGrafana                bool     `flag:"enable-grafana" json:"enable_grafana"`
+	EnableMultus                 bool     `flag:"deploy-multus" json:"deploy_multus"`
 	DockerProxy                  string   `flag:"docker-proxy" json:"docker_proxy"`
 	GPU                          string   `flag:"gpu" json:"gpu"`
 	NvmeDisks                    []string `flag:"nvme" json:"nvme"`
@@ -233,5 +234,9 @@ var FlagMap = map[string]FlagConfig{
 	"usb": {
 		FlagType:        "[]string",
 		ProviderOptFunc: WithUSBDisks,
+	},
+	"deploy-multus": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithMultus,
 	},
 }
