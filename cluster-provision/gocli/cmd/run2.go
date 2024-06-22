@@ -50,6 +50,8 @@ func NewRun2Command() *cobra.Command {
 	run.Flags().Bool("enable-cnao", false, "enable network extensions with istio")
 	run.Flags().Bool("deploy-cnao", false, "deploy the network extensions operator")
 	run.Flags().Bool("deploy-multus", false, "deploy multus")
+	run.Flags().Bool("deploy-cdi", true, "deploy cdi")
+	run.Flags().Bool("deploy-aaq", false, "deploy aaq")
 	run.Flags().Bool("enable-nfs-csi", false, "deploys nfs csi dynamic storage")
 	run.Flags().Bool("enable-prometheus", false, "deploys Prometheus operator")
 	run.Flags().Bool("enable-prometheus-alertmanager", false, "deploys Prometheus alertmanager")
