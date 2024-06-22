@@ -50,6 +50,7 @@ type KubevirtProvider struct {
 	GPU                          string   `flag:"gpu" json:"gpu"`
 	NvmeDisks                    []string `flag:"nvme" json:"nvme"`
 	ScsiDisks                    []string `flag:"scsi" json:"scsi"`
+	USBDisks                     []string `flag:"usb" json:"usb"`
 	RunEtcdOnMemory              bool     `flag:"run-etcd-on-memory" json:"run_etcd_on_memory"`
 	EtcdCapacity                 string   `flag:"etcd-capacity" json:"etcd_capacity"`
 	Hugepages2M                  uint     `flag:"hugepages-2m" json:"hugepages_2m"`
@@ -58,7 +59,6 @@ type KubevirtProvider struct {
 	EnablePSA                    bool     `flag:"enable-psa" json:"enable_psa"`
 	SingleStack                  bool     `flag:"single-stack" json:"single_stack"`
 	EnableAudit                  bool     `flag:"enable-audit" json:"enable_audit"`
-	USBDisks                     []string `flag:"usb" json:"usb"`
 }
 
 type KubevirtProviderOption func(c *KubevirtProvider)

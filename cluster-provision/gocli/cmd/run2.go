@@ -102,6 +102,12 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 				return err
 			}
 			opts = append(opts, flagConfig.ProviderOptFunc(flagVal))
+		case "[]string":
+			flagVal, err := flags.GetStringArray(flagName)
+			if err != nil {
+				return err
+			}
+			opts = append(opts, flagConfig.ProviderOptFunc(flagVal))
 		}
 	}
 
