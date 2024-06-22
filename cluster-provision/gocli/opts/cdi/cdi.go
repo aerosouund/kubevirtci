@@ -23,11 +23,11 @@ func NewCdiOpt(c k8s.K8sDynamicClient, cv string) *CdiOpt {
 }
 
 func (o *CdiOpt) Exec() error {
-	operator, err := f.ReadFile("operator.yaml")
+	operator, err := f.ReadFile("manifests/operator.yaml")
 	if err != nil {
 		return err
 	}
-	cr, err := f.ReadFile("cr.yaml")
+	cr, err := f.ReadFile("manifests/cr.yaml")
 	if err != nil {
 		return err
 	}
