@@ -1,8 +1,6 @@
 module kubevirt.io/kubevirtci/cluster-provision/gocli
 
-go 1.22.0
-
-toolchain go1.22.3
+go 1.22.3
 
 require (
 	github.com/aerosouund/rook/pkg/apis v0.0.0-20240521094914-cfb3faf99740
@@ -67,6 +65,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
 	github.com/openshift/api v0.0.0-20240301093301-ce10821dc999 // indirect
+	github.com/openshift/custom-resource-status v1.1.2 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rook/rook/pkg/apis v0.0.0-20231204200402-5287527732f7 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
@@ -88,6 +87,8 @@ require (
 	k8s.io/kube-openapi v0.0.0-20240322212309-b815d8309940 // indirect
 	k8s.io/pod-security-admission v0.22.0-beta.0.0.20240531013614-68e02f3c6735 // indirect
 	k8s.io/utils v0.0.0-20240310230437-4693a0247e57 // indirect
+	kubevirt.io/containerized-data-importer-api v1.59.1-0.20240610172909-253d5a6e7f95 // indirect
+	kubevirt.io/controller-lifecycle-operator-sdk/api v0.0.0-20220329064328-f3cc58c6ed90 // indirect
 	sigs.k8s.io/controller-runtime v0.17.2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
