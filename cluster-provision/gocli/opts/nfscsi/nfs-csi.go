@@ -38,8 +38,11 @@ func (o *NfsCsiOpt) Exec() error {
 	}
 
 	for _, manifest := range manifests {
-		err := o.client.Apply(f, manifest)
+		yamlData, err := f.ReadFile(manifest)
 		if err != nil {
+			return err
+		}
+		if err := o.client.Apply(yamlData); err != nil {
 			return err
 		}
 	}

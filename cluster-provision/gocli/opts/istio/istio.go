@@ -35,8 +35,11 @@ func NewIstioOpt(sc utils.SSHClient, c k8s.K8sDynamicClient, sshPort uint16, cna
 }
 
 func (o *IstioOpt) Exec() error {
-	err := o.client.Apply(f, "manifests/ns.yaml")
+	yamlData, err := f.ReadFile("manifests/ns.yaml")
 	if err != nil {
+		return err
+	}
+	if err := o.client.Apply(yamlData); err != nil {
 		return err
 	}
 
@@ -51,11 +54,19 @@ func (o *IstioOpt) Exec() error {
 	}
 
 	if o.cnaoEnabled {
-		if err = o.client.Apply(f, "manifests/istio-operator-with-cnao.cr.yaml"); err != nil {
+		yamlData, err := f.ReadFile("manifests/istio-operator-with-cnao.cr.yaml")
+		if err != nil {
+			return err
+		}
+		if err := o.client.Apply(yamlData); err != nil {
 			return err
 		}
 	} else {
-		if err = o.client.Apply(f, "manifests/istio-operator.cr.yaml"); err != nil {
+		yamlData, err := f.ReadFile("manifests/istio-operator.cr.yaml")
+		if err != nil {
+			return err
+		}
+		if err := o.client.Apply(yamlData); err != nil {
 			return err
 		}
 	}

@@ -297,6 +297,9 @@ github.com/opencontainers/runc/libcontainer/user
 # github.com/openshift/api v0.0.0-20240301093301-ce10821dc999
 ## explicit; go 1.21
 github.com/openshift/api/security/v1
+# github.com/openshift/custom-resource-status v1.1.2
+## explicit; go 1.12
+github.com/openshift/custom-resource-status/conditions/v1
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
@@ -755,6 +758,13 @@ k8s.io/utils/net
 k8s.io/utils/pointer
 k8s.io/utils/ptr
 k8s.io/utils/strings/slices
+# kubevirt.io/containerized-data-importer-api v1.59.1-0.20240610172909-253d5a6e7f95
+## explicit; go 1.22.3
+kubevirt.io/containerized-data-importer-api/pkg/apis/core
+kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1
+# kubevirt.io/controller-lifecycle-operator-sdk/api v0.0.0-20220329064328-f3cc58c6ed90
+## explicit; go 1.17
+kubevirt.io/controller-lifecycle-operator-sdk/api
 # sigs.k8s.io/controller-runtime v0.17.2
 ## explicit; go 1.21
 sigs.k8s.io/controller-runtime/pkg/scheme

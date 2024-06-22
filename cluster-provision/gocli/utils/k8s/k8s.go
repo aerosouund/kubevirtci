@@ -3,7 +3,6 @@ package utils
 import (
 	"bytes"
 	"context"
-	"embed"
 	"fmt"
 
 	cephv1 "github.com/aerosouund/rook/pkg/apis/ceph.rook.io/v1"
@@ -13,6 +12,7 @@ import (
 	istiov1alpha1 "istio.io/operator/pkg/apis"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	admissionv1 "k8s.io/pod-security-admission/admission/api/v1"
+	cdiv1beta1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +31,7 @@ import (
 
 type K8sDynamicClient interface {
 	Get(gvk schema.GroupVersionKind, name, ns string) (*unstructured.Unstructured, error)
-	Apply(fs embed.FS, manifestPath string) error
+	Apply(manifest []byte) error
 	List(gvk schema.GroupVersionKind, ns string) (*unstructured.UnstructuredList, error)
 	Delete(gvk schema.GroupVersionKind, name, ns string) error
 }
@@ -70,6 +70,7 @@ func NewDynamicClient(config *rest.Config) (*K8sDynamicClientImpl, error) {
 	monitoringv1.AddToScheme(s)
 	istiov1alpha1.AddToScheme(s)
 	admissionv1.AddToScheme(s)
+	cdiv1beta1.AddToScheme(s)
 
 	return &K8sDynamicClientImpl{
 		client: dynamicClient,
@@ -85,6 +86,7 @@ func NewTestClient(reactors ...ReactorConfig) K8sDynamicClient {
 	monitoringv1alpha1.AddToScheme(s)
 	monitoringv1.AddToScheme(s)
 	istiov1alpha1.AddToScheme(s)
+	cdiv1beta1.AddToScheme(s)
 
 	dynamicClient := fake.NewSimpleDynamicClient(s)
 	for _, r := range reactors {
@@ -131,13 +133,8 @@ func (c *K8sDynamicClientImpl) List(gvk schema.GroupVersionKind, ns string) (*un
 	return objs, nil
 }
 
-func (c *K8sDynamicClientImpl) Apply(fs embed.FS, manifestPath string) error {
-	yamlData, err := fs.ReadFile(manifestPath)
-	if err != nil {
-		return fmt.Errorf("Error reading YAML file: %v", err)
-
-	}
-	yamlDocs := bytes.Split(yamlData, []byte("---\n"))
+func (c *K8sDynamicClientImpl) Apply(manifest []byte) error {
+	yamlDocs := bytes.Split(manifest, []byte("---\n"))
 	for _, yamlDoc := range yamlDocs {
 		if len(yamlDoc) == 0 {
 			continue
@@ -168,7 +165,7 @@ func (c *K8sDynamicClientImpl) Apply(fs embed.FS, manifestPath string) error {
 			return fmt.Errorf("Error applying manifest: %v", err)
 		}
 
-		logrus.Infof("Object %v applied successfully from manifest %s!\n", obj.GetName(), manifestPath)
+		logrus.Infof("Object %v applied successfully\n", obj.GetName())
 	}
 
 	return nil
