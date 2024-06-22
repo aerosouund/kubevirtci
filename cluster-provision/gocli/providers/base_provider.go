@@ -24,7 +24,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
+	aaq "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/aaq"
 	bindvfio "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/bind-vfio"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/cdi"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/cnao"
 	dockerproxy "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/docker-proxy"
 	etcdinmemory "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/etcd"
@@ -590,6 +592,22 @@ func (kp *KubevirtProvider) getDevicePCIID(pciAddress string) (string, error) {
 
 // todo: write this as a map
 func (kp *KubevirtProvider) runK8sOpts() error {
+	if kp.CDI {
+		cdiOpt := cdi.NewCdiOpt(kp.Client, "") // todo: cdi version
+		if err := cdiOpt.Exec(); err != nil {
+			return err
+		}
+	}
+	if kp.AAQ {
+		if kp.Version == "k8s-1.30" {
+			aaqOPt := aaq.NewAaqOpt(kp.Client, "") // todo: aaq version
+			if err := aaqOPt.Exec(); err != nil {
+				return err
+			}
+		} else {
+			logrus.Info("AAQ was requested but kubernetes version is less than 1.30, skipping")
+		}
+	}
 	if kp.EnableCeph {
 		cephOpt := rookceph.NewCephOpt(kp.Client)
 		if err := cephOpt.Exec(); err != nil {

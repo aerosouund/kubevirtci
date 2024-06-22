@@ -47,6 +47,8 @@ type KubevirtProvider struct {
 	EnableGrafana                bool     `flag:"enable-grafana" json:"enable_grafana"`
 	EnableMultus                 bool     `flag:"deploy-multus" json:"deploy_multus"`
 	DockerProxy                  string   `flag:"docker-proxy" json:"docker_proxy"`
+	AAQ                          bool     `flag:"deploy-aaq" json:"deploy_aaq"`
+	CDI                          bool     `flag:"deploy-cdi" json:"deploy_cdi"`
 	GPU                          string   `flag:"gpu" json:"gpu"`
 	NvmeDisks                    []string `flag:"nvme" json:"nvme"`
 	ScsiDisks                    []string `flag:"scsi" json:"scsi"`
@@ -240,5 +242,13 @@ var FlagMap = map[string]FlagConfig{
 	"deploy-multus": {
 		FlagType:        "bool",
 		ProviderOptFunc: WithMultus,
+	},
+	"deploy-aaq": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithAAQ,
+	},
+	"deploy-cdi": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithCDI,
 	},
 }

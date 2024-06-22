@@ -178,6 +178,16 @@ func WithMultus(multus interface{}) KubevirtProviderOption {
 		c.EnableMultus = multus.(bool)
 	}
 }
+func WithAAQ(aaq interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.AAQ = aaq.(bool)
+	}
+}
+func WithCDI(cdi interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.CDI = cdi.(bool)
+	}
+}
 
 func WithDockerProxy(dockerProxy interface{}) KubevirtProviderOption {
 	return func(c *KubevirtProvider) {
