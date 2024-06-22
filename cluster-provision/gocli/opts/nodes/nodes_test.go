@@ -11,7 +11,7 @@ import (
 func TestNodeProvisionerOpt(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
 	opt := NewNodesProvisioner(sshClient, 2020, 1)
-	cgroupv2, _ := f.ReadFile("conf/00-cgroupv2.conf")
+	cgroupv2, err := f.ReadFile("conf/00-cgroupv2.conf")
 
 	cmds := []string{
 		"source /var/lib/kubevirtci/shared_vars.sh",
@@ -30,6 +30,6 @@ func TestNodeProvisionerOpt(t *testing.T) {
 		sshClient.EXPECT().JumpSSH(opt.sshPort, 1, cmd, true, true)
 	}
 
-	err := opt.Exec()
+	err = opt.Exec()
 	assert.NoError(t, err)
 }

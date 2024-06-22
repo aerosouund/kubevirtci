@@ -13,9 +13,15 @@ func TestRealTimeOpt(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
 	opt := NewEtcdInMemOpt(sshClient, 2020, 1, "512M")
 
-	sshClient.EXPECT().JumpSSH(opt.sshPort, 1, "mkdir -p /var/lib/etcd", true, true)
-	sshClient.EXPECT().JumpSSH(opt.sshPort, 1, "test -d /var/lib/etcd", true, true)
-	sshClient.EXPECT().JumpSSH(opt.sshPort, 1, fmt.Sprintf("mount -t tmpfs -o size=%s tmpfs /var/lib/etcd", opt.etcdSize), true, true)
+	cmds := []string{
+		"mkdir -p /var/lib/etcd",
+		"test -d /var/lib/etcd",
+		fmt.Sprintf("mount -t tmpfs -o size=%s tmpfs /var/lib/etcd", opt.etcdSize),
+	}
+	for _, cmd := range cmds {
+		sshClient.EXPECT().JumpSSH(opt.sshPort, opt.nodeIdx, cmd, true, true)
+	}
+
 	err := opt.Exec()
 	assert.NoError(t, err)
 }

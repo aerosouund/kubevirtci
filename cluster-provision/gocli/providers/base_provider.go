@@ -562,7 +562,7 @@ func (kp *KubevirtProvider) persistProvider() error {
 	}
 	escapedJson := strconv.Quote(string(providerJson))
 
-	_, err = docker.Exec(kp.Docker, kp.DNSMasq, []string{"/bin/bash", "-c", fmt.Sprintf("echo %s | tee /provider.json", string(escapedJson))}, os.Stdout)
+	_, err = docker.Exec(kp.Docker, kp.DNSMasq, []string{"/bin/bash", "-c", fmt.Sprintf("echo %s | tee /provider.json > /dev/null", string(escapedJson))}, os.Stdout)
 	if err != nil {
 		return err
 	}
