@@ -21,14 +21,16 @@ type IstioOpt struct {
 	cnaoEnabled bool
 	client      k8s.K8sDynamicClient
 	version     string
+	sshClient   utils.SSHClient
 }
 
-func NewIstioOpt(c k8s.K8sDynamicClient, sshPort uint16, cnaoEnabled bool) *IstioOpt {
+func NewIstioOpt(sc utils.SSHClient, c k8s.K8sDynamicClient, sshPort uint16, cnaoEnabled bool) *IstioOpt {
 	return &IstioOpt{
 		client:      c,
 		sshPort:     sshPort,
 		cnaoEnabled: cnaoEnabled,
 		version:     "1.15.0",
+		sshClient:   sc,
 	}
 }
 
@@ -43,7 +45,7 @@ func (o *IstioOpt) Exec() error {
 		"PATH=/opt/istio-" + o.version + "/bin:$PATH istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
 	}
 	for _, cmd := range cmds {
-		if _, err := utils.JumpSSH(o.sshPort, 1, cmd, true, true); err != nil {
+		if _, err := o.sshClient.JumpSSH(o.sshPort, 1, cmd, true, true); err != nil {
 			return err
 		}
 	}

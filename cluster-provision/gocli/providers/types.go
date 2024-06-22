@@ -3,12 +3,14 @@ package providers
 import (
 	"github.com/docker/docker/client"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
+	utils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
 type KubevirtProvider struct {
-	Client  k8s.K8sDynamicClient `json:"-"`
-	Docker  *client.Client       `json:"-"`
-	DNSMasq string               `json:"dnsmasq"`
+	Client    k8s.K8sDynamicClient `json:"-"`
+	Docker    *client.Client       `json:"-"`
+	SSHClient utils.SSHClient      `json:"-"`
+	DNSMasq   string               `json:"dnsmasq"`
 
 	Version string `json:"version"`
 	Image   string `json:"image"`

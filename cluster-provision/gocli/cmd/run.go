@@ -342,6 +342,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	if err != nil {
 		return err
 	}
+	sshClient := &sshutils.SSHClientImpl{}
 
 	b := context.Background()
 	ctx, cancel := context.WithCancel(b)
@@ -635,7 +636,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 
-		rootkey := rootkey.NewRootKey(sshPort, x+1)
+		rootkey := rootkey.NewRootKey(sshClient, sshPort, x+1)
 		if err = rootkey.Exec(); err != nil {
 			return err
 		}
@@ -673,14 +674,14 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			// 	logrus.Errorf("failed to create mount for etcd data on node %s: %v", nodeName, err)
 			// 	return err
 			// }
-			etcd := etcdinmemory.NewEtcdInMemOpt(sshPort, x+1, etcdDataMountSize)
+			etcd := etcdinmemory.NewEtcdInMemOpt(sshClient, sshPort, x+1, etcdDataMountSize)
 			if err := etcd.Exec(); err != nil {
 				return err
 			}
 		}
 
 		if realtimeSchedulingEnabled {
-			realtimeOpt := realtime.NewRealtimeOpt(sshPort, x+1)
+			realtimeOpt := realtime.NewRealtimeOpt(sshClient, sshPort, x+1)
 			if err := realtimeOpt.Exec(); err != nil {
 				panic(err)
 			}
@@ -695,7 +696,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		// turn to opt
 		for _, s := range soundcardPCIIDs {
 			// move the VM sound cards to a vfio-pci driver to prepare for assignment
-			bindVfioOpt := bindvfio.NewBindVfioOpt(sshPort, x+1, s)
+			bindVfioOpt := bindvfio.NewBindVfioOpt(sshClient, sshPort, x+1, s)
 			if err := bindVfioOpt.Exec(); err != nil {
 				return err
 			}
@@ -729,14 +730,14 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 
 		// turn to opt
 		if psaEnabled {
-			psaOpt := psa.NewPsaOpt(sshPort)
+			psaOpt := psa.NewPsaOpt(sshClient, sshPort)
 			if err := psaOpt.Exec(); err != nil {
 				return err
 			}
 		}
 		// todo: remove checking for scripts for node, just do different stuff at index 1
 		if success {
-			n := node01.NewNode01Provisioner(sshPort)
+			n := node01.NewNode01Provisioner(sshClient, sshPort)
 			err := n.Exec()
 			if err != nil {
 				panic(err)
@@ -747,12 +748,12 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 				if err != nil {
 					return err
 				}
-				bindVfioOpt := bindvfio.NewBindVfioOpt(sshPort, x+1, gpuDeviceID)
+				bindVfioOpt := bindvfio.NewBindVfioOpt(sshClient, sshPort, x+1, gpuDeviceID)
 				if err := bindVfioOpt.Exec(); err != nil {
 					return err
 				}
 			}
-			n := nodeprovisioner.NewNodesProvisioner(sshPort, x+1)
+			n := nodeprovisioner.NewNodesProvisioner(sshClient, sshPort, x+1)
 			err = n.Exec()
 			if err != nil {
 				panic(err)
@@ -769,7 +770,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}(node.ID)
 	}
 
-	err = sshutils.CopyRemoteFile(sshPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
+	err = sshClient.CopyRemoteFile(sshPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
 	if err != nil {
 		panic(err)
 	}
@@ -813,7 +814,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	if istioEnabled {
-		istioOpt := istio.NewIstioOpt(k8sClient, sshPort, cnaoEnabled)
+		istioOpt := istio.NewIstioOpt(sshClient, k8sClient, sshPort, cnaoEnabled)
 		if err := istioOpt.Exec(); err != nil {
 			panic(err)
 		}
