@@ -17,12 +17,12 @@ type DockerProxyOpt struct {
 	sshClient utils.SSHClient
 }
 
-func NewDockerProxyOpt(port uint16, proxy string, idx int) *DockerProxyOpt {
+func NewDockerProxyOpt(sc utils.SSHClient, port uint16, proxy string, idx int) *DockerProxyOpt {
 	return &DockerProxyOpt{
 		sshPort:   port,
 		proxy:     proxy,
 		nodeIdx:   idx,
-		sshClient: &utils.SSHClientImpl{},
+		sshClient: sc,
 	}
 }
 
