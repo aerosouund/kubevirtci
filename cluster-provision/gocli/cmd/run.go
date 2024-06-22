@@ -75,9 +75,6 @@ EOF
 
 var soundcardPCIIDs = []string{"8086:2668", "8086:2415"}
 var cli *client.Client
-var nvmeDisks []string
-var scsiDisks []string
-var usbDisks []string
 
 //go:embed scripts/*
 var f embed.FS
