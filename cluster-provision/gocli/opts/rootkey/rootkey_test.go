@@ -11,10 +11,10 @@ import (
 func TestRootKey(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
 	opt := NewRootKey(sshClient, 2020, 1)
-	key, _ := f.ReadFile("conf/vagrant.pub")
+	key, err := f.ReadFile("conf/vagrant.pub")
 
 	sshClient.EXPECT().JumpSSH(opt.sshPort, opt.nodeIdx, "echo '"+string(key)+"' | sudo tee /root/.ssh/authorized_keys > /dev/null", false, false)
 	sshClient.EXPECT().JumpSSH(opt.sshPort, opt.nodeIdx, "sudo service sshd restart", false, false)
-	err := opt.Exec()
+	err = opt.Exec()
 	assert.NoError(t, err)
 }

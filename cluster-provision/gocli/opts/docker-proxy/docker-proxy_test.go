@@ -12,7 +12,7 @@ import (
 func TestNodeProvisionerOpt(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
 	opt := NewDockerProxyOpt(sshClient, 2020, "test-proxy", 1)
-	override, _ := f.ReadFile("conf/override.conf")
+	override, err := f.ReadFile("conf/override.conf")
 	script := strings.ReplaceAll(string(override), "$PROXY", opt.proxy)
 
 	cmds := []string{
@@ -27,6 +27,6 @@ func TestNodeProvisionerOpt(t *testing.T) {
 		sshClient.EXPECT().JumpSSH(opt.sshPort, 1, cmd, true, true)
 	}
 
-	err := opt.Exec()
+	err = opt.Exec()
 	assert.NoError(t, err)
 }

@@ -31,10 +31,9 @@ import (
 func TestNodeProvisionerOpt(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
 	opt := NewNode01Provisioner(sshClient, 2020)
-	cgroupv2, _ := f.ReadFile("conf/00-cgroupv2.conf")
 
-	advAudit, _ := f.ReadFile("conf/adv-audit.yaml")
-
+	cgroupv2, err := f.ReadFile("conf/00-cgroupv2.conf")
+	advAudit, err := f.ReadFile("conf/adv-audit.yaml")
 	cmds := []string{
 		`[ -f /home/vagrant/single_stack ] && export kubeadm_conf="/etc/kubernetes/kubeadm_ipv6.conf" && export cni_manifest="/provision/cni_ipv6.yaml" || { export kubeadm_conf="/etc/kubernetes/kubeadm.conf"; export cni_manifest="/provision/cni.yaml"; }`,
 		`if [ -f /home/vagrant/enable_audit ]; then echo '` + string(advAudit) + `' | tee /etc/kubernetes/audit/adv-audit.yaml > /dev/null; fi`,
@@ -58,6 +57,6 @@ func TestNodeProvisionerOpt(t *testing.T) {
 		sshClient.EXPECT().JumpSSH(opt.sshPort, 1, cmd, true, true)
 	}
 
-	err := opt.Exec()
+	err = opt.Exec()
 	assert.NoError(t, err)
 }
