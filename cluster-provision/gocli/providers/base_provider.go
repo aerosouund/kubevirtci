@@ -42,13 +42,18 @@ import (
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
-func NewKubevirtProvider(k8sversion string, image string, cli *client.Client, options []KubevirtProviderOption, sshClient sshutils.SSHClient) *KubevirtProvider {
+func NewKubevirtProvider(k8sversion string, image string, cli *client.Client,
+	options []KubevirtProviderOption,
+	sshClient sshutils.SSHClient,
+	nd, sd, ud []string) *KubevirtProvider {
 	kp := &KubevirtProvider{
-		Image:      image,
-		Version:    k8sversion,
-		Background: true,
-		Docker:     cli,
-		SSHClient:  sshClient,
+		Image:     image,
+		Version:   k8sversion,
+		Docker:    cli,
+		SSHClient: sshClient,
+		NvmeDisks: nd,
+		ScsiDisks: sd,
+		USBDisks:  ud,
 	}
 
 	for _, option := range options {

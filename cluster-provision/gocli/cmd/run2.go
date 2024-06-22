@@ -15,6 +15,8 @@ import (
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
+var nvmeDisks, scsiDisks, usbDisks []string
+
 func NewRun2Command() *cobra.Command {
 	run := &cobra.Command{
 		Use:   "run2",
@@ -29,7 +31,7 @@ func NewRun2Command() *cobra.Command {
 	run.Flags().UintP("secondary-nics", "", 0, "number of secondary nics to add")
 	run.Flags().String("qemu-args", "", "additional qemu args to pass through to the nodes")
 	run.Flags().String("kernel-args", "", "additional kernel args to pass through to the nodes")
-	run.Flags().BoolP("background", "b", false, "go to background after nodes are up")
+	run.Flags().BoolP("background", "b", true, "go to background after nodes are up")
 	run.Flags().BoolP("reverse", "r", false, "revert node startup order")
 	run.Flags().Bool("random-ports", true, "expose all ports on random localhost ports")
 	run.Flags().Bool("slim", false, "use the slim flavor")
@@ -169,7 +171,8 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 		panic(fmt.Sprintf("Failed to download cluster image %s, %s", clusterImage, err))
 
 	}
-	kp := providers.NewKubevirtProvider(k8sVersion, clusterImage, cli, opts, &sshutils.SSHClientImpl{})
+	kp := providers.NewKubevirtProvider(k8sVersion, clusterImage, cli, opts, &sshutils.SSHClientImpl{}, nvmeDisks, scsiDisks, usbDisks)
+
 	err = kp.Start(ctx, cancel, portMap)
 	if err != nil {
 		return err
