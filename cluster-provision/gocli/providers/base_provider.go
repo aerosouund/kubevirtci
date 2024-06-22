@@ -42,12 +42,13 @@ import (
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
-func NewKubevirtProvider(k8sversion string, image string, cli *client.Client, options []KubevirtProviderOption) *KubevirtProvider {
+func NewKubevirtProvider(k8sversion string, image string, cli *client.Client, options []KubevirtProviderOption, sshClient sshutils.SSHClient) *KubevirtProvider {
 	kp := &KubevirtProvider{
 		Image:      image,
 		Version:    k8sversion,
 		Background: true,
 		Docker:     cli,
+		SSHClient:  sshClient,
 	}
 
 	for _, option := range options {
@@ -80,6 +81,7 @@ func NewFromRunning(dnsmasqPrefix string) (*KubevirtProvider, error) {
 	if err != nil {
 		return nil, err
 	}
+	kp.SSHClient = &sshutils.SSHClientImpl{}
 
 	return kp, nil
 }
@@ -142,7 +144,7 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 		return err
 	}
 
-	err = sshutils.CopyRemoteFile(kp.SSHPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
+	err = kp.SSHClient.CopyRemoteFile(kp.SSHPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
 	if err != nil {
 		panic(err)
 	}
@@ -305,7 +307,7 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 				return err
 			}
 			deviceMappings = dm
-			// kp.QemuArgs = fmt.Sprintf("%s -device vfio-pci,host=%s", kp.QemuArgs, gpuAddress)
+			qemuCMD = fmt.Sprintf("%s -device vfio-pci,host=%s", qemuCMD, kp.GPU)
 		}
 
 		if kp.EnableCeph {
@@ -345,13 +347,13 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			return err
 		}
 
-		rootkey := rootkey.NewRootKey(kp.SSHPort, x+1)
+		rootkey := rootkey.NewRootKey(kp.SSHClient, kp.SSHPort, x+1)
 		if err = rootkey.Exec(); err != nil {
 			return err
 		}
 
 		if kp.EnableFIPS {
-			if _, err := sshutils.JumpSSH(kp.SSHPort, x+1, "fips-mode-setup --enable && ( ssh.sh sudo reboot || true )", true, true); err != nil {
+			if _, err := kp.SSHClient.JumpSSH(kp.SSHPort, x+1, "fips-mode-setup --enable && ( ssh.sh sudo reboot || true )", true, true); err != nil {
 				return err
 			}
 			err = kp.waitForVMToBeUp(kp.Version, nodeName)
@@ -362,7 +364,6 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 
 		// turn to opt
 		if kp.DockerProxy != "" {
-			//if dockerProxy has value, generate a shell script`/script/docker-proxy.sh` which can be applied to set proxy settings
 			proxyOpt := dockerproxy.NewDockerProxyOpt(kp.SSHPort, kp.DockerProxy, x+1)
 			if err := proxyOpt.Exec(); err != nil {
 				return err
@@ -371,14 +372,14 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 
 		if kp.RunEtcdOnMemory {
 			logrus.Infof("Creating in-memory mount for etcd data on node %s", nodeName)
-			etcdOpt := etcdinmemory.NewEtcdInMemOpt(kp.SSHPort, x+1, kp.EtcdCapacity)
+			etcdOpt := etcdinmemory.NewEtcdInMemOpt(kp.SSHClient, kp.SSHPort, x+1, kp.EtcdCapacity)
 			if err = etcdOpt.Exec(); err != nil {
 				return err
 			}
 		}
 
 		if kp.EnableRealtimeScheduler {
-			realtimeOpt := realtime.NewRealtimeOpt(kp.SSHPort, x+1)
+			realtimeOpt := realtime.NewRealtimeOpt(kp.SSHClient, kp.SSHPort, x+1)
 			if err := realtimeOpt.Exec(); err != nil {
 				return err
 			}
@@ -387,32 +388,32 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 		// turn to opt
 		for _, s := range []string{"8086:2668", "8086:2415"} {
 			// move the VM sound cards to a vfio-pci driver to prepare for assignment
-			bindVfioOpt := bindvfio.NewBindVfioOpt(kp.SSHPort, x+1, s)
+			bindVfioOpt := bindvfio.NewBindVfioOpt(kp.SSHClient, kp.SSHPort, x+1, s)
 			if err := bindVfioOpt.Exec(); err != nil {
 				return err
 			}
 		}
 
 		if kp.SingleStack {
-			if _, err := sshutils.JumpSSH(kp.SSHPort, 1, "touch /home/vagrant/single_stack", true, true); err != nil {
+			if _, err := kp.SSHClient.JumpSSH(kp.SSHPort, 1, "touch /home/vagrant/single_stack", true, true); err != nil {
 				return err
 			}
 		}
 
 		if kp.EnableAudit {
-			if _, err := sshutils.JumpSSH(kp.SSHPort, 1, "touch /home/vagrant/enable_audit", true, true); err != nil {
+			if _, err := kp.SSHClient.JumpSSH(kp.SSHPort, 1, "touch /home/vagrant/enable_audit", true, true); err != nil {
 				return err
 			}
 		}
 
 		if kp.EnablePSA {
-			psaOpt := psa.NewPsaOpt(kp.SSHPort)
+			psaOpt := psa.NewPsaOpt(kp.SSHClient, kp.SSHPort)
 			if err := psaOpt.Exec(); err != nil {
 				return err
 			}
 		}
 		if x+1 == 1 {
-			n := node01.NewNode01Provisioner(uint16(kp.SSHPort))
+			n := node01.NewNode01Provisioner(kp.SSHClient, uint16(kp.SSHPort))
 			err := n.Exec()
 			if err != nil {
 				return err
@@ -423,12 +424,12 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 				if err != nil {
 					return err
 				}
-				bindVfioOpt := bindvfio.NewBindVfioOpt(kp.SSHPort, x+1, gpuDeviceID)
+				bindVfioOpt := bindvfio.NewBindVfioOpt(kp.SSHClient, kp.SSHPort, x+1, gpuDeviceID)
 				if err := bindVfioOpt.Exec(); err != nil {
 					return err
 				}
 			}
-			n := nodeprovisioner.NewNodesProvisioner(kp.SSHPort, x+1)
+			n := nodeprovisioner.NewNodesProvisioner(kp.SSHClient, kp.SSHPort, x+1)
 			if err = n.Exec(); err != nil {
 				return err
 			}
@@ -563,8 +564,6 @@ func (kp *KubevirtProvider) persistProvider() error {
 	return nil
 }
 
-// func (kp *KubevirtProvider) Stop() {}
-
 func (kp *KubevirtProvider) getDevicePCIID(pciAddress string) (string, error) {
 	file, err := os.Open(filepath.Join("/sys/bus/pci/devices", pciAddress, "uevent"))
 	if err != nil {
@@ -615,7 +614,7 @@ func (kp *KubevirtProvider) runK8sOpts() error {
 	}
 
 	if kp.EnableIstio {
-		istioOpt := istio.NewIstioOpt(kp.Client, kp.SSHPort, kp.EnableCNAO)
+		istioOpt := istio.NewIstioOpt(kp.SSHClient, kp.Client, kp.SSHPort, kp.EnableCNAO)
 		if err := istioOpt.Exec(); err != nil {
 			return err
 		}

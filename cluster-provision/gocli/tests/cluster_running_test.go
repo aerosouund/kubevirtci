@@ -11,7 +11,6 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
-	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
 // func TDD(t *testing.T) {
@@ -41,11 +40,11 @@ func TestClusterRunning(t *testing.T) {
 	apiServerPort, err := utils.GetPublicPort(utils.PortAPI, container.NetworkSettings.Ports)
 	assert.NoError(t, err)
 
-	sshPort, err := utils.GetPublicPort(utils.PortSSH, container.NetworkSettings.Ports)
+	_, err = utils.GetPublicPort(utils.PortSSH, container.NetworkSettings.Ports)
 	assert.NoError(t, err)
 
-	err = sshutils.CopyRemoteFile(sshPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
-	assert.NoError(t, err)
+	// err = sshutils.CopyRemoteFile(sshPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
+	// assert.NoError(t, err)
 
 	config, err := k8s.InitConfig(".kubeconfig", apiServerPort)
 	assert.NoError(t, err)

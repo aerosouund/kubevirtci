@@ -9,7 +9,6 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/providers"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
-	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
 func NewSetContextCommand() *cobra.Command {
@@ -31,7 +30,7 @@ func setKubeContext(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = sshutils.CopyRemoteFile(kp.SSHPort, "/etc/kubernetes/admin.conf", ".tempkubeconfig")
+	err = kp.SSHClient.CopyRemoteFile(kp.SSHPort, "/etc/kubernetes/admin.conf", ".tempkubeconfig")
 	if err != nil {
 		return err
 	}

@@ -7,19 +7,21 @@ import (
 )
 
 type EtcdInMemOpt struct {
-	sshPort  uint16
-	nodeIdx  int
-	etcdSize string
+	sshPort   uint16
+	nodeIdx   int
+	etcdSize  string
+	sshClient utils.SSHClient
 }
 
-func NewEtcdInMemOpt(p uint16, idx int, s string) *EtcdInMemOpt {
+func NewEtcdInMemOpt(sc utils.SSHClient, p uint16, idx int, s string) *EtcdInMemOpt {
 	if s == "" {
 		s = "512M"
 	}
 	return &EtcdInMemOpt{
-		sshPort:  p,
-		nodeIdx:  idx,
-		etcdSize: s,
+		sshPort:   p,
+		nodeIdx:   idx,
+		etcdSize:  s,
+		sshClient: sc,
 	}
 }
 
@@ -30,7 +32,7 @@ func (o *EtcdInMemOpt) Exec() error {
 		fmt.Sprintf("mount -t tmpfs -o size=%s tmpfs /var/lib/etcd", o.etcdSize),
 	}
 	for _, cmd := range cmds {
-		if _, err := utils.JumpSSH(o.sshPort, o.nodeIdx, cmd, true, true); err != nil {
+		if _, err := o.sshClient.JumpSSH(o.sshPort, o.nodeIdx, cmd, true, true); err != nil {
 			return err
 		}
 	}

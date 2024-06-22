@@ -9,21 +9,23 @@ import (
 )
 
 type BindVfioOpt struct {
-	sshPort uint16
-	nodeIdx int
-	pciID   string
+	sshPort   uint16
+	nodeIdx   int
+	pciID     string
+	sshClient utils.SSHClient
 }
 
-func NewBindVfioOpt(sshPort uint16, nodeIdx int, id string) *BindVfioOpt {
+func NewBindVfioOpt(sshClient utils.SSHClient, sshPort uint16, nodeIdx int, id string) *BindVfioOpt {
 	return &BindVfioOpt{
-		sshPort: sshPort,
-		nodeIdx: nodeIdx,
-		pciID:   id,
+		sshPort:   sshPort,
+		nodeIdx:   nodeIdx,
+		pciID:     id,
+		sshClient: sshClient,
 	}
 }
 
 func (o *BindVfioOpt) Exec() error {
-	addr, err := utils.JumpSSH(o.sshPort, o.nodeIdx, "lspci -D -d "+o.pciID, true, false)
+	addr, err := o.sshClient.JumpSSH(o.sshPort, o.nodeIdx, "lspci -D -d "+o.pciID, true, false)
 	if err != nil {
 		return err
 	}
@@ -34,21 +36,21 @@ func (o *BindVfioOpt) Exec() error {
 	driverPath := devSysfsPath + "/driver"
 	driverOverride := devSysfsPath + "/driver_override"
 
-	driver, err := utils.JumpSSH(o.sshPort, o.nodeIdx, "readlink "+driverPath+" | awk -F'/' '{print $NF}'", true, false)
+	driver, err := o.sshClient.JumpSSH(o.sshPort, o.nodeIdx, "readlink "+driverPath+" | awk -F'/' '{print $NF}'", true, false)
 	if err != nil {
 		return err
 	}
 	driver = strings.TrimSuffix(driver, "\n")
 
-	if _, err := utils.JumpSSH(o.sshPort, o.nodeIdx, "modprobe -i vfio-pci", true, false); err != nil {
+	if _, err := o.sshClient.JumpSSH(o.sshPort, o.nodeIdx, "modprobe -i vfio-pci", true, false); err != nil {
 		return fmt.Errorf("Error loading vfio-pci module: %v", err)
 	}
 
 	for i := 0; i < 10; i++ {
-		if _, err := utils.JumpSSH(o.sshPort, o.nodeIdx, "ls /sys/bus/pci/drivers/vfio-pci", true, false); err != nil {
+		if _, err := o.sshClient.JumpSSH(o.sshPort, o.nodeIdx, "ls /sys/bus/pci/drivers/vfio-pci", true, false); err != nil {
 			fmt.Println("module not loaded properly, sleeping 1 second and trying again")
 			time.Sleep(time.Second * 1)
-			utils.JumpSSH(o.sshPort, o.nodeIdx, "modprobe -i vfio-pci", true, false)
+			o.sshClient.JumpSSH(o.sshPort, o.nodeIdx, "modprobe -i vfio-pci", true, false)
 		} else {
 			break
 		}
@@ -61,7 +63,7 @@ func (o *BindVfioOpt) Exec() error {
 	}
 
 	for _, cmd := range cmds {
-		if _, err := utils.JumpSSH(o.sshPort, 1, cmd, true, true); err != nil {
+		if _, err := o.sshClient.JumpSSH(o.sshPort, 1, cmd, true, true); err != nil {
 			return err
 		}
 	}

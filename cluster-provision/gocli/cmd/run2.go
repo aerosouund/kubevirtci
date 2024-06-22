@@ -12,6 +12,7 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/providers"
+	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
 func NewRun2Command() *cobra.Command {
@@ -162,7 +163,7 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 		panic(fmt.Sprintf("Failed to download cluster image %s, %s", clusterImage, err))
 
 	}
-	kp := providers.NewKubevirtProvider(k8sVersion, clusterImage, cli, opts)
+	kp := providers.NewKubevirtProvider(k8sVersion, clusterImage, cli, opts, &sshutils.SSHClientImpl{})
 	err = kp.Start(ctx, cancel, portMap)
 	if err != nil {
 		return err
