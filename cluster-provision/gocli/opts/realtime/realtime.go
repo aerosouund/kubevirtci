@@ -23,7 +23,7 @@ func (o *RealtimeOpt) Exec() error {
 	}
 
 	for _, cmd := range cmds {
-		if _, err := o.sshClient.JumpSSH(o.sshPort, 1, cmd, true, true); err != nil {
+		if _, err := o.sshClient.JumpSSH(o.sshPort, o.nodeIdx, cmd, true, true); err != nil {
 			return err
 		}
 	}

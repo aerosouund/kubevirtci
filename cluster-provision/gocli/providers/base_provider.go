@@ -364,7 +364,7 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 
 		// turn to opt
 		if kp.DockerProxy != "" {
-			proxyOpt := dockerproxy.NewDockerProxyOpt(kp.SSHPort, kp.DockerProxy, x+1)
+			proxyOpt := dockerproxy.NewDockerProxyOpt(kp.SSHClient, kp.SSHPort, kp.DockerProxy, x+1)
 			if err := proxyOpt.Exec(); err != nil {
 				return err
 			}
