@@ -135,11 +135,13 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 
 	k8sVersion := args[0]
 	allowedK8sVersions := []string{"k8s-1.28", "k8s-1.29", "k8s-1.30"}
+	var validVersion bool
 	for _, v := range allowedK8sVersions {
-		fmt.Println(v)
 		if k8sVersion == v {
-			break
+			validVersion = true
 		}
+	}
+	if !validVersion {
 		return fmt.Errorf("Invalid k8s version passed, please use one of k8s-1.28, k8s-1.29 or k8s-1.30")
 	}
 
