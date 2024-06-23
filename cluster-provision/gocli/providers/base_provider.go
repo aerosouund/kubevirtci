@@ -463,9 +463,9 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			}
 		}
 
-		if _, err := kp.SSHClient.JumpSSH(kp.SSHPort, x+1, "cp -uv /etc/cni/multus/net.d/*istio*.conf /etc/cni/net.d/", true, true); err != nil {
-			return err
-		}
+		// if _, err := kp.SSHClient.JumpSSH(kp.SSHPort, x+1, "cp -uv /etc/cni/multus/net.d/*istio*.conf /etc/cni/net.d/", true, true); err != nil {
+		// 	return err
+		// }
 	}
 
 	return nil
