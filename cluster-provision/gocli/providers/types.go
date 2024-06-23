@@ -50,6 +50,9 @@ type KubevirtProvider struct {
 	AAQ                          bool     `flag:"deploy-aaq" json:"deploy_aaq"`
 	CDI                          bool     `flag:"deploy-cdi" json:"deploy_cdi"`
 	GPU                          string   `flag:"gpu" json:"gpu"`
+	KSM                          bool     `flag:"enable-ksm" json:"enable-ksm"`
+	KSMPages                     int      `flag:"ksm-page-count" json:"ksm-page-count"`
+	KSMInterval                  int      `flag:"ksm-scan-interval" json:"ksm-scan-interval"`
 	NvmeDisks                    []string `flag:"nvme" json:"nvme"`
 	ScsiDisks                    []string `flag:"scsi" json:"scsi"`
 	USBDisks                     []string `flag:"usb" json:"usb"`
@@ -250,5 +253,17 @@ var FlagMap = map[string]FlagConfig{
 	"deploy-cdi": {
 		FlagType:        "bool",
 		ProviderOptFunc: WithCDI,
+	},
+	"enable-ksm": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithKSM,
+	},
+	"ksm-page-count": {
+		FlagType:        "int",
+		ProviderOptFunc: WithKSMPages,
+	},
+	"ksm-scan-interval": {
+		FlagType:        "int",
+		ProviderOptFunc: WithKSMInterval,
 	},
 }
