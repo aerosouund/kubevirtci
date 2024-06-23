@@ -50,12 +50,12 @@ type KubevirtProvider struct {
 	CDI                          bool     `flag:"deploy-cdi" json:"deploy_cdi"`
 	GPU                          string   `flag:"gpu" json:"gpu"`
 	KSM                          bool     `flag:"enable-ksm" json:"enable-ksm"`
-	KSMPages                     int      `flag:"ksm-page-count" json:"ksm-page-count"`
-	KSMInterval                  int      `flag:"ksm-scan-interval" json:"ksm-scan-interval"`
+	KSMPages                     uint     `flag:"ksm-page-count" json:"ksm-page-count"`
+	KSMInterval                  uint     `flag:"ksm-scan-interval" json:"ksm-scan-interval"`
 	Swap                         bool     `flag:"enable-swap" json:"enable-swap"`
 	Swapsize                     string   `flag:"swap-size" json:"swap-size"`
 	UnlimitedSwap                bool     `flag:"unlimited-swap" json:"unlimited-swap"`
-	Swapiness                    int      `flag:"swapiness" json:"swapiness"`
+	Swapiness                    uint     `flag:"swapiness" json:"swapiness"`
 	NvmeDisks                    []string `flag:"nvme" json:"nvme"`
 	ScsiDisks                    []string `flag:"scsi" json:"scsi"`
 	USBDisks                     []string `flag:"usb" json:"usb"`
