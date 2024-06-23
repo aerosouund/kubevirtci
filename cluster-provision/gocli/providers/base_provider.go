@@ -92,6 +92,7 @@ func NewFromRunning(dnsmasqPrefix string) (*KubevirtProvider, error) {
 		return nil, err
 	}
 	kp.SSHClient = &sshutils.SSHClientImpl{}
+	kp.Docker = cli
 
 	return kp, nil
 }
