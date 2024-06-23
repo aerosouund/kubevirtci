@@ -33,6 +33,7 @@ import (
 	etcdinmemory "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/etcd"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/istio"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/ksm"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/labelnodes"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/multus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
@@ -448,6 +449,15 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			kp.Docker.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 			wg.Done()
 		}(node.ID)
+
+		labelSelector := "node-role.kubernetes.io/control-plane"
+		if kp.Nodes > 1 {
+			labelSelector = "!node-role.kubernetes.io/control-plane"
+		}
+		ln := labelnodes.NewNodeLabler(kp.SSHClient, kp.SSHPort, labelSelector)
+		if err := ln.Exec(); err != nil {
+			return err
+		}
 
 		if kp.Swap {
 			swapOpt := swap.NewSwapOpt(kp.SSHClient, kp.SSHPort, x+1, int(kp.Swapiness), kp.UnlimitedSwap, kp.Swapsize)
