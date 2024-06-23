@@ -189,6 +189,24 @@ func WithCDI(cdi interface{}) KubevirtProviderOption {
 	}
 }
 
+func WithKSM(ksm interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.KSM = ksm.(bool)
+	}
+}
+
+func WithKSMInterval(ki interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.KSMInterval = ki.(int)
+	}
+}
+
+func WithKSMPages(kp interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.KSMPages = kp.(int)
+	}
+}
+
 func WithDockerProxy(dockerProxy interface{}) KubevirtProviderOption {
 	return func(c *KubevirtProvider) {
 		c.DockerProxy = dockerProxy.(string)

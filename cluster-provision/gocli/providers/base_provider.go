@@ -31,6 +31,7 @@ import (
 	dockerproxy "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/docker-proxy"
 	etcdinmemory "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/etcd"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/istio"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/ksm"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/multus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
@@ -438,6 +439,13 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			}
 			n := nodeprovisioner.NewNodesProvisioner(kp.SSHClient, kp.SSHPort, x+1)
 			if err = n.Exec(); err != nil {
+				return err
+			}
+		}
+
+		if kp.KSM {
+			ksmOpt := ksm.NewKsmOpt(kp.SSHClient, kp.SSHPort, kp.KSMInterval, kp.KSMPages, x+1)
+			if err := ksmOpt.Exec(); err != nil {
 				return err
 			}
 		}
