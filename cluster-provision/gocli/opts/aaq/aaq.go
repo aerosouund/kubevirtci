@@ -42,9 +42,9 @@ func (o *AaqOpt) Exec() error {
 		operator = []byte(operatorNewVersion)
 	}
 
-	for _, manifest := range [][]byte{operator, cr} {
+	for i, manifest := range [][]byte{operator, cr} {
 		if err := o.client.Apply(manifest); err != nil {
-			fmt.Println(err)
+			return fmt.Errorf("error applying manifest at index %d, %s", i, err)
 		}
 	}
 	return nil
