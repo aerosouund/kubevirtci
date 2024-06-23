@@ -2,6 +2,7 @@ package aaq
 
 import (
 	"embed"
+	"fmt"
 	"regexp"
 
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
@@ -43,7 +44,7 @@ func (o *AaqOpt) Exec() error {
 
 	for _, manifest := range [][]byte{operator, cr} {
 		if err := o.client.Apply(manifest); err != nil {
-			return err
+			fmt.Println(err)
 		}
 	}
 	return nil
