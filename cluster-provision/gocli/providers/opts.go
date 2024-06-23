@@ -24,6 +24,30 @@ func WithCPU(cpu interface{}) KubevirtProviderOption {
 	}
 }
 
+func WithSwap(swap interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.Swap = swap.(bool)
+	}
+}
+
+func WithUnlimitedSwap(us interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.UnlimitedSwap = us.(bool)
+	}
+}
+
+func WithSwapiness(s interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.Swapiness = s.(int)
+	}
+}
+
+func WithSwapSize(s interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.Swapsize = s.(string)
+	}
+}
+
 func WithSecondaryNics(secondaryNics interface{}) KubevirtProviderOption {
 	return func(c *KubevirtProvider) {
 		c.SecondaryNics = secondaryNics.(uint)

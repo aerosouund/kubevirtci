@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts"
 	aaq "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/aaq"
 	bindvfio "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/bind-vfio"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/cdi"
@@ -41,6 +42,7 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/realtime"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rookceph"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rootkey"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/swap"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
@@ -370,7 +372,6 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			}
 		}
 
-		// turn to opt
 		if kp.DockerProxy != "" {
 			proxyOpt := dockerproxy.NewDockerProxyOpt(kp.SSHClient, kp.SSHPort, kp.DockerProxy, x+1)
 			if err := proxyOpt.Exec(); err != nil {
@@ -393,7 +394,6 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			}
 		}
 
-		// turn to opt
 		for _, s := range []string{"8086:2668", "8086:2415"} {
 			// move the VM sound cards to a vfio-pci driver to prepare for assignment
 			bindVfioOpt := bindvfio.NewBindVfioOpt(kp.SSHClient, kp.SSHPort, x+1, s)
@@ -439,6 +439,13 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			}
 			n := nodeprovisioner.NewNodesProvisioner(kp.SSHClient, kp.SSHPort, x+1)
 			if err = n.Exec(); err != nil {
+				return err
+			}
+		}
+
+		if kp.Swap {
+			swapOpt := swap.NewSwapOpt(kp.SSHClient, kp.SSHPort, x+1, kp.Swapiness, kp.UnlimitedSwap, kp.Swapsize)
+			if err := swapOpt.Exec(); err != nil {
 				return err
 			}
 		}
@@ -600,63 +607,49 @@ func (kp *KubevirtProvider) getDevicePCIID(pciAddress string) (string, error) {
 
 // todo: write this as a map
 func (kp *KubevirtProvider) runK8sOpts() error {
+	opts := []opts.Opt{}
 	if kp.CDI {
-		cdiOpt := cdi.NewCdiOpt(kp.Client, "") // todo: cdi version
-		if err := cdiOpt.Exec(); err != nil {
-			return err
-		}
+		opts = append(opts, cdi.NewCdiOpt(kp.Client, "")) // todo: cdi version
 	}
+
 	if kp.AAQ {
 		if kp.Version == "k8s-1.30" {
-			aaqOPt := aaq.NewAaqOpt(kp.Client, "") // todo: aaq version
-			if err := aaqOPt.Exec(); err != nil {
-				return err
-			}
+			opts = append(opts, aaq.NewAaqOpt(kp.Client, "")) // todo: aaq version
 		} else {
 			logrus.Info("AAQ was requested but kubernetes version is less than 1.30, skipping")
 		}
 	}
+
+	if kp.EnablePrometheus {
+		opts = append(opts, prometheus.NewPrometheusOpt(kp.Client, kp.EnableGrafana, kp.EnablePrometheusAlertManager))
+	}
+
 	if kp.EnableCeph {
-		cephOpt := rookceph.NewCephOpt(kp.Client)
-		if err := cephOpt.Exec(); err != nil {
-			return err
-		}
+		opts = append(opts, rookceph.NewCephOpt(kp.Client))
 	}
 
 	if kp.EnableNFSCSI {
-		csiOpt := nfscsi.NewNfsCsiOpt(kp.Client)
-		if err := csiOpt.Exec(); err != nil {
-			return err
-		}
+		opts = append(opts, nfscsi.NewNfsCsiOpt(kp.Client))
 	}
 
 	if kp.EnableMultus {
-		multusOpt := multus.NewMultusOpt(kp.Client)
-		if err := multusOpt.Exec(); err != nil {
-			return err
-		}
+		opts = append(opts, multus.NewMultusOpt(kp.Client))
 	}
 
 	if kp.EnableCNAO {
-		cnaoOpt := cnao.NewCnaoOpt(kp.Client)
-		if err := cnaoOpt.Exec(); err != nil {
-			return err
-		}
+		opts = append(opts, cnao.NewCnaoOpt(kp.Client))
 	}
 
 	if kp.EnableIstio {
-		istioOpt := istio.NewIstioOpt(kp.SSHClient, kp.Client, kp.SSHPort, kp.EnableCNAO)
-		if err := istioOpt.Exec(); err != nil {
+		opts = append(opts, istio.NewIstioOpt(kp.SSHClient, kp.Client, kp.SSHPort, kp.EnableCNAO))
+	}
+
+	for _, opt := range opts {
+		if err := opt.Exec(); err != nil {
 			return err
 		}
 	}
 
-	if kp.EnablePrometheus {
-		prometheusOpt := prometheus.NewPrometheusOpt(kp.Client, kp.EnableGrafana, kp.EnablePrometheusAlertManager)
-		if err := prometheusOpt.Exec(); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 

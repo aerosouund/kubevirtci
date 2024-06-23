@@ -9,7 +9,7 @@ import (
 
 func TestCdiOpt(t *testing.T) {
 	client := k8s.NewTestClient()
-	opt := NewCdiOpt(client, "")
+	opt := NewCdiOpt(client, "") // todo: cdi version
 	err := opt.Exec()
 	assert.NoError(t, err)
 }

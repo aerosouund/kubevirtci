@@ -53,6 +53,10 @@ type KubevirtProvider struct {
 	KSM                          bool     `flag:"enable-ksm" json:"enable-ksm"`
 	KSMPages                     int      `flag:"ksm-page-count" json:"ksm-page-count"`
 	KSMInterval                  int      `flag:"ksm-scan-interval" json:"ksm-scan-interval"`
+	Swap                         bool     `flag:"enable-swap" json:"enable-swap"`
+	Swapsize                     string   `flag:"swap-size" json:"swap-size"`
+	UnlimitedSwap                bool     `flag:"unlimited-swap" json:"unlimited-swap"`
+	Swapiness                    int      `flag:"swapiness" json:"swapiness"`
 	NvmeDisks                    []string `flag:"nvme" json:"nvme"`
 	ScsiDisks                    []string `flag:"scsi" json:"scsi"`
 	USBDisks                     []string `flag:"usb" json:"usb"`
@@ -265,5 +269,21 @@ var FlagMap = map[string]FlagConfig{
 	"ksm-scan-interval": {
 		FlagType:        "int",
 		ProviderOptFunc: WithKSMInterval,
+	},
+	"enable-swap": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithSwap,
+	},
+	"unlimited-swap": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithUnlimitedSwap,
+	},
+	"swap-size": {
+		FlagType:        "string",
+		ProviderOptFunc: WithSwapSize,
+	},
+	"swapiness": {
+		FlagType:        "int",
+		ProviderOptFunc: WithSwapiness,
 	},
 }
