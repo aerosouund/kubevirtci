@@ -19,7 +19,7 @@ func NewNodeLabler(sc utils.SSHClient, p uint16, l string) *NodeLabler {
 }
 
 func (n *NodeLabler) Exec() error {
-	if _, err := n.sshClient.JumpSSH(n.sshPort, 1, "kubectl --kubeconfig=/etc/kubernetes/admin.conf -l "+n.labelSelector+" node-role.kubernetes.io/worker=''", true, true); err != nil {
+	if _, err := n.sshClient.JumpSSH(n.sshPort, 1, "kubectl --kubeconfig=/etc/kubernetes/admin.conf label node -l "+n.labelSelector+" node-role.kubernetes.io/worker=''", true, true); err != nil {
 		return err
 	}
 	return nil
