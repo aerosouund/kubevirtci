@@ -658,7 +658,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		// turn to opt
 		if dockerProxy != "" {
 			//if dockerProxy has value, generate a shell script`/script/docker-proxy.sh` which can be applied to set proxy settings
-			dpOpt := dockerproxy.NewDockerProxyOpt(sshClient, sshPort, dockerProxy, x+1)
+			dpOpt := dockerproxy.NewDockerProxyOpt(sshClient, sshPort, x+1, dockerProxy)
 			if err := dpOpt.Exec(); err != nil {
 				return err
 			}
