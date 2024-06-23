@@ -258,11 +258,11 @@ var FlagMap = map[string]FlagConfig{
 		ProviderOptFunc: WithKSM,
 	},
 	"ksm-page-count": {
-		FlagType:        "int",
+		FlagType:        "uint",
 		ProviderOptFunc: WithKSMPages,
 	},
 	"ksm-scan-interval": {
-		FlagType:        "int",
+		FlagType:        "uint",
 		ProviderOptFunc: WithKSMInterval,
 	},
 	"enable-swap": {
@@ -278,7 +278,7 @@ var FlagMap = map[string]FlagConfig{
 		ProviderOptFunc: WithSwapSize,
 	},
 	"swapiness": {
-		FlagType:        "int",
+		FlagType:        "uint",
 		ProviderOptFunc: WithSwapiness,
 	},
 }
