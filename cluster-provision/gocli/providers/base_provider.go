@@ -443,6 +443,11 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			}
 		}
 
+		go func(id string) {
+			kp.Docker.ContainerWait(ctx, id, container.WaitConditionNotRunning)
+			wg.Done()
+		}(node.ID)
+
 		if kp.Swap {
 			swapOpt := swap.NewSwapOpt(kp.SSHClient, kp.SSHPort, x+1, kp.Swapiness, kp.UnlimitedSwap, kp.Swapsize)
 			if err := swapOpt.Exec(); err != nil {
@@ -457,10 +462,9 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			}
 		}
 
-		go func(id string) {
-			kp.Docker.ContainerWait(ctx, id, container.WaitConditionNotRunning)
-			wg.Done()
-		}(node.ID)
+		if _, err := kp.SSHClient.JumpSSH(kp.SSHPort, x+1, "cp -uv /etc/cni/multus/net.d/*istio*.conf /etc/cni/net.d/", true, true); err != nil {
+			return err
+		}
 	}
 
 	return nil
