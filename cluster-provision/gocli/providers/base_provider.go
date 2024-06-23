@@ -450,15 +450,6 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			wg.Done()
 		}(node.ID)
 
-		labelSelector := "node-role.kubernetes.io/control-plane"
-		if kp.Nodes > 1 {
-			labelSelector = "!node-role.kubernetes.io/control-plane"
-		}
-		ln := labelnodes.NewNodeLabler(kp.SSHClient, kp.SSHPort, labelSelector)
-		if err := ln.Exec(); err != nil {
-			return err
-		}
-
 		if kp.Swap {
 			swapOpt := swap.NewSwapOpt(kp.SSHClient, kp.SSHPort, x+1, int(kp.Swapiness), kp.UnlimitedSwap, kp.Swapsize)
 			if err := swapOpt.Exec(); err != nil {
@@ -623,6 +614,12 @@ func (kp *KubevirtProvider) getDevicePCIID(pciAddress string) (string, error) {
 // todo: write this as a map
 func (kp *KubevirtProvider) runK8sOpts() error {
 	opts := []opts.Opt{}
+	labelSelector := "node-role.kubernetes.io/control-plane"
+	if kp.Nodes > 1 {
+		labelSelector = "!node-role.kubernetes.io/control-plane"
+	}
+	opts = append(opts, labelnodes.NewNodeLabler(kp.SSHClient, kp.SSHPort, labelSelector))
+
 	if kp.CDI {
 		opts = append(opts, cdi.NewCdiOpt(kp.Client, "")) // todo: cdi version
 	}
