@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"time"
 
 	cephv1 "github.com/aerosouund/rook/pkg/apis/ceph.rook.io/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -166,15 +167,31 @@ func (c *K8sDynamicClientImpl) Apply(manifest []byte) error {
 			return err
 		}
 
-		_, err = resourceClient.Create(context.TODO(), obj, v1.CreateOptions{})
+		const maxRetries = 3
+		err = createWithRetries(resourceClient, obj)
 		if err != nil {
-			return fmt.Errorf("Error applying manifest: %v for object %s", err, obj.GetName())
+			return err
 		}
-
 		logrus.Infof("Object %v applied successfully\n", obj.GetName())
 	}
 
 	return nil
+}
+
+func createWithRetries(resourceClient dynamic.ResourceInterface, obj *unstructured.Unstructured) error {
+	const maxRetries = 3
+	var err error
+
+	for i := 0; i < maxRetries; i++ {
+		_, err = resourceClient.Create(context.TODO(), obj, v1.CreateOptions{})
+		if err == nil {
+			return nil
+		}
+		fmt.Printf("Attempt %d: Error applying manifest: %v for object %s\n", i+1, err, obj.GetName())
+		time.Sleep(3 * time.Second)
+	}
+
+	return fmt.Errorf("Error applying manifest after %d attempts: %v for object %s", maxRetries, err, obj.GetName())
 }
 
 func (c *K8sDynamicClientImpl) Delete(gvk schema.GroupVersionKind, name, ns string) error {
