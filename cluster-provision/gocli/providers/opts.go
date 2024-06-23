@@ -237,6 +237,18 @@ func WithGPU(gpu interface{}) KubevirtProviderOption {
 	}
 }
 
+func WithCDIVersion(cdi interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.CDIVersion = cdi.(string)
+	}
+}
+
+func WithAAQVersion(aaq interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.AAQVersion = aaq.(string)
+	}
+}
+
 func WithNvmeDisks(nvmeDisks interface{}) KubevirtProviderOption {
 	return func(c *KubevirtProvider) {
 		c.NvmeDisks = nvmeDisks.([]string)

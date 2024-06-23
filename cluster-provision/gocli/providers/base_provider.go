@@ -621,12 +621,12 @@ func (kp *KubevirtProvider) runK8sOpts() error {
 	opts = append(opts, labelnodes.NewNodeLabler(kp.SSHClient, kp.SSHPort, labelSelector))
 
 	if kp.CDI {
-		opts = append(opts, cdi.NewCdiOpt(kp.Client, "")) // todo: cdi version
+		opts = append(opts, cdi.NewCdiOpt(kp.Client, kp.CDIVersion))
 	}
 
 	if kp.AAQ {
 		if kp.Version == "k8s-1.30" {
-			opts = append(opts, aaq.NewAaqOpt(kp.Client, "")) // todo: aaq version
+			opts = append(opts, aaq.NewAaqOpt(kp.Client, kp.AAQVersion))
 		} else {
 			logrus.Info("AAQ was requested but kubernetes version is less than 1.30, skipping")
 		}

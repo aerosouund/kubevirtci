@@ -47,7 +47,9 @@ type KubevirtProvider struct {
 	EnableMultus                 bool     `flag:"deploy-multus" json:"deploy_multus"`
 	DockerProxy                  string   `flag:"docker-proxy" json:"docker_proxy"`
 	AAQ                          bool     `flag:"deploy-aaq" json:"deploy_aaq"`
+	AAQVersion                   string   `flag:"aaq-version" json:"aaq-version"`
 	CDI                          bool     `flag:"deploy-cdi" json:"deploy_cdi"`
+	CDIVersion                   string   `flag:"cdi-version" json:"cdi-version"`
 	GPU                          string   `flag:"gpu" json:"gpu"`
 	KSM                          bool     `flag:"enable-ksm" json:"enable-ksm"`
 	KSMPages                     uint     `flag:"ksm-page-count" json:"ksm-page-count"`
@@ -280,5 +282,13 @@ var FlagMap = map[string]FlagConfig{
 	"swapiness": {
 		FlagType:        "uint",
 		ProviderOptFunc: WithSwapiness,
+	},
+	"cdi-version": {
+		FlagType:        "string",
+		ProviderOptFunc: WithCDIVersion,
+	},
+	"aaq-version": {
+		FlagType:        "string",
+		ProviderOptFunc: WithAAQVersion,
 	},
 }
