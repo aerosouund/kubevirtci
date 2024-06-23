@@ -72,12 +72,6 @@ func WithBackground(background interface{}) KubevirtProviderOption {
 	}
 }
 
-func WithReverse(reverse interface{}) KubevirtProviderOption {
-	return func(c *KubevirtProvider) {
-		c.Reverse = reverse.(bool)
-	}
-}
-
 func WithRandomPorts(randomPorts interface{}) KubevirtProviderOption {
 	return func(c *KubevirtProvider) {
 		c.RandomPorts = randomPorts.(bool)

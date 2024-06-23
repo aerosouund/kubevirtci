@@ -23,7 +23,6 @@ type KubevirtProvider struct {
 	QemuArgs                     string   `flag:"qemu-args" json:"qemu_args"`
 	KernelArgs                   string   `flag:"kernel-args" json:"kernel_args"`
 	Background                   bool     `flag:"background" short:"b" json:"background"`
-	Reverse                      bool     `flag:"reverse" short:"r" json:"reverse"`
 	RandomPorts                  bool     `flag:"random-ports" json:"random_ports"`
 	Slim                         bool     `flag:"slim" json:"slim"`
 	VNCPort                      uint16   `flag:"vnc-port" json:"vnc_port"`
@@ -109,10 +108,6 @@ var FlagMap = map[string]FlagConfig{
 	"background": {
 		FlagType:        "bool",
 		ProviderOptFunc: WithBackground,
-	},
-	"reverse": {
-		FlagType:        "bool",
-		ProviderOptFunc: WithReverse,
 	},
 	"random-ports": {
 		FlagType:        "bool",
