@@ -438,11 +438,10 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 					return err
 				}
 			}
-			go func() {
-				n := nodeprovisioner.NewNodesProvisioner(kp.SSHClient, kp.SSHPort, x+1)
-				n.Exec()
-			}()
-
+			n := nodeprovisioner.NewNodesProvisioner(kp.SSHClient, kp.SSHPort, x+1)
+			if err = n.Exec(); err != nil {
+				return err
+			}
 		}
 
 		go func(id string) {
