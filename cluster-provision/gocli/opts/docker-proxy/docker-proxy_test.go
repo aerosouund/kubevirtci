@@ -11,7 +11,7 @@ import (
 
 func TestNodeProvisionerOpt(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
-	opt := NewDockerProxyOpt(sshClient, 2020, "test-proxy", 1)
+	opt := NewDockerProxyOpt(sshClient, 2020, 1, "test-proxy")
 	override, err := f.ReadFile("conf/override.conf")
 	script := strings.ReplaceAll(string(override), "$PROXY", opt.proxy)
 
