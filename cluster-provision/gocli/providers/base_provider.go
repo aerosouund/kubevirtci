@@ -374,7 +374,7 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 		}
 
 		if kp.DockerProxy != "" {
-			proxyOpt := dockerproxy.NewDockerProxyOpt(kp.SSHClient, kp.SSHPort, kp.DockerProxy, x+1)
+			proxyOpt := dockerproxy.NewDockerProxyOpt(kp.SSHClient, kp.SSHPort, x+1, kp.DockerProxy)
 			if err := proxyOpt.Exec(); err != nil {
 				return err
 			}
@@ -422,7 +422,7 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 			}
 		}
 		if x+1 == 1 {
-			n := node01.NewNode01Provisioner(kp.SSHClient, uint16(kp.SSHPort))
+			n := node01.NewNode01Provisioner(kp.SSHClient, kp.SSHPort)
 			err := n.Exec()
 			if err != nil {
 				return err
@@ -457,7 +457,7 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 		}
 
 		if kp.KSM {
-			ksmOpt := ksm.NewKsmOpt(kp.SSHClient, kp.SSHPort, kp.KSMInterval, kp.KSMPages, x+1)
+			ksmOpt := ksm.NewKsmOpt(kp.SSHClient, kp.SSHPort, x+1, kp.KSMInterval, kp.KSMPages)
 			if err := ksmOpt.Exec(); err != nil {
 				return err
 			}

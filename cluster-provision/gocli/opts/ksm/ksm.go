@@ -14,7 +14,7 @@ type KsmOpt struct {
 	nodeIdx      int
 }
 
-func NewKsmOpt(sc utils.SSHClient, sshPort uint16, si, pages, idx int) *KsmOpt {
+func NewKsmOpt(sc utils.SSHClient, sshPort uint16, idx, si, pages int) *KsmOpt {
 	return &KsmOpt{
 		sshClient:    sc,
 		sshPort:      sshPort,
