@@ -136,6 +136,7 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 	k8sVersion := args[0]
 	allowedK8sVersions := []string{"k8s-1.28", "k8s-1.29", "k8s-1.30"}
 	for _, v := range allowedK8sVersions {
+		fmt.Println(v)
 		if k8sVersion == v {
 			break
 		}
