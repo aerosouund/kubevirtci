@@ -65,6 +65,7 @@ func NewDynamicClient(config *rest.Config) (*K8sDynamicClientImpl, error) {
 	}
 	s := runtime.NewScheme()
 	scheme.AddToScheme(s)
+
 	apiextensionsv1.AddToScheme(s)
 	cephv1.AddToScheme(s)
 	monitoringv1alpha1.AddToScheme(s)
@@ -83,11 +84,13 @@ func NewDynamicClient(config *rest.Config) (*K8sDynamicClientImpl, error) {
 func NewTestClient(reactors ...ReactorConfig) K8sDynamicClient {
 	s := runtime.NewScheme()
 	scheme.AddToScheme(s)
+
 	apiextensionsv1.AddToScheme(s)
 	cephv1.AddToScheme(s)
 	monitoringv1alpha1.AddToScheme(s)
 	monitoringv1.AddToScheme(s)
 	istiov1alpha1.AddToScheme(s)
+	admissionv1.AddToScheme(s)
 	cdiv1beta1.AddToScheme(s)
 	aaqv1alpha1.AddToScheme(s)
 
@@ -165,7 +168,7 @@ func (c *K8sDynamicClientImpl) Apply(manifest []byte) error {
 
 		_, err = resourceClient.Create(context.TODO(), obj, v1.CreateOptions{})
 		if err != nil {
-			return fmt.Errorf("Error applying manifest: %v", err)
+			return fmt.Errorf("Error applying manifest: %v for object %s", err, obj.GetName())
 		}
 
 		logrus.Infof("Object %v applied successfully\n", obj.GetName())
