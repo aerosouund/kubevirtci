@@ -38,7 +38,7 @@ func WithUnlimitedSwap(us interface{}) KubevirtProviderOption {
 
 func WithSwapiness(s interface{}) KubevirtProviderOption {
 	return func(c *KubevirtProvider) {
-		c.Swapiness = s.(int)
+		c.Swapiness = s.(uint)
 	}
 }
 
@@ -215,13 +215,13 @@ func WithKSM(ksm interface{}) KubevirtProviderOption {
 
 func WithKSMInterval(ki interface{}) KubevirtProviderOption {
 	return func(c *KubevirtProvider) {
-		c.KSMInterval = ki.(int)
+		c.KSMInterval = ki.(uint)
 	}
 }
 
 func WithKSMPages(kp interface{}) KubevirtProviderOption {
 	return func(c *KubevirtProvider) {
-		c.KSMPages = kp.(int)
+		c.KSMPages = kp.(uint)
 	}
 }
 

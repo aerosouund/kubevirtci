@@ -450,14 +450,14 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 		}(node.ID)
 
 		if kp.Swap {
-			swapOpt := swap.NewSwapOpt(kp.SSHClient, kp.SSHPort, x+1, kp.Swapiness, kp.UnlimitedSwap, kp.Swapsize)
+			swapOpt := swap.NewSwapOpt(kp.SSHClient, kp.SSHPort, x+1, int(kp.Swapiness), kp.UnlimitedSwap, kp.Swapsize)
 			if err := swapOpt.Exec(); err != nil {
 				return err
 			}
 		}
 
 		if kp.KSM {
-			ksmOpt := ksm.NewKsmOpt(kp.SSHClient, kp.SSHPort, x+1, kp.KSMInterval, kp.KSMPages)
+			ksmOpt := ksm.NewKsmOpt(kp.SSHClient, kp.SSHPort, x+1, int(kp.KSMInterval), int(kp.KSMPages))
 			if err := ksmOpt.Exec(); err != nil {
 				return err
 			}
