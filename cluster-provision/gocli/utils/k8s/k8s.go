@@ -168,7 +168,7 @@ func (c *K8sDynamicClientImpl) Apply(manifest []byte) error {
 		}
 
 		const maxRetries = 3
-		err = createWithRetries(resourceClient, obj)
+		err = c.createWithRetries(resourceClient, obj)
 		if err != nil {
 			return err
 		}
@@ -178,7 +178,7 @@ func (c *K8sDynamicClientImpl) Apply(manifest []byte) error {
 	return nil
 }
 
-func createWithRetries(resourceClient dynamic.ResourceInterface, obj *unstructured.Unstructured) error {
+func (c *K8sDynamicClientImpl) createWithRetries(resourceClient dynamic.ResourceInterface, obj *unstructured.Unstructured) error {
 	const maxRetries = 3
 	var err error
 
