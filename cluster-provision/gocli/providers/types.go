@@ -47,16 +47,16 @@ type KubevirtProvider struct {
 	EnableMultus                 bool     `flag:"deploy-multus" json:"deploy_multus"`
 	DockerProxy                  string   `flag:"docker-proxy" json:"docker_proxy"`
 	AAQ                          bool     `flag:"deploy-aaq" json:"deploy_aaq"`
-	AAQVersion                   string   `flag:"aaq-version" json:"aaq-version"`
+	AAQVersion                   string   `flag:"aaq-version" json:"aaq_version"`
 	CDI                          bool     `flag:"deploy-cdi" json:"deploy_cdi"`
-	CDIVersion                   string   `flag:"cdi-version" json:"cdi-version"`
+	CDIVersion                   string   `flag:"cdi-version" json:"cdi_version"`
 	GPU                          string   `flag:"gpu" json:"gpu"`
-	KSM                          bool     `flag:"enable-ksm" json:"enable-ksm"`
-	KSMPages                     uint     `flag:"ksm-page-count" json:"ksm-page-count"`
-	KSMInterval                  uint     `flag:"ksm-scan-interval" json:"ksm-scan-interval"`
-	Swap                         bool     `flag:"enable-swap" json:"enable-swap"`
-	Swapsize                     string   `flag:"swap-size" json:"swap-size"`
-	UnlimitedSwap                bool     `flag:"unlimited-swap" json:"unlimited-swap"`
+	KSM                          bool     `flag:"enable-ksm" json:"enable_ksm"`
+	KSMPages                     uint     `flag:"ksm-page-count" json:"ksm_page_count"`
+	KSMInterval                  uint     `flag:"ksm-scan-interval" json:"ksm_scan_interval"`
+	Swap                         bool     `flag:"enable-swap" json:"enable_swap"`
+	Swapsize                     string   `flag:"swap-size" json:"swap_size"`
+	UnlimitedSwap                bool     `flag:"unlimited-swap" json:"unlimited_swap"`
 	Swapiness                    uint     `flag:"swapiness" json:"swapiness"`
 	NvmeDisks                    []string `flag:"nvme" json:"nvme"`
 	ScsiDisks                    []string `flag:"scsi" json:"scsi"`
