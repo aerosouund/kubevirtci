@@ -167,7 +167,6 @@ func (c *K8sDynamicClientImpl) Apply(manifest []byte) error {
 			return err
 		}
 
-		const maxRetries = 3
 		err = c.createWithRetries(resourceClient, obj)
 		if err != nil {
 			return err
@@ -187,7 +186,7 @@ func (c *K8sDynamicClientImpl) createWithRetries(resourceClient dynamic.Resource
 		if err == nil {
 			return nil
 		}
-		fmt.Printf("Attempt %d: Error applying manifest: %v for object %s\n", i+1, err, obj.GetName())
+		logrus.Infof("Attempt %d: Error applying manifest: %v for object %s\n", i+1, err, obj.GetName())
 		time.Sleep(3 * time.Second)
 	}
 
