@@ -50,7 +50,7 @@ func (o *SwapOpt) Exec() error {
 
 	if o.unlimitedSwap {
 		cmds := []string{
-			`sed -i ':a;N;\$!ba;s/memorySwap: {}/memorySwap:\n  swapBehavior: UnlimitedSwap/g' /var/lib/kubelet/config.yaml`,
+			`sed -i 's/memorySwap: {}/memorySwap:\n  swapBehavior: UnlimitedSwap/g' /var/lib/kubelet/config.yaml`,
 			"systemctl restart kubelet",
 		}
 		for _, cmd := range cmds {
