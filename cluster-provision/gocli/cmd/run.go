@@ -588,7 +588,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return fmt.Errorf("checking for ssh.sh script for node %s failed", nodeName)
 		}
 
-		success, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"scp", "-o UserKnownHostsFile=/dev/null-o StrictHostKeyChecking=no -i vagrant.key", fmt.Sprintf("-r /scripts vagrant@192.168.66.10%d:/home/vagrant/scripts", x+1)}, os.Stdout)
+		success, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", "scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key " + fmt.Sprintf("-r /scripts vagrant@192.168.66.10%d:/home/vagrant/scripts", x+1)}, os.Stdout)
 		if err != nil {
 			return err
 		}
