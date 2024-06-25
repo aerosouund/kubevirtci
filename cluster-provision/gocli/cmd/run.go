@@ -728,7 +728,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		// add params
-		if _, err = sshClient.JumpSSH(fmt.Sprintf("sudo /bin/bash -c '~/scripts/prometheus.sh %s'", params), false, true); err != nil {
+		if _, err = sshClient.JumpSSH(fmt.Sprintf("sudo /bin/bash -c '/home/vagrant/scripts/prometheus.sh %s'", params), false, true); err != nil {
 			return fmt.Errorf("deploying Prometheus operator failed: %s", err)
 		}
 	}
@@ -828,7 +828,7 @@ func prepareDeviceForAssignment(sshClient sshutils.SSHClient, pciID, pciAddress 
 	if pciAddress != "" {
 		devicePCIID, _ = getDevicePCIID(pciAddress)
 	}
-	if _, err := sshClient.JumpSSH(fmt.Sprintf("sudo /bin/bash -c '~/scripts/bind_device_to_vfio.sh --vendor %s'", devicePCIID), false, true); err != nil {
+	if _, err := sshClient.JumpSSH(fmt.Sprintf("sudo /bin/bash -c '/home/vagrant/scripts/bind_device_to_vfio.sh --vendor %s'", devicePCIID), false, true); err != nil {
 		return err
 	}
 	return nil
