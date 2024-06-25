@@ -735,7 +735,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 
 	// clean up scripts directory
 	for i := 0; i < int(nodes); i++ {
-		if _, err = sshClient.JumpSSH("sudo rm ~/scripts", false, true); err != nil {
+		if _, err = sshClient.JumpSSH("sudo rm -rf ~/scripts", false, true); err != nil {
 			return fmt.Errorf("Cleaning up scripts dir faile: %s", err)
 		}
 	}
