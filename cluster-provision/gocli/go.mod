@@ -19,6 +19,8 @@ require (
 	k8s.io/apimachinery v0.29.0
 )
 
+require github.com/bramvdbogaerde/go-scp v1.4.0 // indirect
+
 require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
