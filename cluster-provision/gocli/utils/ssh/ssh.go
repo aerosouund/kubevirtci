@@ -25,6 +25,8 @@ type SSHClient interface {
 
 type SSHClientImpl struct{}
 
+// Jump performs two ssh connections, one to the forwarded port by dnsmasq to the local which is the ssh port of the control plane node
+// then a hop to the designated host where the command is desired to be ran
 func (s *SSHClientImpl) JumpSSH(sshPort uint16, nodeIdx int, cmd string, root, stdOut bool) (string, error) {
 	signer, err := ssh.ParsePrivateKey([]byte(sshKey))
 	if err != nil {
@@ -83,6 +85,8 @@ func (s *SSHClientImpl) JumpSSH(sshPort uint16, nodeIdx int, cmd string, root, s
 	return stdout.String(), nil
 }
 
+// Jump SCP copies any arbitrary object that implements fs.File to a designated node by establishing connection to the
+// forwarded control plane SSH port then to the target host
 func (s *SSHClientImpl) JumpSCP(sshPort uint16, destNodeIdx int, fileName string, contents fs.File) error {
 	signer, err := ssh.ParsePrivateKey([]byte(sshKey))
 	if err != nil {
