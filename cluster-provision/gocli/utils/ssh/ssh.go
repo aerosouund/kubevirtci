@@ -11,14 +11,24 @@ import (
 )
 
 type SSHClient interface {
-	JumpSSH(uint16, int, string, bool, bool) (string, error)
+	JumpSSH(string, bool, bool) (string, error)
 }
 
-type SSHClientImpl struct{}
+type SSHClientImpl struct {
+	SSHPort uint16
+	NodeIdx int
+}
+
+func NewSSHClient(port uint16, idx int) *SSHClientImpl {
+	return &SSHClientImpl{
+		SSHPort: port,
+		NodeIdx: idx,
+	}
+}
 
 // Jump performs two ssh connections, one to the forwarded port by dnsmasq to the local which is the ssh port of the control plane node
 // then a hop to the designated host where the command is desired to be ran
-func (s *SSHClientImpl) JumpSSH(sshPort uint16, nodeIdx int, cmd string, root, stdOut bool) (string, error) {
+func (s *SSHClientImpl) JumpSSH(cmd string, root, stdOut bool) (string, error) {
 	signer, err := ssh.ParsePrivateKey([]byte(sshKey))
 	if err != nil {
 		return "", err
@@ -36,18 +46,18 @@ func (s *SSHClientImpl) JumpSSH(sshPort uint16, nodeIdx int, cmd string, root, s
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	client, err := ssh.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(sshPort)), config)
+	client, err := ssh.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(s.SSHPort)), config)
 	if err != nil {
 		return "", fmt.Errorf("Failed to connect to SSH server: %v", err)
 	}
 	defer client.Close()
 
-	conn, err := client.Dial("tcp", fmt.Sprintf("192.168.66.10%d:22", nodeIdx))
+	conn, err := client.Dial("tcp", fmt.Sprintf("192.168.66.10%d:22", s.NodeIdx))
 	if err != nil {
 		return "", fmt.Errorf("Error establishing connection to the next hop host: %s", err)
 	}
 
-	ncc, chans, reqs, err := ssh.NewClientConn(conn, fmt.Sprintf("192.168.66.10%d:22", nodeIdx), config)
+	ncc, chans, reqs, err := ssh.NewClientConn(conn, fmt.Sprintf("192.168.66.10%d:22", s.NodeIdx), config)
 	if err != nil {
 		return "", fmt.Errorf("Error creating forwarded ssh connection: %s", err)
 	}
