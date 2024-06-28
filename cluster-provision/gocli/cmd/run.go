@@ -660,8 +660,8 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		if err != nil {
 			return err
 		}
-		if _, err = sshClient.SSH("sudo rm -rf ~/scripts", true); err != nil {
-			return fmt.Errorf("Cleaning up scripts dir faile: %s", err)
+		if _, err = sshClient.SSH("rm -rf ~/scripts", true); err != nil {
+			return fmt.Errorf("Cleaning up scripts dir failed: %s", err)
 		}
 	}
 
