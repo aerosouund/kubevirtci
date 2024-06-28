@@ -633,10 +633,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			wg.Done()
 		}(node.ID)
 	}
-	sshClient, err := sshutils.NewSSHClient(sshPort, 1, false)
-	if err != nil {
-		return err
-	}
+	sshClient := docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeNameFromIndex(1)))
 
 	if cephEnabled {
 		if _, err = sshClient.SSH("sudo /bin/bash ~/scripts/rook-ceph.sh", true); err != nil {
@@ -675,8 +672,8 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	// clean up scripts directory
 	for i := 0; i < int(nodes); i++ {
 		nodeName := nodeNameFromIndex(i + 1)
-		da := docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeName))
-		if _, err = da.SSH("rm -rf /home/vagrant/scripts", true); err != nil {
+		sshClient := docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeName))
+		if _, err = sshClient.SSH("rm -rf /home/vagrant/scripts", true); err != nil {
 			return fmt.Errorf("Cleaning up scripts dir failed: %s", err)
 		}
 	}
