@@ -42,6 +42,7 @@ func (d *DockerAdapter) SSH(cmd string, stdOut bool) (string, error) {
 	default:
 		cmd = "ssh.sh " + cmd
 	}
+	fmt.Println("the cmd:", cmd)
 
 	success, err := Exec(d.dockerClient, d.nodeName, []string{"/bin/bash", "-c", cmd}, os.Stdout)
 	if err != nil {
