@@ -601,6 +601,15 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		if !success {
 			return fmt.Errorf("Copying scripts directory for node %s failed", nodeName)
 		}
+		success, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", "ssh.sh sudo mkdir /scripts && sudo cp -r /home/vagrant/scripts/* /scripts"}, os.Stdout)
+		if err != nil {
+			return err
+		}
+
+		if !success {
+			return fmt.Errorf("Copying scripts directory for node %s failed", nodeName)
+		}
+
 		da := docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeName))
 		n := nodesconfig.NewNodeLinuxConfig(x+1, prefix, fipsEnabled,
 			dockerProxy, runEtcdOnMemory,
@@ -649,7 +658,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		// add params
-		if _, err = sshClient.SSH(fmt.Sprintf("sudo /bin/bash -c '/home/vagrant/scripts/prometheus.sh %s'", params), true); err != nil {
+		if _, err = sshClient.SSH(fmt.Sprintf("-s -- %s < /scripts/prometheus.sh", params), true); err != nil {
 			return fmt.Errorf("deploying Prometheus operator failed: %s", err)
 		}
 	}
