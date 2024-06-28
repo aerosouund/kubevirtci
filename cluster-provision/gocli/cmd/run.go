@@ -601,7 +601,16 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		if !success {
 			return fmt.Errorf("Copying scripts directory for node %s failed", nodeName)
 		}
-		success, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", "ssh.sh sudo mkdir /scripts && sudo cp -r /home/vagrant/scripts/* /scripts"}, os.Stdout)
+		success, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", "ssh.sh sudo mkdir /scripts"}, os.Stdout)
+		if err != nil {
+			return err
+		}
+
+		if !success {
+			return fmt.Errorf("Copying scripts directory for node %s failed", nodeName)
+		}
+
+		success, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", "ssh.sh sudo cp -r /home/vagrant/scripts/* /scripts"}, os.Stdout)
 		if err != nil {
 			return err
 		}
