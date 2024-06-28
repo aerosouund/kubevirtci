@@ -34,12 +34,15 @@ func NewDockerAdapter(cli *client.Client, nodeName string) *DockerAdapter {
 
 func (d *DockerAdapter) SSH(cmd string, stdOut bool) (string, error) {
 	firstCmdChar := cmd[0]
-	if string(firstCmdChar) == "/" {
+	switch string(firstCmdChar) {
+	case "/":
 		cmd = "ssh.sh sudo /bin/bash < " + cmd
-	}
-	if string(firstCmdChar) == "-" {
+	case "-":
 		cmd = "ssh.sh sudo /bin/bash " + cmd
+	default:
+		cmd = "ssh.sh " + cmd
 	}
+
 	success, err := Exec(d.dockerClient, d.nodeName, []string{"/bin/bash", "-c", cmd}, os.Stdout)
 	if err != nil {
 		return "", err
@@ -89,7 +92,6 @@ func GetPrefixedVolumes(cli *client.Client, prefix string) ([]*volume.Volume, er
 }
 
 func ImagePull(cli *client.Client, ctx context.Context, ref string, options types.ImagePullOptions) error {
-
 	if !strings.ContainsAny(ref, ":@") {
 		ref = ref + ":latest"
 	}
