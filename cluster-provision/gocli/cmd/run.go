@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/nodes"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	containers2 "kubevirt.io/kubevirtci/cluster-provision/gocli/containers"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
@@ -756,6 +757,104 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		stop <- fmt.Errorf("Done. please clean up")
 	}
 
+	return nil
+}
+
+func provisionNode(sshClient sshutils.SSHClient, n *nodes.NodeLinuxConfig) error {
+	nodeName := nodeNameFromIndex(n.NodeIdx)
+	var err error
+	if n.FipsEnabled {
+		if _, err := sshClient.SSH("sudo fips-mode-setup --enable && sudo reboot", true); err != nil {
+			return fmt.Errorf("Starting fips mode failed: %s", err)
+		}
+		err := waitForVMToBeUp(n.K8sVersion, nodeName)
+		if err != nil {
+			return err
+		}
+	}
+
+	if n.DockerProxy != "" {
+		//if dockerProxy has value, generate a shell script`/script/docker-proxy.sh` which can be applied to set proxy settings
+		proxyConfig, err := getDockerProxyConfig(n.DockerProxy)
+		if err != nil {
+			return fmt.Errorf("parsing proxy settings for node %s failed", nodeName)
+		}
+
+		if _, err = sshClient.SSH(fmt.Sprintf("cat <<EOF > ~/scripts/docker-proxy.sh %s", proxyConfig), true); err != nil {
+			return fmt.Errorf("write failed for proxy provision script for node %d: %s", n.NodeIdx, err)
+		}
+
+		if success {
+			if _, err = sshClient.SSH("sudo /bin/bash ~/scripts/docker-proxy.sh", true); err != nil {
+				return fmt.Errorf("Running docker proxy failed on node %d: %s", n.NodeIdx, err)
+			}
+		}
+	}
+
+	if n.EtcdInMemory {
+		logrus.Infof("Creating in-memory mount for etcd data on node %s", nodeName)
+		err = prepareEtcdDataMount(sshClient, etcdDataDir, n.EtcdSize)
+		if err != nil {
+			logrus.Errorf("failed to create mount for etcd data on node %s: %v", n.NodeIdx, err)
+			return err
+		}
+	}
+
+	if n.Realtime {
+		if _, err = sshClient.SSH("sudo /bin/bash ~/scripts/realtime.sh", true); err != nil {
+			return fmt.Errorf("Provisioning kernel to allow unlimited runtime realtime scheduler failed: %s", err)
+		}
+	}
+
+	//check if we have a special provision script
+	success, err = docker.Exec(cli, nodeContainer(n.K8sVersion, nodeName), []string{"/bin/bash", "-c", fmt.Sprintf("test -f /scripts/%s.sh", nodeName)}, os.Stdout)
+	if err != nil {
+		return fmt.Errorf("checking for matching provision script for node %s failed", nodeName)
+	}
+
+	for _, s := range soundcardPCIIDs {
+		// move the VM sound cards to a vfio-pci driver to prepare for assignment
+		err = prepareDeviceForAssignment(sshClient, s, "")
+		if err != nil {
+			return err
+		}
+	}
+
+	if n.SingleStack {
+		if _, err = sshClient.SSH("touch /home/vagrant/single_stack", true); err != nil {
+			return fmt.Errorf("provisioning node %d failed (setting singleStack phase): %s", n.NodeIdx, err)
+		}
+	}
+
+	if n.EnableAudit {
+		if _, err = sshClient.SSH("touch /home/vagrant/enable_audit", true); err != nil {
+			return fmt.Errorf("provisioning node %d failed (setting enableAudit phase): %s", n.NodeIdx, err)
+		}
+	}
+
+	if n.PSA {
+		if _, err = sshClient.SSH("sudo /bin/bash ~/scripts/psa.sh", true); err != nil {
+			return fmt.Errorf("provisioning node %d failed: %s", n.NodeIdx, err)
+		}
+	}
+
+	//replace
+	if success {
+		if _, err = sshClient.SSH(fmt.Sprintf("sudo /bin/bash ~/scripts/%s.sh", nodeName), true); err != nil {
+			return fmt.Errorf("provisioning node %d failed: %s", n.NodeIdx, err)
+		}
+	} else {
+		if n.GpuAddress != "" {
+			// move the assigned PCI device to a vfio-pci driver to prepare for assignment
+			err = prepareDeviceForAssignment(sshClient, "", gpuAddress)
+			if err != nil {
+				return err
+			}
+		}
+		if _, err = sshClient.SSH("sudo /bin/bash ~/scripts/nodes.sh", true); err != nil {
+			return fmt.Errorf("provisioning node %d failed: %s", n.NodeIdx, err)
+		}
+	}
 	return nil
 }
 

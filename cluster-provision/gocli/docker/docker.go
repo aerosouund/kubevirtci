@@ -20,6 +20,23 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+type DockerAdapter struct {
+	nodeName     string
+	dockerClient *client.Client
+}
+
+func NewDockerAdapter(cli *client.Client, nodeName string) *DockerAdapter {
+	return &DockerAdapter{
+		nodeName:     nodeName,
+		dockerClient: cli,
+	}
+}
+
+func (d *DockerAdapter) SSH(cmd string, stdOut bool) (string, error) {
+
+	return "", nil
+}
+
 func GetPrefixedContainers(cli *client.Client, prefix string) ([]types.Container, error) {
 	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{
 		All: true,
