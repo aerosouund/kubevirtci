@@ -636,19 +636,19 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	sshClient := docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeNameFromIndex(1)))
 
 	if cephEnabled {
-		if _, err = sshClient.SSH("sudo /bin/bash ~/scripts/rook-ceph.sh", true); err != nil {
+		if _, err = sshClient.SSH("/scripts/rook-ceph.sh", true); err != nil {
 			return fmt.Errorf("provisioning Ceph CSI failed: %s", err)
 		}
 	}
 
 	if nfsCsiEnabled {
-		if _, err = sshClient.SSH("sudo /bin/bash ~/scripts/nfs-csi.sh", true); err != nil {
+		if _, err = sshClient.SSH("/scripts/nfs-csi.sh", true); err != nil {
 			return fmt.Errorf("provisioning NFS CSI failed: %s", err)
 		}
 	}
 
 	if istioEnabled {
-		if _, err = sshClient.SSH("sudo /bin/bash ~/scripts/istio.sh", true); err != nil {
+		if _, err = sshClient.SSH("/scripts/istio.sh", true); err != nil {
 			return fmt.Errorf("deploying Istio service mesh failed: %s", err)
 		}
 	}
@@ -707,7 +707,7 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 			return fmt.Errorf("parsing proxy settings for node %s failed", nodeName)
 		}
 
-		if _, err = sshClient.SSH(fmt.Sprintf("cat <<EOF > ~/scripts/docker-proxy.sh %s", proxyConfig), true); err != nil {
+		if _, err = sshClient.SSH(fmt.Sprintf("cat <<EOF > /scripts/docker-proxy.sh %s", proxyConfig), true); err != nil {
 			return fmt.Errorf("write failed for proxy provision script for node %d: %s", n.NodeIdx, err)
 		}
 
