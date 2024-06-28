@@ -60,6 +60,7 @@ var cli *client.Client
 var nvmeDisks []string
 var scsiDisks []string
 var usbDisks []string
+var sshClient sshutils.SSHClient
 
 type dockerSetting struct {
 	Proxy string
@@ -443,14 +444,14 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 
 		nodeName := nodeNameFromIndex(x + 1)
 		nodeNum := fmt.Sprintf("%02d", x+1)
-		_, err := sshutils.NewSSHClient(sshPort, x+1, false)
+		sshClient, err = sshutils.NewSSHClient(sshPort, x+1, false)
 		if err != nil {
 			return err
 		}
 		if reverse {
 			nodeName = nodeNameFromIndex((int(nodes) - x))
 			nodeNum = fmt.Sprintf("%02d", (int(nodes) - x))
-			_, err = sshutils.NewSSHClient(sshPort, (int(nodes) - x), false)
+			sshClient, err = sshutils.NewSSHClient(sshPort, (int(nodes) - x), false)
 			if err != nil {
 				return err
 			}
@@ -619,14 +620,13 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return fmt.Errorf("Copying scripts directory for node %s failed", nodeName)
 		}
 
-		da := docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeName))
 		n := nodesconfig.NewNodeLinuxConfig(x+1, prefix, fipsEnabled,
 			dockerProxy, runEtcdOnMemory,
 			etcdDataMountSize, singleStack,
 			enableAudit, gpuAddress,
 			realtimeSchedulingEnabled, psaEnabled)
 
-		err = provisionNode(da, n)
+		err = provisionNode(sshClient, n)
 
 		go func(id string) {
 			cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
