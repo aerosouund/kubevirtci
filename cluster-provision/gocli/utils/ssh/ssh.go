@@ -18,7 +18,7 @@ import (
 )
 
 type SSHClient interface {
-	JumpSSH(uint16, int, string, bool, bool) (string, error)
+	JumpSSH(sshPort uint16, nodeIdx int, cmd string, root bool, stdOut bool) (string, error)
 	JumpSCP(uint16, int, string, fs.File) error
 	CopyRemoteFile(uint16, string, string) error
 }
