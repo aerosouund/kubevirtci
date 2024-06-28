@@ -33,16 +33,14 @@ func NewDockerAdapter(cli *client.Client, nodeName string) *DockerAdapter {
 }
 
 func (d *DockerAdapter) SSH(cmd string, stdOut bool) (string, error) {
-	startsWithSlash := cmd[0]
-	if string(startsWithSlash) == "/" {
+	indicatesScript := cmd[0]
+	if string(indicatesScript) == "/" || string(indicatesScript) == "-s" {
 		cmd = "ssh.sh sudo /bin/bash < " + cmd
 	}
-	fmt.Printf("executing: %s on %s \n", cmd, d.nodeName)
 	success, err := Exec(d.dockerClient, d.nodeName, []string{"/bin/bash", "-c", cmd}, os.Stdout)
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("cmd exited")
 	if !success {
 		return "", fmt.Errorf("Error executing %s on node %s", cmd, d.nodeName)
 	}
