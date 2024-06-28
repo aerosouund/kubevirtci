@@ -842,7 +842,7 @@ func prepareDeviceForAssignment(sshClient sshutils.SSHClient, pciID, pciAddress 
 	if pciAddress != "" {
 		devicePCIID, _ = getDevicePCIID(pciAddress)
 	}
-	if _, err := sshClient.SSH(fmt.Sprintf("/scripts/bind_device_to_vfio.sh --vendor %s", devicePCIID), true); err != nil {
+	if _, err := sshClient.SSH(fmt.Sprintf("-s -- --vendor %s < /scripts/bind_device_to_vfio.sh", devicePCIID), true); err != nil {
 		return err
 	}
 	return nil
