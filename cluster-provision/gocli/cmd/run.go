@@ -443,14 +443,14 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 
 		nodeName := nodeNameFromIndex(x + 1)
 		nodeNum := fmt.Sprintf("%02d", x+1)
-		sshClient, err := sshutils.NewSSHClient(sshPort, x+1, false)
+		_, err := sshutils.NewSSHClient(sshPort, x+1, false)
 		if err != nil {
 			return err
 		}
 		if reverse {
 			nodeName = nodeNameFromIndex((int(nodes) - x))
 			nodeNum = fmt.Sprintf("%02d", (int(nodes) - x))
-			sshClient, err = sshutils.NewSSHClient(sshPort, (int(nodes) - x), false)
+			_, err = sshutils.NewSSHClient(sshPort, (int(nodes) - x), false)
 			if err != nil {
 				return err
 			}
@@ -601,13 +601,14 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		if !success {
 			return fmt.Errorf("Copying scripts directory for node %s failed", nodeName)
 		}
+		da := docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeName))
 		n := nodesconfig.NewNodeLinuxConfig(x+1, prefix, fipsEnabled,
 			dockerProxy, runEtcdOnMemory,
 			etcdDataMountSize, singleStack,
 			enableAudit, gpuAddress,
 			realtimeSchedulingEnabled, psaEnabled)
 
-		err = provisionNode(sshClient, n)
+		err = provisionNode(da, n)
 
 		go func(id string) {
 			cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
@@ -677,7 +678,7 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 	nodeName := nodeNameFromIndex(n.NodeIdx)
 	var err error
 	if n.FipsEnabled {
-		if _, err := sshClient.SSH("sudo fips-mode-setup --enable && sudo reboot", true); err != nil {
+		if _, err := sshClient.SSH("fips-mode-setup --enable && sudo reboot", true); err != nil {
 			return fmt.Errorf("Starting fips mode failed: %s", err)
 		}
 		err := waitForVMToBeUp(n.K8sVersion, nodeName)
