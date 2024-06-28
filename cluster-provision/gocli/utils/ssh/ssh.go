@@ -78,8 +78,12 @@ func (s *SSHClientImpl) SSH(cmd string, stdOut bool) (string, error) {
 		session.Stdout = &stdout
 		session.Stderr = &stderr
 	}
+	startsWithSlash := cmd[0]
+	if string(startsWithSlash) == "/" {
+		cmd = "~" + cmd
+	}
 
-	err = session.Run(cmd)
+	err = session.Run("sudo /bin/bash -c " + cmd)
 	if err != nil {
 		return "", fmt.Errorf("Failed to execute command: %v, %v", err, stderr.String())
 	}

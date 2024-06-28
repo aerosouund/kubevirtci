@@ -697,7 +697,7 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 			return fmt.Errorf("write failed for proxy provision script for node %d: %s", n.NodeIdx, err)
 		}
 
-		if _, err = sshClient.SSH("sudo /bin/bash ~/scripts/docker-proxy.sh", true); err != nil {
+		if _, err = sshClient.SSH("/scripts/docker-proxy.sh", true); err != nil {
 			return fmt.Errorf("Running docker proxy failed on node %d: %s", n.NodeIdx, err)
 		}
 	}
@@ -711,7 +711,7 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 	}
 
 	if n.Realtime {
-		if _, err = sshClient.SSH("sudo /bin/bash ~/scripts/realtime.sh", true); err != nil {
+		if _, err = sshClient.SSH("/scripts/realtime.sh", true); err != nil {
 			return fmt.Errorf("Provisioning kernel to allow unlimited runtime realtime scheduler failed: %s", err)
 		}
 	}
@@ -737,14 +737,13 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 	}
 
 	if n.PSA {
-		if _, err = sshClient.SSH("sudo /bin/bash ~/scripts/psa.sh", true); err != nil {
+		if _, err = sshClient.SSH("/scripts/psa.sh", true); err != nil {
 			return fmt.Errorf("provisioning node %d failed: %s", n.NodeIdx, err)
 		}
 	}
 
-	//replace
 	if n.NodeIdx == 1 {
-		if _, err = sshClient.SSH("sudo /bin/bash ~/scripts/node01.sh", true); err != nil {
+		if _, err = sshClient.SSH("/scripts/node01.sh", true); err != nil {
 			return fmt.Errorf("provisioning node %d failed: %s", n.NodeIdx, err)
 		}
 
@@ -756,7 +755,7 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 				return err
 			}
 		}
-		if _, err = sshClient.SSH("sudo /bin/bash ~/scripts/nodes.sh", true); err != nil {
+		if _, err = sshClient.SSH("/scripts/nodes.sh", true); err != nil {
 			return fmt.Errorf("provisioning node %d failed: %s", n.NodeIdx, err)
 		}
 	}
@@ -842,7 +841,7 @@ func prepareDeviceForAssignment(sshClient sshutils.SSHClient, pciID, pciAddress 
 	if pciAddress != "" {
 		devicePCIID, _ = getDevicePCIID(pciAddress)
 	}
-	if _, err := sshClient.SSH(fmt.Sprintf("sudo /bin/bash -c '/home/vagrant/scripts/bind_device_to_vfio.sh --vendor %s'", devicePCIID), true); err != nil {
+	if _, err := sshClient.SSH(fmt.Sprintf("/scripts/bind_device_to_vfio.sh --vendor %s", devicePCIID), true); err != nil {
 		return err
 	}
 	return nil
@@ -851,10 +850,10 @@ func prepareDeviceForAssignment(sshClient sshutils.SSHClient, pciID, pciAddress 
 // replace
 func prepareEtcdDataMount(sshClient sshutils.SSHClient, etcdDataDir string, mountSize string) error {
 	cmds := []string{
-		fmt.Sprintf("sudo mkdir -p %s", etcdDataDir),
-		fmt.Sprintf("sudo test -d %s", etcdDataDir),
-		fmt.Sprintf("sudo mount -t tmpfs -o size=%s tmpfs %s", mountSize, etcdDataDir),
-		fmt.Sprintf("sudo df -h %s", etcdDataDir),
+		fmt.Sprintf("mkdir -p %s", etcdDataDir),
+		fmt.Sprintf("test -d %s", etcdDataDir),
+		fmt.Sprintf("mount -t tmpfs -o size=%s tmpfs %s", mountSize, etcdDataDir),
+		fmt.Sprintf("df -h %s", etcdDataDir),
 	}
 
 	for _, cmd := range cmds {
