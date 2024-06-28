@@ -2,6 +2,7 @@ package docker
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -33,8 +34,22 @@ func NewDockerAdapter(cli *client.Client, nodeName string) *DockerAdapter {
 }
 
 func (d *DockerAdapter) SSH(cmd string, stdOut bool) (string, error) {
+	var stdout bytes.Buffer
+	if !stdOut {
+		_, err := Exec(d.dockerClient, d.nodeName, []string{cmd}, os.Stdout)
+		if err != nil {
+			return "", err
+		}
+	}
+	success, err := Exec(d.dockerClient, d.nodeName, []string{cmd}, os.Stdout)
+	if err != nil {
+		return "", err
+	}
+	if !success {
+		return "", fmt.Errorf("Error executing %s on node %s", cmd, d.nodeName)
+	}
 
-	return "", nil
+	return stdout.String(), nil
 }
 
 func GetPrefixedContainers(cli *client.Client, prefix string) ([]types.Container, error) {
