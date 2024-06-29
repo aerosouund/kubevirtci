@@ -49,6 +49,7 @@ func (d *DockerAdapter) SSH(cmd string, stdOut bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	fmt.Println("cmd exited", cmd)
 	if !success {
 		return "", fmt.Errorf("Error executing %s on node %s", cmd, d.nodeName)
 	}
