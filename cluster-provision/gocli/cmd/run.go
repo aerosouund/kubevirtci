@@ -444,7 +444,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 
 		nodeName := nodeNameFromIndex(x + 1)
 		nodeNum := fmt.Sprintf("%02d", x+1)
-		sshClient, err = sshutils.NewSSHClient(sshPort, x+1, false)
+		sshClient = docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeNameFromIndex(x+1)))
 		if err != nil {
 			return err
 		}
