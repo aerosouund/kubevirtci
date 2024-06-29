@@ -43,13 +43,11 @@ func (d *DockerAdapter) SSH(cmd string, stdOut bool) (string, error) {
 		cmd = "ssh.sh " + cmd
 	}
 
-	fmt.Println("the cmd:", cmd)
-
 	success, err := Exec(d.dockerClient, d.nodeName, []string{"/bin/bash", "-c", cmd}, os.Stdout)
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("cmd exited", cmd)
+
 	if !success {
 		return "", fmt.Errorf("Error executing %s on node %s", cmd, d.nodeName)
 	}
