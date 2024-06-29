@@ -367,6 +367,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	sshPort, err := utils.GetPublicPort(utils.PortSSH, dm.NetworkSettings.Ports)
+	_ = sshPort
 
 	// Pull the registry image
 	err = docker.ImagePull(cli, ctx, utils.DockerRegistryImage, types.ImagePullOptions{})
@@ -444,14 +445,14 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 
 		nodeName := nodeNameFromIndex(x + 1)
 		nodeNum := fmt.Sprintf("%02d", x+1)
-		sshClient = docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeNameFromIndex(x+1)))
+		sshClient = docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeName))
 		if err != nil {
 			return err
 		}
 		if reverse {
 			nodeName = nodeNameFromIndex((int(nodes) - x))
 			nodeNum = fmt.Sprintf("%02d", (int(nodes) - x))
-			sshClient, err = sshutils.NewSSHClient(sshPort, (int(nodes) - x), false)
+
 			if err != nil {
 				return err
 			}
