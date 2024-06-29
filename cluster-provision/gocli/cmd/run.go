@@ -692,7 +692,7 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 	var err error
 	n.FipsEnabled = true
 	if n.FipsEnabled {
-		if _, err := sshClient.SSH("fips-mode-setup --enable", true); err != nil {
+		if _, err := sshClient.SSH("sudo fips-mode-setup --enable", true); err != nil {
 			return fmt.Errorf("Starting fips mode failed: %s", err)
 		}
 		if _, err := sshClient.SSH("reboot", true); err != nil {
