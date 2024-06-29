@@ -690,6 +690,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig) error {
 	nodeName := nodeNameFromIndex(n.NodeIdx)
 	var err error
+	n.FipsEnabled = true
 	if n.FipsEnabled {
 		for _, cmd := range []string{"fips-mode-setup --enable", "reboot"} {
 			if _, err := sshClient.SSH(cmd, true); err != nil {
