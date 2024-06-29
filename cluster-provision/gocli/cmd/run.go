@@ -367,7 +367,6 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	sshPort, err := utils.GetPublicPort(utils.PortSSH, dm.NetworkSettings.Ports)
-	_ = sshPort
 
 	// Pull the registry image
 	err = docker.ImagePull(cli, ctx, utils.DockerRegistryImage, types.ImagePullOptions{})
@@ -445,13 +444,14 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 
 		nodeName := nodeNameFromIndex(x + 1)
 		nodeNum := fmt.Sprintf("%02d", x+1)
-		sshClient = docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeName))
+		sshClient, err = sshutils.NewSSHClient(sshPort, x+1, false)
 		if err != nil {
 			return err
 		}
 		if reverse {
 			nodeName = nodeNameFromIndex((int(nodes) - x))
 			nodeNum = fmt.Sprintf("%02d", (int(nodes) - x))
+			sshClient, err = sshutils.NewSSHClient(sshPort, (int(nodes) - x), false)
 
 			if err != nil {
 				return err
@@ -620,7 +620,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		if !success {
 			return fmt.Errorf("Copying scripts directory for node %s failed", nodeName)
 		}
-		sshClient = docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeName))
+
 		n := nodesconfig.NewNodeLinuxConfig(x+1, prefix, fipsEnabled,
 			dockerProxy, runEtcdOnMemory,
 			etcdDataMountSize, singleStack,
@@ -635,7 +635,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}(node.ID)
 	}
 
-	sshClient := docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeNameFromIndex(1)))
+	sshClient, _ := sshutils.NewSSHClient(sshPort, 1, false)
 	n := nodesconfig.NewNodeK8sConfig(cephEnabled, prometheusEnabled, prometheusAlertmanagerEnabled, grafanaEnabled, istioEnabled, nfsCsiEnabled)
 	err = provisionK8sOptions(sshClient, n)
 	if err != nil {
@@ -644,8 +644,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 
 	// clean up scripts directory
 	for i := 0; i < int(nodes); i++ {
-		nodeName := nodeNameFromIndex(i + 1)
-		sshClient := docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeName))
+		sshClient, _ := sshutils.NewSSHClient(sshPort, i+1, false)
 		if _, err = sshClient.SSH("rm -rf /home/vagrant/scripts", true); err != nil {
 			return fmt.Errorf("Cleaning up scripts dir failed: %s", err)
 		}
