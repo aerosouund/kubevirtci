@@ -691,8 +691,11 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 	nodeName := nodeNameFromIndex(n.NodeIdx)
 	var err error
 	if n.FipsEnabled {
-		if _, err := sshClient.SSH("fips-mode-setup --enable && sudo reboot", true); err != nil {
+		if _, err := sshClient.SSH("fips-mode-setup --enable", true); err != nil {
 			return fmt.Errorf("Starting fips mode failed: %s", err)
+		}
+		if _, err := sshClient.SSH("reboot", true); err != nil {
+			return fmt.Errorf("Rebooting failed: %s", err)
 		}
 		err := waitForVMToBeUp(n.K8sVersion, nodeName)
 		if err != nil {
