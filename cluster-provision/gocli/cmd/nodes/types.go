@@ -14,6 +14,26 @@ type NodeLinuxConfig struct {
 	PSA          bool
 }
 
+type NodeK8sConfig struct {
+	Ceph         bool
+	Prometheus   bool
+	Alertmanager bool
+	Grafana      bool
+	Istio        bool
+	NfsCsi       bool
+}
+
+func NewNodeK8sConfig(ceph, prometheus, alertmanager, grafana, istio, nfsCsi bool) *NodeK8sConfig {
+	return &NodeK8sConfig{
+		Ceph:         ceph,
+		Prometheus:   prometheus,
+		Alertmanager: alertmanager,
+		Grafana:      grafana,
+		Istio:        istio,
+		NfsCsi:       nfsCsi,
+	}
+}
+
 func NewNodeLinuxConfig(
 	nodeIdx int,
 	k8sVersion string,

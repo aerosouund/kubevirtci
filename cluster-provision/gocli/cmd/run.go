@@ -633,40 +633,12 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			wg.Done()
 		}(node.ID)
 	}
+
 	sshClient := docker.NewDockerAdapter(cli, nodeContainer(prefix, nodeNameFromIndex(1)))
-
-	if cephEnabled {
-		if _, err = sshClient.SSH("/scripts/rook-ceph.sh", true); err != nil {
-			return fmt.Errorf("provisioning Ceph CSI failed: %s", err)
-		}
-	}
-
-	if nfsCsiEnabled {
-		if _, err = sshClient.SSH("/scripts/nfs-csi.sh", true); err != nil {
-			return fmt.Errorf("provisioning NFS CSI failed: %s", err)
-		}
-	}
-
-	if istioEnabled {
-		if _, err = sshClient.SSH("/scripts/istio.sh", true); err != nil {
-			return fmt.Errorf("deploying Istio service mesh failed: %s", err)
-		}
-	}
-
-	if prometheusEnabled {
-		var params string
-		if prometheusAlertmanagerEnabled {
-			params += "--alertmanager true "
-		}
-
-		if grafanaEnabled {
-			params += "--grafana true "
-		}
-
-		// add params
-		if _, err = sshClient.SSH(fmt.Sprintf("-s -- %s < /scripts/prometheus.sh", params), true); err != nil {
-			return fmt.Errorf("deploying Prometheus operator failed: %s", err)
-		}
+	n := nodesconfig.NewNodeK8sConfig(cephEnabled, prometheusEnabled, prometheusAlertmanagerEnabled, grafanaEnabled, istioEnabled, nfsCsiEnabled)
+	err = provisionK8sOptions(sshClient, n)
+	if err != nil {
+		return err
 	}
 
 	// clean up scripts directory
@@ -687,10 +659,47 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	return nil
 }
 
+func provisionK8sOptions(sshClient sshutils.SSHClient, n *nodesconfig.NodeK8sConfig) error {
+	var err error
+	if n.Ceph {
+		if _, err = sshClient.SSH("/scripts/rook-ceph.sh", true); err != nil {
+			return fmt.Errorf("provisioning Ceph CSI failed: %s", err)
+		}
+	}
+
+	if n.NfsCsi {
+		if _, err = sshClient.SSH("/scripts/nfs-csi.sh", true); err != nil {
+			return fmt.Errorf("provisioning NFS CSI failed: %s", err)
+		}
+	}
+
+	if n.Istio {
+		if _, err = sshClient.SSH("/scripts/istio.sh", true); err != nil {
+			return fmt.Errorf("deploying Istio service mesh failed: %s", err)
+		}
+	}
+
+	if n.Prometheus {
+		var params string
+		if n.Alertmanager {
+			params += "--alertmanager true "
+		}
+
+		if n.Grafana {
+			params += "--grafana true "
+		}
+
+		if _, err = sshClient.SSH(fmt.Sprintf("-s -- %s < /scripts/prometheus.sh", params), true); err != nil {
+			return fmt.Errorf("deploying Prometheus operator failed: %s", err)
+		}
+	}
+	return nil
+}
+
 func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig) error {
+
 	nodeName := nodeNameFromIndex(n.NodeIdx)
 	var err error
-	n.FipsEnabled = true
 	if n.FipsEnabled {
 		for _, cmd := range []string{"sudo fips-mode-setup --enable", "sudo reboot"} {
 			if _, err := sshClient.SSH(cmd, true); err != nil {
