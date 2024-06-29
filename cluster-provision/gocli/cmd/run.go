@@ -592,9 +592,9 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		if err != nil {
 			return err
 		}
-
+		devNull, _ := os.Open(os.DevNull)
 		// the scripts required for running the provider exist in the node container, in order to execute them directly on the node they must be copied to the node first
-		success, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", "scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key " + fmt.Sprintf("-r /scripts vagrant@192.168.66.10%d:/home/vagrant/scripts", x+1)}, os.Stdout)
+		success, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", "scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key " + fmt.Sprintf("-r /scripts vagrant@192.168.66.10%d:/home/vagrant/scripts", x+1)}, devNull)
 		if err != nil {
 			return err
 		}
@@ -692,11 +692,10 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 	var err error
 	n.FipsEnabled = true
 	if n.FipsEnabled {
-		if _, err := sshClient.SSH("sudo fips-mode-setup --enable", true); err != nil {
-			return fmt.Errorf("Starting fips mode failed: %s", err)
-		}
-		if _, err := sshClient.SSH("sudo reboot", true); err != nil {
-			return fmt.Errorf("Rebooting failed: %s", err)
+		for _, cmd := range []string{"sudo fips-mode-setup --enable", "sudo reboot"} {
+			if _, err := sshClient.SSH(cmd, true); err != nil {
+				return fmt.Errorf("Starting fips mode failed: %s", err)
+			}
 		}
 		err := waitForVMToBeUp(n.K8sVersion, nodeName)
 		if err != nil {
