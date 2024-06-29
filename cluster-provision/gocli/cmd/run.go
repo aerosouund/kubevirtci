@@ -619,6 +619,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		if !success {
 			return fmt.Errorf("Copying scripts directory for node %s failed", nodeName)
 		}
+		sshClient = docker.NewDockerAdapter(cli, nodeName)
 
 		n := nodesconfig.NewNodeLinuxConfig(x+1, prefix, fipsEnabled,
 			dockerProxy, runEtcdOnMemory,
