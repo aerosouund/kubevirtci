@@ -317,6 +317,8 @@ function _prepare_kind_config() {
     cat ${KUBEVIRTCI_CONFIG_PATH}/$KUBEVIRT_PROVIDER/kind.yaml
 }
 
+
+# this is main
 function kind_up() {
     _fetch_kind
     _prepare_kind_config

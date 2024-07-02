@@ -33,6 +33,8 @@ function configure_registry_proxy() {
     KIND_BIN="$kind_binary_path" PROXY_HOSTNAME="$ci_proxy_hostname" $configure_registry_proxy_script
 }
 
+
+# this is main
 function up() {
     # print hardware info for easier debugging based on logs
     echo 'Available cards'
