@@ -4,11 +4,10 @@ import (
 	"context"
 	"errors"
 	"io"
-	"net/http"
 	"net/url"
 
-	"github.com/distribution/reference"
-	"github.com/docker/docker/api/types/image"
+	"github.com/docker/distribution/reference"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/errdefs"
 )
@@ -17,7 +16,7 @@ import (
 // It executes the privileged function if the operation is unauthorized
 // and it tries one more time.
 // It's up to the caller to handle the io.ReadCloser and close it properly.
-func (cli *Client) ImagePush(ctx context.Context, image string, options image.PushOptions) (io.ReadCloser, error) {
+func (cli *Client) ImagePush(ctx context.Context, image string, options types.ImagePushOptions) (io.ReadCloser, error) {
 	ref, err := reference.ParseNormalizedNamed(image)
 	if err != nil {
 		return nil, err
@@ -51,7 +50,6 @@ func (cli *Client) ImagePush(ctx context.Context, image string, options image.Pu
 }
 
 func (cli *Client) tryImagePush(ctx context.Context, imageID string, query url.Values, registryAuth string) (serverResponse, error) {
-	return cli.post(ctx, "/images/"+imageID+"/push", query, nil, http.Header{
-		registry.AuthHeader: {registryAuth},
-	})
+	headers := map[string][]string{registry.AuthHeader: {registryAuth}}
+	return cli.post(ctx, "/images/"+imageID+"/push", query, nil, headers)
 }

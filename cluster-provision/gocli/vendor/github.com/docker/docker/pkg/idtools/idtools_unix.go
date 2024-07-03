@@ -1,4 +1,5 @@
 //go:build !windows
+// +build !windows
 
 package idtools // import "github.com/docker/docker/pkg/idtools"
 
@@ -12,7 +13,7 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/moby/sys/user"
+	"github.com/opencontainers/runc/libcontainer/user"
 )
 
 func mkdirAs(path string, mode os.FileMode, owner Identity, mkAll, chownExisting bool) error {
