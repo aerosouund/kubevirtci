@@ -49,13 +49,11 @@ func (p *Podman) Run(containerID string) error {
 }
 
 func (p *Podman) Inspect(containerID string) (*define.InspectContainerData, error) {
-	inspectData, err := containers.Inspect(p.Conn, "foobar", new(containers.InspectOptions).WithSize(true))
+	inspectData, err := containers.Inspect(p.Conn, containerID, nil)
 	if err != nil {
 		return nil, err
 	}
-	// Print the container ID
 	return inspectData, nil
-
 }
 
 func (p *Podman) Remove(containerID string) error {
