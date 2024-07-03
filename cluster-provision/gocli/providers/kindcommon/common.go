@@ -2,21 +2,111 @@ package kindcommon
 
 import (
 	"context"
+	"embed"
+	"encoding/json"
 
-	kindmain "kubevirt.io/kubevirtci/cluster-provision/gocli/providers/kind"
+	"k8s.io/client-go/rest"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	kind "sigs.k8s.io/kind/pkg/cluster"
+	"sigs.k8s.io/yaml"
 )
 
+//go:embed manifests/*
+var f embed.FS
+
 type KindCommonProvider struct {
-	Version         string
-	Nodes           int
-	Client          k8s.K8sDynamicClient `json:"-"`
-	ContainerClient kindmain.ContainerClient
+	Client k8s.K8sDynamicClient
+
+	nodes           int
+	version         string
+	provider        *kind.Provider
+	runEtcdOnMemory bool
+	ipFamily        string
+	withCPUManager  bool
 }
 
-func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFunc) {
-	// download the kind cli or a library or whatever -- _fetch_kind
-	kind := kind.Provider{}
+func NewKindCommondProvider(version string, nodeNum int) (*KindCommonProvider, error) {
+	// use podman first
+	providerCRIOpt, err := kind.DetectNodeProvider()
+	if err != nil {
+		return nil, err
+	}
 
+	k := kind.NewProvider(providerCRIOpt)
+	return &KindCommonProvider{
+		nodes:    nodeNum,
+		provider: k,
+		version:  version,
+	}, nil
+}
+
+func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFunc) error {
+	cluster, err := k.prepareClusterYaml()
+	if err != nil {
+		return err
+	}
+
+	err = k.provider.Create("kubevirt", kind.CreateWithRawConfig([]byte(cluster)))
+	if err != nil {
+		return err
+	}
+
+	kubeconf, err := k.provider.KubeConfig("kubevirt", true)
+	if err != nil {
+		return err
+	}
+
+	jsonData, err := yaml.YAMLToJSON([]byte(kubeconf))
+	if err != nil {
+		return err
+	}
+	config := &rest.Config{}
+	err = json.Unmarshal(jsonData, config)
+	if err != nil {
+		return err
+	}
+
+	k8sClient, err := k8s.NewDynamicClient(config)
+	if err != nil {
+		return err
+	}
+	k.Client = k8sClient
+
+	return nil
+}
+
+func (k *KindCommonProvider) prepareClusterYaml() (string, error) {
+	cluster, err := f.ReadFile("manifests/kind.yaml")
+	if err != nil {
+		return "", err
+	}
+
+	wp, err := f.ReadFile("manifests/worker-patch.yaml")
+	if err != nil {
+		return "", err
+	}
+
+	cpump, err := f.ReadFile("manifests/cpu-manager-patch.yaml")
+	if err != nil {
+		return "", err
+	}
+
+	ipf, err := f.ReadFile("manifests/ip-family.yaml")
+	if err != nil {
+		return "", err
+	}
+
+	// cpu manager condition
+	for i := 0; i < k.nodes; i++ {
+		cluster = append(cluster, wp...)
+		cluster = append(cluster, []byte("\n")...)
+		if k.withCPUManager {
+			cluster = append(cluster, cpump...)
+		}
+	}
+
+	if k.ipFamily != "" {
+		cluster = append(cluster, []byte(string(ipf)+k.ipFamily)...)
+	}
+	return string(cluster), nil
 }

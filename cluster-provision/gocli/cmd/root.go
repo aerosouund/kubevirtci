@@ -36,6 +36,7 @@ func NewRootCommand() *cobra.Command {
 		NewProvisionManagerCommand(),
 		NewSetContextCommand(),
 		NewRun2Command(),
+		NewRunKindCommand(),
 	)
 
 	return root

@@ -159,17 +159,17 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 
 	err = kp.SSHClient.CopyRemoteFile(kp.SSHPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	config, err := k8s.InitConfig(".kubeconfig", kp.APIServerPort)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	k8sClient, err := k8s.NewDynamicClient(config)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	kp.Client = k8sClient
 
