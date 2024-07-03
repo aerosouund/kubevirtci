@@ -229,7 +229,7 @@ func (kp *KubevirtProvider) runDNSMasq(ctx context.Context, portMap nat.PortMap)
 		Mounts: dnsmasqMounts,
 	}, nil, nil, kp.Version+"-dnsmasq")
 
-	if err := kp.Docker.ContainerStart(ctx, dnsmasq.ID, types.ContainerStartOptions{}); err != nil {
+	if err := kp.Docker.ContainerStart(ctx, dnsmasq.ID, container.StartOptions{}); err != nil {
 		return "", err
 	}
 	return dnsmasq.ID, nil
@@ -250,7 +250,7 @@ func (kp *KubevirtProvider) runRegistry(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	if err := kp.Docker.ContainerStart(ctx, registry.ID, types.ContainerStartOptions{}); err != nil {
+	if err := kp.Docker.ContainerStart(ctx, registry.ID, container.StartOptions{}); err != nil {
 		return "", err
 	}
 

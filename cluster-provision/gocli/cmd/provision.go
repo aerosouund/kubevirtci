@@ -12,6 +12,7 @@ import (
 	"github.com/alessio/shellescape"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
@@ -163,7 +164,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 	containers <- dnsmasq.ID
-	if err := cli.ContainerStart(ctx, dnsmasq.ID, types.ContainerStartOptions{}); err != nil {
+	if err := cli.ContainerStart(ctx, dnsmasq.ID, dockercontainer.StartOptions{}); err != nil {
 		return err
 	}
 
@@ -217,7 +218,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 	containers <- node.ID
-	if err := cli.ContainerStart(ctx, node.ID, types.ContainerStartOptions{}); err != nil {
+	if err := cli.ContainerStart(ctx, node.ID, dockercontainer.StartOptions{}); err != nil {
 		return err
 	}
 
@@ -315,7 +316,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	logrus.Infof("Commiting the node as %s", target)
-	_, err = cli.ContainerCommit(ctx, node.ID, types.ContainerCommitOptions{
+	_, err = cli.ContainerCommit(ctx, node.ID, dockercontainer.CommitOptions{
 		Reference: target,
 		Comment:   "PROVISION SUCCEEDED",
 		Author:    "gocli",

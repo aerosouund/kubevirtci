@@ -19,6 +19,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
@@ -28,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	containers2 "kubevirt.io/kubevirtci/cluster-provision/gocli/containers"
+
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/images"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
@@ -399,7 +401,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	containers <- dnsmasq.ID
-	if err := cli.ContainerStart(ctx, dnsmasq.ID, types.ContainerStartOptions{}); err != nil {
+	if err := cli.ContainerStart(ctx, dnsmasq.ID, dockercontainer.StartOptions{}); err != nil {
 		return err
 	}
 
@@ -428,7 +430,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 	containers <- registry.ID
-	if err := cli.ContainerStart(ctx, registry.ID, types.ContainerStartOptions{}); err != nil {
+	if err := cli.ContainerStart(ctx, registry.ID, dockercontainer.StartOptions{}); err != nil {
 		return err
 	}
 
@@ -461,7 +463,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 		containers <- nfsServer.ID
-		if err := cli.ContainerStart(ctx, nfsServer.ID, types.ContainerStartOptions{}); err != nil {
+		if err := cli.ContainerStart(ctx, nfsServer.ID, dockercontainer.StartOptions{}); err != nil {
 			return err
 		}
 	}
@@ -614,7 +616,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}
 		containers <- node.ID
 
-		if err := cli.ContainerStart(ctx, node.ID, types.ContainerStartOptions{}); err != nil {
+		if err := cli.ContainerStart(ctx, node.ID, dockercontainer.StartOptions{}); err != nil {
 			return err
 		}
 
