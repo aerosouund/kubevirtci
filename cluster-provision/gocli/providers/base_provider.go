@@ -98,6 +98,7 @@ func NewFromRunning(dnsmasqPrefix string) (*KubevirtProvider, error) {
 	return kp, nil
 }
 
+// is the portmap also usable in kind ?
 func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc, portMap nat.PortMap) (retErr error) {
 	stop := make(chan error, 10)
 	containers, _, done := docker.NewCleanupHandler(kp.Docker, stop, os.Stdout, false)

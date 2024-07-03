@@ -36,7 +36,7 @@ require (
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
-	github.com/BurntSushi/toml v1.3.2 // indirect
+	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Microsoft/hcsshim v0.12.3 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
@@ -67,6 +67,7 @@ require (
 	github.com/docker/docker-credential-helpers v0.8.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.12.0 // indirect
 	github.com/evanphx/json-patch v5.9.0+incompatible // indirect
+	github.com/evanphx/json-patch/v5 v5.8.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
@@ -91,6 +92,7 @@ require (
 	github.com/google/go-containerregistry v0.19.1 // indirect
 	github.com/google/go-intervals v0.0.2 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
+	github.com/google/safetext v0.0.0-20220905092116-b49f7bc46da2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/schema v1.3.0 // indirect
@@ -116,6 +118,7 @@ require (
 	github.com/letsencrypt/boulder v0.0.0-20230907030200-6d76a0f91e1e // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/manifoldco/promptui v0.9.0 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect
@@ -140,6 +143,7 @@ require (
 	github.com/openshift/api v0.0.0 // indirect
 	github.com/openshift/custom-resource-status v1.1.2 // indirect
 	github.com/ostreedev/ostree-go v0.0.0-20210805093236-719684c64e4f // indirect
+	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pkg/sftp v1.13.6 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/proglottis/gpgme v0.1.3 // indirect
@@ -191,6 +195,7 @@ require (
 	kubevirt.io/controller-lifecycle-operator-sdk/api v0.0.0-20220329064328-f3cc58c6ed90 // indirect
 	sigs.k8s.io/controller-runtime v0.17.2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
+	sigs.k8s.io/kind v0.24.0-alpha.0.20240702070959-79ffb67882fb // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	tags.cncf.io/container-device-interface v0.7.2 // indirect
 )
