@@ -285,7 +285,7 @@ func (kp *KubevirtProvider) runNFSGanesha(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	if err := kp.Docker.ContainerStart(ctx, nfsGanesha.ID, types.ContainerStartOptions{}); err != nil {
+	if err := kp.Docker.ContainerStart(ctx, nfsGanesha.ID, container.StartOptions{}); err != nil {
 		return "", err
 	}
 	return nfsGanesha.ID, nil
@@ -340,7 +340,7 @@ func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan str
 		}
 		containerChan <- node.ID
 
-		if err := kp.Docker.ContainerStart(ctx, node.ID, types.ContainerStartOptions{}); err != nil {
+		if err := kp.Docker.ContainerStart(ctx, node.ID, container.StartOptions{}); err != nil {
 			return err
 		}
 
