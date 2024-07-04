@@ -25,6 +25,8 @@ type KindCommonProvider struct {
 	withCPUManager  bool
 }
 
+const kind128Image = "kindest/node:v1.28.0@sha256:b7a4cad12c197af3ba43202d3efe03246b3f0793f162afb40a33c923952d5b31"
+
 func NewKindCommondProvider(version string, nodeNum int) (*KindCommonProvider, error) {
 	// use podman first
 	providerCRIOpt, err := kind.DetectNodeProvider()
@@ -46,7 +48,7 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 		return err
 	}
 
-	err = k.provider.Create("kubevirt", kind.CreateWithRawConfig([]byte(cluster)), kind.CreateWithNodeImage("kindest/node:v1.28.0@sha256:b7a4cad12c197af3ba43202d3efe03246b3f0793f162afb40a33c923952d5b31"))
+	err = k.provider.Create("kubevirt", kind.CreateWithRawConfig([]byte(cluster)), kind.CreateWithNodeImage(kind128Image))
 	if err != nil {
 		return err
 	}
