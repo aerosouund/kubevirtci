@@ -4,8 +4,19 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
+	"fmt"
+	"io"
+	"io/fs"
+	"net/http"
+	"os"
+	"runtime"
+
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 
 	"k8s.io/client-go/rest"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	kind "sigs.k8s.io/kind/pkg/cluster"
 	"sigs.k8s.io/yaml"
@@ -15,7 +26,9 @@ import (
 var f embed.FS
 
 type KindCommonProvider struct {
-	Client k8s.K8sDynamicClient
+	Client    k8s.K8sDynamicClient
+	CRIClient client.ContainerAPIClient
+	cli       *client.Client
 
 	nodes           int
 	version         string
@@ -25,7 +38,11 @@ type KindCommonProvider struct {
 	withCPUManager  bool
 }
 
-const kind128Image = "kindest/node:v1.28.0@sha256:b7a4cad12c197af3ba43202d3efe03246b3f0793f162afb40a33c923952d5b31"
+const (
+	kind128Image      = "kindest/node:v1.28.0@sha256:b7a4cad12c197af3ba43202d3efe03246b3f0793f162afb40a33c923952d5b31"
+	cniArchieFilename = "cni-archive.tar.gz"
+	registryImage     = "quay.io/kubevirtci/library-registry:2.7.1"
+)
 
 func NewKindCommondProvider(version string, nodeNum int) (*KindCommonProvider, error) {
 	// use podman first
@@ -73,6 +90,45 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 		return err
 	}
 	k.Client = k8sClient
+	nodes, err := k.provider.ListNodes(k.version)
+	if err != nil {
+		return err
+	}
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return err
+	}
+
+	err = k.downloadCNI()
+	if err != nil {
+		return nil
+	}
+	file, err := os.Open(cniArchieFilename)
+	if err != nil {
+		return err
+	}
+
+	_, registryIP, err := k.runRegistry("5000") // read from flag
+	if err != nil {
+		return nil
+	}
+
+	for _, node := range nodes {
+		da := docker.NewDockerAdapter(cli, node.String())
+		if err := k.setupCNI(da, file); err != nil {
+			return err
+		}
+		if err = k.setupRegistryOnNode(da, registryIP); err != nil {
+			return err
+		}
+		if err = k.setupNetwork(da); err != nil {
+			return err
+		}
+		if err = k.setupRegistryProxy(da, "docker-mirror-proxy.kubevirt-prow.svc"); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -114,16 +170,124 @@ func (k *KindCommonProvider) prepareClusterYaml() (string, error) {
 }
 
 func (k *KindCommonProvider) Delete(prefix string) error {
-	n, err := k.provider.ListNodes(prefix)
+	err := k.provider.Delete(prefix, "")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (k *KindCommonProvider) setupNetwork(da *docker.DockerAdapter) error {
+	cmds := []string{
+		"modprobe br_netfilter",
+		"sysctl -w sys.net.bridge.bridge-nf-call-arptables=1",
+		"sysctl -w sys.net.bridge.bridge-nf-call-iptables=1",
+		"sysctl -w sys.net.bridge.bridge-nf-call-ip6tables=1",
+	}
+
+	for _, cmd := range cmds {
+		if _, err := da.SSH(cmd, true); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (k *KindCommonProvider) setupRegistryOnNode(da *docker.DockerAdapter, registryIP string) error {
+	cmds := []string{
+		`bash -c "sed -i '/\[plugins.cri.registry.mirrors\]/a\        [plugins.cri.registry.mirrors.\"registry:5000\"]\n\          endpoint = [\"http://registry:5000\"]' /etc/containerd/config.toml"`,
+		"bash -c systemctl restart containerd",
+		"echo " + registryIP + "\tregistry >> /etc/hosts",
+	}
+	for _, cmd := range cmds {
+		if _, err := da.SSH(cmd, true); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (k *KindCommonProvider) setupCNI(da *docker.DockerAdapter, cniArchive fs.File) error {
+	err := da.SCP(cniArchieFilename, "/cni.tar.gz", cniArchive)
+	if err != nil {
+		return nil
+	}
+
+	_, err = da.SSH(`/bin/sh -c "tar xf /cni.tar.gz" -C /opt/cni/bin"`, true)
 	if err != nil {
 		return err
 	}
 
-	if len(n) > 0 {
-		err = k.provider.Delete(prefix, "")
-		if err != nil {
+	return nil
+}
+
+func (k *KindCommonProvider) setupRegistryProxy(da *docker.DockerAdapter, proxyHost string) error {
+	setupUrl := "http://" + proxyHost + ":3128/setup/systemd"
+	cmds := []string{
+		"curl " + setupUrl + " > proxyscript.sh",
+		"sed s/docker.service/containerd.service/g proxyscript.sh",
+		`sed '/Environment/ s/$/ \"NO_PROXY=127.0.0.0\/8,10.0.0.0\/8,172.16.0.0\/12,192.168.0.0\/16\"/ proxyscript.sh`,
+		"/bin/bash -c proxyscript.sh",
+	}
+	for _, cmd := range cmds {
+		if _, err := da.SSH(cmd, true); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (k *KindCommonProvider) runRegistry(hostPort string) (string, string, error) {
+	registry, err := k.cli.ContainerCreate(context.Background(), &container.Config{
+		Image: registryImage,
+		ExposedPorts: nat.PortSet{
+			nat.Port(5000): {},
+		},
+	}, &container.HostConfig{
+		Privileged:  true,
+		NetworkMode: "kind",
+		PortBindings: nat.PortMap{
+			nat.Port(5000): []nat.PortBinding{{HostPort: hostPort}},
+		},
+		RestartPolicy: container.RestartPolicy{
+			Name: container.RestartPolicyAlways,
+		},
+	}, nil, nil, k.version+"-registry")
+	if err != nil {
+		return "", "", err
+	}
+
+	if err := k.cli.ContainerStart(context.TODO(), registry.ID, container.StartOptions{}); err != nil {
+		return "", "", err
+	}
+
+	registryJSON, err := k.cli.ContainerInspect(context.Background(), registry.ID)
+	if err != nil {
+		return "", "", err
+	}
+	return registry.ID, registryJSON.NetworkSettings.IPAddress, nil
+}
+
+func (k *KindCommonProvider) downloadCNI() error {
+	out, err := os.Create(cniArchieFilename)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	resp, err := http.Get("https://github.com/containernetworking/plugins/releases/download/v0.8.5/cni-plugins-linux-" + runtime.GOARCH + "-v0.8.5.tgz")
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status: %s", resp.Status)
+	}
+
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
 	}
 	return nil
 }

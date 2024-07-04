@@ -162,11 +162,12 @@ func run2(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 
-	cli, err = client.NewClientWithOpts(client.FromEnv)
+	slim, err := cmd.Flags().GetBool("slim")
 	if err != nil {
 		return err
 	}
-	slim, err := cmd.Flags().GetBool("slim")
+
+	cli, err = client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
 	}
