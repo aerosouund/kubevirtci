@@ -68,16 +68,16 @@ func (mr *MockSSHClientMockRecorder) JumpSCP(arg0, arg1, arg2, arg3 any) *gomock
 }
 
 // JumpSSH mocks base method.
-func (m *MockSSHClient) JumpSSH(arg0 uint16, arg1 int, arg2 string, arg3, arg4 bool) (string, error) {
+func (m *MockSSHClient) JumpSSH(sshPort uint16, nodeIdx int, cmd string, root, stdOut bool) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "JumpSSH", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "JumpSSH", sshPort, nodeIdx, cmd, root, stdOut)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // JumpSSH indicates an expected call of JumpSSH.
-func (mr *MockSSHClientMockRecorder) JumpSSH(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+func (mr *MockSSHClientMockRecorder) JumpSSH(sshPort, nodeIdx, cmd, root, stdOut any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JumpSSH", reflect.TypeOf((*MockSSHClient)(nil).JumpSSH), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JumpSSH", reflect.TypeOf((*MockSSHClient)(nil).JumpSSH), sshPort, nodeIdx, cmd, root, stdOut)
 }
