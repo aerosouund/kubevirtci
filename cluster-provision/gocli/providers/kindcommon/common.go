@@ -112,3 +112,18 @@ func (k *KindCommonProvider) prepareClusterYaml() (string, error) {
 	}
 	return string(cluster), nil
 }
+
+func (k *KindCommonProvider) Delete(prefix string) error {
+	n, err := k.provider.ListNodes(prefix)
+	if err != nil {
+		return err
+	}
+
+	if len(n) > 0 {
+		err = k.provider.Delete(prefix, "")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
