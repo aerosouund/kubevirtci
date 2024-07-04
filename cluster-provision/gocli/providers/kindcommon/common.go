@@ -48,7 +48,7 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 		return err
 	}
 
-	err = k.provider.Create("kubevirt", kind.CreateWithRawConfig([]byte(cluster)), kind.CreateWithNodeImage(kind128Image))
+	err = k.provider.Create(k.version, kind.CreateWithRawConfig([]byte(cluster)), kind.CreateWithNodeImage(kind128Image))
 	if err != nil {
 		return err
 	}
