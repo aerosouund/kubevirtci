@@ -17,6 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/rest"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
+	dockercri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/docker"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	kind "sigs.k8s.io/kind/pkg/cluster"
@@ -109,10 +110,11 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 	if err != nil {
 		return err
 	}
+	k.CRI = dockercri.NewDockerClient()
 
 	_, registryIP, err := k.runRegistry("5000") // read from flag
 	if err != nil {
-		return nil
+		return err
 	}
 
 	for _, node := range nodes {
@@ -293,5 +295,6 @@ func (k *KindCommonProvider) downloadCNI() error {
 	if err != nil {
 		return err
 	}
+	logrus.Info("Downloaded cni archive")
 	return nil
 }
