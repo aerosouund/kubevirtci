@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
-	kind "kubevirt.io/kubevirtci/cluster-provision/gocli/providers/kindcommon"
+	kind "kubevirt.io/kubevirtci/cluster-provision/gocli/providers/kind/kindcommon"
 )
 
 func NewRunKindCommand() *cobra.Command {

@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/kind/pkg/errors"
 	"sigs.k8s.io/kind/pkg/log"
 
+	"sigs.k8s.io/kind/pkg/cluster/internal/kubeconfig"
 	"sigs.k8s.io/kind/pkg/cluster/internal/providers"
 )
 
@@ -32,12 +33,21 @@ func Cluster(logger log.Logger, p providers.Provider, name, explicitKubeconfigPa
 		return errors.Wrap(err, "error listing nodes")
 	}
 
+	kerr := kubeconfig.Remove(name, explicitKubeconfigPath)
+	if kerr != nil {
+		logger.Errorf("failed to update kubeconfig: %v", kerr)
+	}
+
 	if len(n) > 0 {
 		err = p.DeleteNodes(n)
 		if err != nil {
 			return err
 		}
 		logger.V(0).Infof("Deleted nodes: %q", n)
+	}
+
+	if kerr != nil {
+		return kerr
 	}
 
 	return nil

@@ -34,7 +34,7 @@ func (p *Podman) ImagePull(image string) error {
 
 func (p *Podman) Create(image string) (string, error) {
 	s := specgen.NewSpecGenerator(image, false)
-	createResponse, err := containers.CreateWithSpec(p.Conn, s, nil)
+	createResponse, err := containers.CreateWithSpec(p.Conn, s, &containers.CreateOptions{})
 	if err != nil {
 		return "", err
 	}
