@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/podman/v5/libpod/define"
 	"github.com/containers/podman/v5/pkg/bindings"
 	"github.com/containers/podman/v5/pkg/bindings/containers"
 	"github.com/containers/podman/v5/pkg/bindings/images"
@@ -35,9 +34,9 @@ func (p *Podman) ImagePull(image string) error {
 	return nil
 }
 
-func (p *Podman) Create(image string, co cri.CreateOpts) (string, error) {
+func (p *Podman) Create(image string, co *cri.CreateOpts) (string, error) {
 	s := specgen.NewSpecGenerator(image, false)
-	s = p.createOptsToSpec(s, &co)
+	s = p.createOptsToSpec(s, co)
 	createResponse, err := containers.CreateWithSpec(p.Conn, s, &containers.CreateOptions{})
 	if err != nil {
 		return "", err
@@ -52,12 +51,13 @@ func (p *Podman) Run(containerID string) error {
 	return nil
 }
 
-func (p *Podman) Inspect(containerID string) (*define.InspectContainerData, error) {
-	inspectData, err := containers.Inspect(p.Conn, containerID, nil)
+func (p *Podman) Inspect(containerID string) ([]byte, error) {
+	_, err := containers.Inspect(p.Conn, containerID, nil)
 	if err != nil {
 		return nil, err
 	}
-	return inspectData, nil
+
+	return []byte{}, nil
 }
 
 func (p *Podman) Remove(containerID string) error {

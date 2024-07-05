@@ -110,6 +110,7 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 	if err != nil {
 		return err
 	}
+
 	k.CRI = dockercri.NewDockerClient()
 
 	_, registryIP, err := k.runRegistry("5000") // read from flag

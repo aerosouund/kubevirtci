@@ -60,7 +60,7 @@ func (dc *DockerClient) Create(image string, createOpts *cri.CreateOpts) (string
 	cmd := exec.Command("docker",
 		"create",
 		image,
-		"--name=", createOpts.Name,
+		"--name="+createOpts.Name,
 		"--priviliged="+strconv.FormatBool(createOpts.Privileged),
 		"--rm="+strconv.FormatBool(createOpts.Remove),
 		ports,
