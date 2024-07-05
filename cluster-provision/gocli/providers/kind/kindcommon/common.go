@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 
+	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/rest"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
@@ -68,6 +69,7 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 	if err != nil {
 		return err
 	}
+	logrus.Infof("Kind %s base cluster started\n", k.version)
 
 	kubeconf, err := k.provider.KubeConfig("kubevirt", true)
 	if err != nil {

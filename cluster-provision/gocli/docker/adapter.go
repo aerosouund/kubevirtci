@@ -8,6 +8,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/sirupsen/logrus"
 )
 
 // DockerAdapter is a wrapper around client.Client to conform it to the SSH interface
@@ -24,6 +25,7 @@ func NewDockerAdapter(cli *client.Client, nodeName string) *DockerAdapter {
 }
 
 func (d *DockerAdapter) SSH(cmd string, stdOut bool) (string, error) {
+	logrus.Infof("[node %s]: %s\n", d.nodeName, cmd)
 	success, err := Exec(d.dockerClient, d.nodeName, []string{cmd}, os.Stdout)
 	if err != nil {
 		return "", err
