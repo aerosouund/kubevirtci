@@ -71,7 +71,7 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 	}
 	logrus.Infof("Kind %s base cluster started\n", k.version)
 
-	kubeconf, err := k.provider.KubeConfig("kubevirt", true)
+	kubeconf, err := k.provider.KubeConfig(k.version, true)
 	if err != nil {
 		return err
 	}
