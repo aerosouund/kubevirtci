@@ -11,11 +11,11 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 
 	"k8s.io/client-go/rest"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	kind "sigs.k8s.io/kind/pkg/cluster"
@@ -26,9 +26,8 @@ import (
 var f embed.FS
 
 type KindCommonProvider struct {
-	Client    k8s.K8sDynamicClient
-	CRIClient client.ContainerAPIClient
-	cli       *client.Client
+	Client k8s.K8sDynamicClient
+	CRI    cri.ContainerClient
 
 	nodes           int
 	version         string
@@ -238,34 +237,37 @@ func (k *KindCommonProvider) setupRegistryProxy(da *docker.DockerAdapter, proxyH
 }
 
 func (k *KindCommonProvider) runRegistry(hostPort string) (string, string, error) {
-	registry, err := k.cli.ContainerCreate(context.Background(), &container.Config{
-		Image: registryImage,
-		ExposedPorts: nat.PortSet{
-			nat.Port(5000): {},
+	registryID, err := k.CRI.Create(registryImage, &cri.CreateOpts{
+		Name:          k.version + "-registry",
+		Privileged:    true,
+		Network:       "kind",
+		RestartPolicy: "always",
+		Ports: map[string]string{
+			"5000": hostPort,
 		},
-	}, &container.HostConfig{
-		Privileged:  true,
-		NetworkMode: "kind",
-		PortBindings: nat.PortMap{
-			nat.Port(5000): []nat.PortBinding{{HostPort: hostPort}},
-		},
-		RestartPolicy: container.RestartPolicy{
-			Name: container.RestartPolicyAlways,
-		},
-	}, nil, nil, k.version+"-registry")
+	})
 	if err != nil {
 		return "", "", err
 	}
 
-	if err := k.cli.ContainerStart(context.TODO(), registry.ID, container.StartOptions{}); err != nil {
+	if err := k.CRI.Start(registryID); err != nil {
 		return "", "", err
 	}
 
-	registryJSON, err := k.cli.ContainerInspect(context.Background(), registry.ID)
+	// check if this will work for podman
+	registryJSON := &types.ContainerJSON{}
+
+	jsonData, err := k.CRI.Inspect(registryID)
 	if err != nil {
 		return "", "", err
 	}
-	return registry.ID, registryJSON.NetworkSettings.IPAddress, nil
+
+	err = json.Unmarshal(jsonData, registryJSON)
+	if err != nil {
+		return "", "", err
+	}
+
+	return registryID, registryJSON.NetworkSettings.Networks["kind"].IPAddress, nil
 }
 
 func (k *KindCommonProvider) downloadCNI() error {

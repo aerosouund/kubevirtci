@@ -59,7 +59,6 @@ func GetPrefixedVolumes(cli *client.Client, prefix string) ([]*volume.Volume, er
 }
 
 func ImagePull(cli *client.Client, ctx context.Context, ref string, options types.ImagePullOptions) error {
-
 	if !strings.ContainsAny(ref, ":@") {
 		ref = ref + ":latest"
 	}
