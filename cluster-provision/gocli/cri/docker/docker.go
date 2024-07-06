@@ -40,7 +40,6 @@ func (dc *DockerClient) Inspect(containerID string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(out))
 	return out, nil
 }
 
