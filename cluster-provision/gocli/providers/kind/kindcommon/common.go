@@ -37,6 +37,7 @@ type KindCommonProvider struct {
 	runEtcdOnMemory bool
 	ipFamily        string
 	withCPUManager  bool
+	registryProxy   string
 }
 
 const (
@@ -129,8 +130,10 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 		if err = k.setupNetwork(da); err != nil {
 			return err
 		}
-		if err = k.setupRegistryProxy(da, "docker-mirror-proxy.kubevirt-prow.svc"); err != nil {
-			return err
+		if k.registryProxy != "" {
+			if err = k.setupRegistryProxy(da); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -217,8 +220,8 @@ func (k *KindCommonProvider) setupCNI(da *docker.DockerAdapter, cniArchive fs.Fi
 	return nil
 }
 
-func (k *KindCommonProvider) setupRegistryProxy(da *docker.DockerAdapter, proxyHost string) error {
-	setupUrl := "http://" + proxyHost + ":3128/setup/systemd"
+func (k *KindCommonProvider) setupRegistryProxy(da *docker.DockerAdapter) error {
+	setupUrl := "http://" + k.registryProxy + ":3128/setup/systemd"
 	cmds := []string{
 		"curl " + setupUrl + " > proxyscript.sh",
 		"sed s/docker.service/containerd.service/g proxyscript.sh",
