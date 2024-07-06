@@ -45,7 +45,7 @@ func (dc *DockerClient) Inspect(containerID string) ([]byte, error) {
 
 func (dc *DockerClient) Start(containerID string) error {
 	cmd := exec.Command("docker",
-		"run",
+		"start",
 		containerID)
 
 	if err := cmd.Run(); err != nil {
@@ -83,7 +83,6 @@ func (dc *DockerClient) Create(image string, createOpts *cri.CreateOpts) (string
 	cmd := exec.Command("docker",
 		fullArgs...,
 	)
-	logrus.Info("cmd:", cmd.String())
 
 	containerID, err := cmd.CombinedOutput()
 	if err != nil {
