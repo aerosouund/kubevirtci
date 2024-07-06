@@ -267,7 +267,7 @@ func (k *KindCommonProvider) runRegistry(hostPort string) (string, string, error
 		return "", "", err
 	}
 
-	err = json.Unmarshal(jsonData, registryJSON)
+	err = json.Unmarshal(jsonData, &registryJSON)
 	if err != nil {
 		return "", "", err
 	}
