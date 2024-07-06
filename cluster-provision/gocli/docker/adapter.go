@@ -38,6 +38,6 @@ func (d *DockerAdapter) SSH(cmd string, stdOut bool) (string, error) {
 }
 
 // maybe add ctx ?
-func (d *DockerAdapter) SCP(filePath, destPath string, contents fs.File) error {
+func (d *DockerAdapter) SCP(destPath string, contents fs.File) error {
 	return d.dockerClient.CopyToContainer(context.Background(), d.nodeName, destPath, contents, types.CopyToContainerOptions{})
 }
