@@ -26,7 +26,7 @@ func NewDockerAdapter(cli *client.Client, nodeName string) *DockerAdapter {
 
 func (d *DockerAdapter) SSH(cmd string, stdOut bool) (string, error) {
 	logrus.Infof("[node %s]: %s\n", d.nodeName, cmd)
-	success, err := Exec(d.dockerClient, d.nodeName, []string{cmd}, os.Stdout)
+	success, err := Exec(d.dockerClient, d.nodeName, []string{"/bin/sh", "-c", cmd}, os.Stdout)
 	if err != nil {
 		return "", err
 	}
