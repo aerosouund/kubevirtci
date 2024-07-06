@@ -40,6 +40,7 @@ func (dc *DockerClient) Inspect(containerID string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(string(out))
 	return out, nil
 }
 
@@ -47,8 +48,6 @@ func (dc *DockerClient) Start(containerID string) error {
 	cmd := exec.Command("docker",
 		"start",
 		containerID)
-
-	logrus.Info(cmd)
 
 	if _, err := cmd.CombinedOutput(); err != nil {
 		return err
