@@ -199,8 +199,6 @@ func (k *KindCommonProvider) setupNetwork(da *docker.DockerAdapter) error {
 
 func (k *KindCommonProvider) setupRegistryOnNode(da *docker.DockerAdapter, registryIP string) error {
 	cmds := []string{
-		`bash -c "sed -i '/\[plugins.cri.registry.mirrors\]/a\        [plugins.cri.registry.mirrors.\"registry:5000\"]\n\          endpoint = [\"http://registry:5000\"]' /etc/containerd/config.toml"`,
-		"bash -c systemctl restart containerd",
 		"echo " + registryIP + "\tregistry >> /etc/hosts",
 	}
 	for _, cmd := range cmds {
