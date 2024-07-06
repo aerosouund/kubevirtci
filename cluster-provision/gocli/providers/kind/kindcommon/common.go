@@ -111,6 +111,7 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	k.CRI = dockercri.NewDockerClient()
 
