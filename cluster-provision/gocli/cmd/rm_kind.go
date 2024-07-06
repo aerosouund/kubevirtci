@@ -6,7 +6,6 @@ import (
 )
 
 func NewRemoveKindCommand() *cobra.Command {
-
 	rm := &cobra.Command{
 		Use:   "rm-kind",
 		Short: "rm deletes all traces of a kind cluster",
