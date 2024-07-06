@@ -2,9 +2,9 @@ package docker
 
 import (
 	"os/exec"
-	"strconv"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
 )
 
@@ -60,12 +60,12 @@ func (dc *DockerClient) Create(image string, createOpts *cri.CreateOpts) (string
 	cmd := exec.Command("docker",
 		"create",
 		"--name="+createOpts.Name,
-		"--priviliged="+strconv.FormatBool(createOpts.Privileged),
-		"--rm="+strconv.FormatBool(createOpts.Remove),
+		// "--priviliged="+strconv.FormatBool(createOpts.Privileged),
+		// "--rm="+strconv.FormatBool(createOpts.Remove),
 		ports,
-		"--restart="+createOpts.RestartPolicy,
-		"--network="+createOpts.Network,
-		"--cap-add="+strings.Join(createOpts.Capabilities, ","),
+		// "--restart="+createOpts.RestartPolicy,
+		// "--network="+createOpts.Network,
+		// "--cap-add="+strings.Join(createOpts.Capabilities, ","),
 		image,
 		strings.Join(createOpts.Command, " "),
 	)
@@ -74,6 +74,7 @@ func (dc *DockerClient) Create(image string, createOpts *cri.CreateOpts) (string
 	if err != nil {
 		return "", err
 	}
+	logrus.Info("created container with id: ", containerID)
 	return string(containerID), nil
 }
 
