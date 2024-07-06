@@ -210,16 +210,16 @@ func (k *KindCommonProvider) setupRegistryOnNode(da *docker.DockerAdapter, regis
 }
 
 func (k *KindCommonProvider) setupCNI(da *docker.DockerAdapter, cniArchive fs.File) error {
-	err := da.SCP("/", cniArchive)
+	err := da.SCP("/opt/cni/bin", cniArchive)
 	if err != nil {
 		return err
 	}
 	logrus.Info("file copied")
 
-	_, err = da.SSH(`/bin/sh -c "tar xf /cni.tar.gz -C /opt/cni/bin"`, true)
-	if err != nil {
-		return err
-	}
+	// _, err = da.SSH(`/bin/sh -c "tar xf /cni.tar.gz -C "`, true)
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
