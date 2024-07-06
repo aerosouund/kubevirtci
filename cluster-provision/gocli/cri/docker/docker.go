@@ -64,7 +64,7 @@ func (dc *DockerClient) Create(image string, createOpts *cri.CreateOpts) (string
 		"--name=" + createOpts.Name,
 		"--privileged=" + strconv.FormatBool(createOpts.Privileged),
 		"--rm=" + strconv.FormatBool(createOpts.Remove),
-		ports,
+		// ports,
 		"--restart=" + createOpts.RestartPolicy,
 		"--network=" + createOpts.Network,
 	}
@@ -74,14 +74,14 @@ func (dc *DockerClient) Create(image string, createOpts *cri.CreateOpts) (string
 
 	fullArgs := append([]string{"create"}, args...)
 	fullArgs = append(fullArgs, image)
-	// fullArgs = append(fullArgs, createOpts.Command...)
+	fullArgs = append(fullArgs, createOpts.Command...)
 
 	cmd := exec.Command("docker",
 		fullArgs...,
 	)
 	logrus.Info("cmd:", cmd.String())
 
-	containerID, err := cmd.Output()
+	containerID, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Println(err)
 	}
