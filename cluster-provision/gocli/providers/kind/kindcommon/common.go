@@ -156,7 +156,7 @@ func (k *KindCommonProvider) prepareClusterYaml() (string, error) {
 		return "", err
 	}
 
-	// cpu manager condition
+	k.withCPUManager = true
 	for i := 0; i < k.nodes; i++ {
 		cluster = append(cluster, wp...)
 		cluster = append(cluster, []byte("\n")...)
