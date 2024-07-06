@@ -10,9 +10,11 @@ import (
 	"net/http"
 	"os"
 	"runtime"
-	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/yaml"
 
 	"github.com/sirupsen/logrus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
@@ -59,78 +61,78 @@ func NewKindCommondProvider(version string, nodeNum int) (*KindCommonProvider, e
 }
 
 func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFunc) error {
-	// cluster, err := k.prepareClusterYaml()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// err = k.provider.Create(k.version, kind.CreateWithRawConfig([]byte(cluster)), kind.CreateWithNodeImage(kind128Image))
-	// if err != nil {
-	// 	return err
-	// }
-	// logrus.Infof("Kind %s base cluster started\n", k.version)
-
-	// kubeconf, err := k.provider.KubeConfig(k.version, true)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// jsonData, err := yaml.YAMLToJSON([]byte(kubeconf))
-	// if err != nil {
-	// 	return err
-	// }
-	// config := &rest.Config{}
-	// err = json.Unmarshal(jsonData, config)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// k8sClient, err := k8s.NewDynamicClient(config)
-	// if err != nil {
-	// 	return err
-	// }
-	// k.Client = k8sClient
-	// nodes, err := k.provider.ListNodes(k.version)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// cli, err := client.NewClientWithOpts(client.FromEnv)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// err = k.downloadCNI()
-	// if err != nil {
-	// 	return nil
-	// }
-	// file, err := os.Open(cniArchieFilename)
-	// if err != nil {
-	// 	return err
-	// }
-
-	k.CRI = dockercri.NewDockerClient()
-
-	_, _, err := k.runRegistry("5000") // read from flag
+	cluster, err := k.prepareClusterYaml()
 	if err != nil {
 		return err
 	}
 
-	// for _, node := range nodes {
-	// 	da := docker.NewDockerAdapter(cli, node.String())
-	// 	if err := k.setupCNI(da, file); err != nil {
-	// 		return err
-	// 	}
-	// 	if err = k.setupRegistryOnNode(da, registryIP); err != nil {
-	// 		return err
-	// 	}
-	// 	if err = k.setupNetwork(da); err != nil {
-	// 		return err
-	// 	}
-	// 	if err = k.setupRegistryProxy(da, "docker-mirror-proxy.kubevirt-prow.svc"); err != nil {
-	// 		return err
-	// 	}
-	// }
+	err = k.provider.Create(k.version, kind.CreateWithRawConfig([]byte(cluster)), kind.CreateWithNodeImage(kind128Image))
+	if err != nil {
+		return err
+	}
+	logrus.Infof("Kind %s base cluster started\n", k.version)
+
+	kubeconf, err := k.provider.KubeConfig(k.version, true)
+	if err != nil {
+		return err
+	}
+
+	jsonData, err := yaml.YAMLToJSON([]byte(kubeconf))
+	if err != nil {
+		return err
+	}
+	config := &rest.Config{}
+	err = json.Unmarshal(jsonData, config)
+	if err != nil {
+		return err
+	}
+
+	k8sClient, err := k8s.NewDynamicClient(config)
+	if err != nil {
+		return err
+	}
+	k.Client = k8sClient
+	nodes, err := k.provider.ListNodes(k.version)
+	if err != nil {
+		return err
+	}
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return err
+	}
+
+	err = k.downloadCNI()
+	if err != nil {
+		return nil
+	}
+	file, err := os.Open(cniArchieFilename)
+	if err != nil {
+		return err
+	}
+
+	k.CRI = dockercri.NewDockerClient()
+
+	_, registryIP, err := k.runRegistry("5000") // read from flag
+	if err != nil {
+		return err
+	}
+
+	for _, node := range nodes {
+		da := docker.NewDockerAdapter(cli, node.String())
+		if err := k.setupCNI(da, file); err != nil {
+			return err
+		}
+		if err = k.setupRegistryOnNode(da, registryIP); err != nil {
+			return err
+		}
+		if err = k.setupNetwork(da); err != nil {
+			return err
+		}
+		if err = k.setupRegistryProxy(da, "docker-mirror-proxy.kubevirt-prow.svc"); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -252,12 +254,10 @@ func (k *KindCommonProvider) runRegistry(hostPort string) (string, string, error
 	if err != nil {
 		return "", "", err
 	}
-	time.Sleep(time.Second * 3)
 
 	if err := k.CRI.Start(registryID); err != nil {
 		return "", "", err
 	}
-	logrus.Info("container started")
 
 	// check if this will work for podman
 	registryJSON := &types.ContainerJSON{}
