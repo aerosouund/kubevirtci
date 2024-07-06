@@ -102,10 +102,10 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 		return err
 	}
 
-	err = k.downloadCNI()
-	if err != nil {
-		return nil
-	}
+	// err = k.downloadCNI()
+	// if err != nil {
+	// 	return nil
+	// }
 	file, err := os.Open(cniArchieFilename)
 	if err != nil {
 		return err
