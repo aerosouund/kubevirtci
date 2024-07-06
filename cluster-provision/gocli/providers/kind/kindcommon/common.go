@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/docker/docker/api/types"
 
@@ -251,6 +252,7 @@ func (k *KindCommonProvider) runRegistry(hostPort string) (string, string, error
 	if err != nil {
 		return "", "", err
 	}
+	time.Sleep(time.Second * 3)
 
 	if err := k.CRI.Start(registryID); err != nil {
 		return "", "", err
