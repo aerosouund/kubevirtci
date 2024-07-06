@@ -199,7 +199,7 @@ func (k *KindCommonProvider) setupNetwork(da *docker.DockerAdapter) error {
 
 func (k *KindCommonProvider) setupRegistryOnNode(da *docker.DockerAdapter, registryIP string) error {
 	cmds := []string{
-		"/bin/sh " + "-c " + `"echo ` + registryIP + "\tregistry " + `"`,
+		"/bin/sh " + "-c " + `'echo ` + registryIP + "\tregistry' | tee -a /etc/hosts",
 	}
 	for _, cmd := range cmds {
 		if _, err := da.SSH(cmd, true); err != nil {
@@ -214,13 +214,6 @@ func (k *KindCommonProvider) setupCNI(da *docker.DockerAdapter, cniArchive fs.Fi
 	if err != nil {
 		return err
 	}
-	logrus.Info("file copied")
-
-	// _, err = da.SSH(`/bin/sh -c "tar xf /cni.tar.gz -C "`, true)
-	// if err != nil {
-	// 	return err
-	// }
-
 	return nil
 }
 
