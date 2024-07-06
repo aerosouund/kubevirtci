@@ -58,15 +58,18 @@ func (dc *DockerClient) Create(image string, createOpts *cri.CreateOpts) (string
 	for containerPort, hostPort := range createOpts.Ports {
 		ports += "-p " + containerPort + ":" + hostPort
 	}
+	args := "--name=" + createOpts.Name + " --privileged=" + strconv.FormatBool(createOpts.Privileged) +
+		" --rm=" + strconv.FormatBool(createOpts.Remove) +
+		ports +
+		" --restart=" + createOpts.RestartPolicy +
+		" --network=" + createOpts.Network
+	if len(createOpts.Capabilities) > 0 {
+		args += " --cap-add=" + strings.Join(createOpts.Capabilities, ",")
+	}
+
 	cmd := exec.Command("docker",
 		"create",
-		"--name="+createOpts.Name,
-		"--priviliged="+strconv.FormatBool(createOpts.Privileged),
-		"--rm="+strconv.FormatBool(createOpts.Remove),
-		ports,
-		"--restart="+createOpts.RestartPolicy,
-		"--network="+createOpts.Network,
-		"--cap-add="+strings.Join(createOpts.Capabilities, ","),
+		args,
 		image,
 		strings.Join(createOpts.Command, " "),
 	)
