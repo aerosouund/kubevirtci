@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/fs"
 	"net/http"
 	"os"
 	"runtime"
@@ -107,11 +106,6 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 	if err != nil {
 		return nil
 	}
-	file, err := os.Open(cniArchieFilename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
 
 	k.CRI = dockercri.NewDockerClient()
 
@@ -122,7 +116,7 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 
 	for _, node := range nodes {
 		da := docker.NewDockerAdapter(cli, node.String())
-		if err := k.setupCNI(da, file); err != nil {
+		if err := k.setupCNI(da); err != nil {
 			return err
 		}
 		if err = k.setupRegistryOnNode(da, registryIP); err != nil {
@@ -213,8 +207,13 @@ func (k *KindCommonProvider) setupRegistryOnNode(da *docker.DockerAdapter, regis
 	return nil
 }
 
-func (k *KindCommonProvider) setupCNI(da *docker.DockerAdapter, cniArchive fs.File) error {
-	err := da.SCP("/opt/cni/bin", cniArchive)
+func (k *KindCommonProvider) setupCNI(da *docker.DockerAdapter) error {
+	file, err := os.Open(cniArchieFilename)
+	if err != nil {
+		return err
+	}
+
+	err = da.SCP("/opt/cni/bin", file)
 	if err != nil {
 		return err
 	}
