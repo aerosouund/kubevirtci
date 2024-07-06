@@ -260,7 +260,7 @@ func (k *KindCommonProvider) runRegistry(hostPort string) (string, string, error
 	}
 
 	// check if this will work for podman
-	registryJSON := &types.ContainerJSON{}
+	registryJSON := []types.ContainerJSON{}
 
 	jsonData, err := k.CRI.Inspect(registryID)
 	if err != nil {
@@ -272,7 +272,7 @@ func (k *KindCommonProvider) runRegistry(hostPort string) (string, string, error
 		return "", "", err
 	}
 
-	return registryID, registryJSON.NetworkSettings.Networks["kind"].IPAddress, nil
+	return registryID, registryJSON[0].NetworkSettings.Networks["kind"].IPAddress, nil
 }
 
 func (k *KindCommonProvider) downloadCNI() error {
