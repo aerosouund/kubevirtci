@@ -91,7 +91,7 @@ func (dc *DockerClient) Create(image string, createOpts *cri.CreateOpts) (string
 		fmt.Println(err)
 	}
 	logrus.Info("created registry container with id: ", string(containerID))
-	return string(containerID), nil
+	return strings.TrimPrefix(string(containerID), "\n"), nil
 }
 
 func (dc *DockerClient) Remove(containerID string) error {
