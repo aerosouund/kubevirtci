@@ -2,6 +2,7 @@ package podman
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -64,6 +65,7 @@ func (p *Podman) Create(image string, createOpts *cri.CreateOpts) (string, error
 	cmd := exec.Command("podman",
 		fullArgs...,
 	)
+	fmt.Println(cmd.String())
 
 	containerID, err := cmd.CombinedOutput()
 	if err != nil {
