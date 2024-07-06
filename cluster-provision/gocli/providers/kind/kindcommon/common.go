@@ -54,6 +54,7 @@ func NewKindCommondProvider(version string, nodeNum int) (*KindCommonProvider, e
 
 	k := kind.NewProvider(providerCRIOpt)
 	return &KindCommonProvider{
+		CRI:      dockercri.NewDockerClient(),
 		nodes:    nodeNum,
 		provider: k,
 		version:  version,
