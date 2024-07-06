@@ -184,9 +184,9 @@ func (k *KindCommonProvider) Delete(prefix string) error {
 func (k *KindCommonProvider) setupNetwork(da *docker.DockerAdapter) error {
 	cmds := []string{
 		"modprobe br_netfilter",
-		"sysctl -w sys.net.bridge.bridge-nf-call-arptables=1",
-		"sysctl -w sys.net.bridge.bridge-nf-call-iptables=1",
-		"sysctl -w sys.net.bridge.bridge-nf-call-ip6tables=1",
+		"sysctl -w net.bridge.bridge-nf-call-arptables=1",
+		"sysctl -w net.bridge.bridge-nf-call-iptables=1",
+		"sysctl -w net.bridge.bridge-nf-call-ip6tables=1",
 	}
 
 	for _, cmd := range cmds {
