@@ -44,7 +44,7 @@ func (p *Podman) Create(image string, co *cri.CreateOpts) (string, error) {
 	return createResponse.ID, nil
 }
 
-func (p *Podman) Run(containerID string) error {
+func (p *Podman) Start(containerID string) error {
 	if err := containers.Start(p.Conn, containerID, &containers.StartOptions{}); err != nil {
 		return err
 	}

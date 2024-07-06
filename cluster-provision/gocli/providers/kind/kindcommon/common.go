@@ -18,6 +18,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
 	dockercri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/docker"
+	podmancri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/podman"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	kind "sigs.k8s.io/kind/pkg/cluster"
@@ -55,10 +56,16 @@ func NewKindCommondProvider(kindConfig *KindConfig) (*KindCommonProvider, error)
 	if err != nil {
 		return nil, err
 	}
+	d := dockercri.DockerClient{}
+	_ = d
+	p, err := podmancri.NewPodman()
+	if err != nil {
+		return nil, err
+	}
 
 	k := kind.NewProvider(providerCRIOpt)
 	return &KindCommonProvider{
-		CRI:        dockercri.NewDockerClient(),
+		CRI:        p,
 		provider:   k,
 		KindConfig: kindConfig,
 	}, nil
