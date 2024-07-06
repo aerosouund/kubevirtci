@@ -18,7 +18,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
 	dockercri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/docker"
-	podmancri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/podman"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	kind "sigs.k8s.io/kind/pkg/cluster"
@@ -52,16 +51,14 @@ const (
 
 func NewKindCommondProvider(kindConfig *KindConfig) (*KindCommonProvider, error) {
 	// use podman first
-	// providerCRIOpt, err := kind.DetectNodeProvider()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	d := dockercri.DockerClient{}
-	_ = d
+	providerCRIOpt, err := kind.DetectNodeProvider()
+	if err != nil {
+		return nil, err
+	}
 
-	k := kind.NewProvider(kind.ProviderWithPodman())
+	k := kind.NewProvider(providerCRIOpt)
 	return &KindCommonProvider{
-		CRI:        podmancri.NewPodman(),
+		CRI:        dockercri.NewDockerClient(),
 		provider:   k,
 		KindConfig: kindConfig,
 	}, nil
