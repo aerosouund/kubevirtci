@@ -1,30 +1,26 @@
 package podman
 
 import (
-	"context"
 	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
 
 	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/podman/v5/pkg/bindings/images"
 	"github.com/containers/podman/v5/pkg/specgen"
 	"github.com/sirupsen/logrus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
 )
 
-type Podman struct {
-	// podman adapter
-	Conn context.Context
-}
+type Podman struct{}
 
 func NewPodman() *Podman {
 	return &Podman{}
 }
 
 func (p *Podman) ImagePull(image string) error {
-	if _, err := images.Pull(p.Conn, image, nil); err != nil {
+	cmd := exec.Command("podman", "pull", image)
+	if err := cmd.Run(); err != nil {
 		return err
 	}
 
