@@ -52,20 +52,16 @@ const (
 
 func NewKindCommondProvider(kindConfig *KindConfig) (*KindCommonProvider, error) {
 	// use podman first
-	providerCRIOpt, err := kind.DetectNodeProvider()
-	if err != nil {
-		return nil, err
-	}
+	// providerCRIOpt, err := kind.DetectNodeProvider()
+	// if err != nil {
+	// 	return nil, err
+	// }
 	d := dockercri.DockerClient{}
 	_ = d
-	p, err := podmancri.NewPodman()
-	if err != nil {
-		return nil, err
-	}
 
-	k := kind.NewProvider(providerCRIOpt)
+	k := kind.NewProvider(kind.ProviderWithPodman())
 	return &KindCommonProvider{
-		CRI:        p,
+		CRI:        podmancri.NewPodman(),
 		provider:   k,
 		KindConfig: kindConfig,
 	}, nil

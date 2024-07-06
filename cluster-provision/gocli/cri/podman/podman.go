@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/podman/v5/pkg/bindings/containers"
 	"github.com/containers/podman/v5/pkg/bindings/images"
 	"github.com/containers/podman/v5/pkg/specgen"
 	"github.com/sirupsen/logrus"
@@ -20,12 +19,8 @@ type Podman struct {
 	Conn context.Context
 }
 
-func NewPodman() (*Podman, error) {
-	// conn, err := bindings.NewConnection(context.Background(), "unix:///run/podman/podman.sock")
-	// if err != nil {
-	// 	return nil, err
-	// }
-	return &Podman{}, nil
+func NewPodman() *Podman {
+	return &Podman{}
 }
 
 func (p *Podman) ImagePull(image string) error {
@@ -76,23 +71,28 @@ func (p *Podman) Create(image string, createOpts *cri.CreateOpts) (string, error
 }
 
 func (p *Podman) Start(containerID string) error {
-	if err := containers.Start(p.Conn, containerID, &containers.StartOptions{}); err != nil {
+	cmd := exec.Command("podman",
+		"start",
+		containerID)
+
+	if _, err := cmd.CombinedOutput(); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (p *Podman) Inspect(containerID string) ([]byte, error) {
-	_, err := containers.Inspect(p.Conn, containerID, nil)
+	cmd := exec.Command("podman", "inspect", containerID)
+	out, err := cmd.Output()
 	if err != nil {
 		return nil, err
 	}
-
-	return []byte{}, nil
+	return out, nil
 }
 
 func (p *Podman) Remove(containerID string) error {
-	if _, err := containers.Remove(p.Conn, containerID, nil); err != nil {
+	cmd := exec.Command("podman", "rm", "-f", containerID)
+	if err := cmd.Run(); err != nil {
 		return err
 	}
 	return nil
