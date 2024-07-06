@@ -171,9 +171,11 @@ func (k *KindCommonProvider) prepareClusterYaml() (string, error) {
 	return string(cluster), nil
 }
 
-func (k *KindCommonProvider) Delete(prefix string) error {
-	err := k.provider.Delete(prefix, "")
-	if err != nil {
+func (k *KindCommonProvider) Delete() error {
+	if err := k.provider.Delete(k.version, ""); err != nil {
+		return err
+	}
+	if err := k.deleteRegistry(); err != nil {
 		return err
 	}
 	return nil
@@ -234,6 +236,10 @@ func (k *KindCommonProvider) setupRegistryProxy(da *docker.DockerAdapter) error 
 		}
 	}
 	return nil
+}
+
+func (k *KindCommonProvider) deleteRegistry() error {
+	return k.CRI.Remove(k.version + "-registry")
 }
 
 func (k *KindCommonProvider) runRegistry(hostPort string) (string, string, error) {
