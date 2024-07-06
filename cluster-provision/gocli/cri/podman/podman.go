@@ -2,12 +2,15 @@ package podman
 
 import (
 	"context"
+	"os/exec"
+	"strconv"
+	"strings"
 
 	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/podman/v5/pkg/bindings"
 	"github.com/containers/podman/v5/pkg/bindings/containers"
 	"github.com/containers/podman/v5/pkg/bindings/images"
 	"github.com/containers/podman/v5/pkg/specgen"
+	"github.com/sirupsen/logrus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
 )
 
@@ -17,13 +20,11 @@ type Podman struct {
 }
 
 func NewPodman() (*Podman, error) {
-	conn, err := bindings.NewConnection(context.Background(), "unix:///run/podman/podman.sock")
-	if err != nil {
-		return nil, err
-	}
-	return &Podman{
-		Conn: conn,
-	}, nil
+	// conn, err := bindings.NewConnection(context.Background(), "unix:///run/podman/podman.sock")
+	// if err != nil {
+	// 	return nil, err
+	// }
+	return &Podman{}, nil
 }
 
 func (p *Podman) ImagePull(image string) error {
@@ -34,14 +35,42 @@ func (p *Podman) ImagePull(image string) error {
 	return nil
 }
 
-func (p *Podman) Create(image string, co *cri.CreateOpts) (string, error) {
-	s := specgen.NewSpecGenerator(image, false)
-	s = p.createOptsToSpec(s, co)
-	createResponse, err := containers.CreateWithSpec(p.Conn, s, &containers.CreateOptions{})
+func (p *Podman) Create(image string, createOpts *cri.CreateOpts) (string, error) {
+	ports := ""
+	for containerPort, hostPort := range createOpts.Ports {
+		ports += "-p " + containerPort + ":" + hostPort
+	}
+
+	args := []string{
+		"--name=" + createOpts.Name,
+		"--privileged=" + strconv.FormatBool(createOpts.Privileged),
+		"--rm=" + strconv.FormatBool(createOpts.Remove),
+		"--restart=" + createOpts.RestartPolicy,
+		"--network=" + createOpts.Network,
+	}
+
+	for containerPort, hostPort := range createOpts.Ports {
+		args = append(args, "-p", containerPort+":"+hostPort)
+	}
+
+	if len(createOpts.Capabilities) > 0 {
+		args = append(args, "--cap-add="+strings.Join(createOpts.Capabilities, ","))
+	}
+
+	fullArgs := append([]string{"create"}, args...)
+	fullArgs = append(fullArgs, image)
+	fullArgs = append(fullArgs, createOpts.Command...)
+
+	cmd := exec.Command("podman",
+		fullArgs...,
+	)
+
+	containerID, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", err
 	}
-	return createResponse.ID, nil
+	logrus.Info("created registry container with id: ", string(containerID))
+	return strings.TrimSuffix(string(containerID), "\n"), nil
 }
 
 func (p *Podman) Start(containerID string) error {
