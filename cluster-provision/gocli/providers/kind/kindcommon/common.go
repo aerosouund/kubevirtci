@@ -199,7 +199,7 @@ func (k *KindCommonProvider) setupNetwork(da *docker.DockerAdapter) error {
 
 func (k *KindCommonProvider) setupRegistryOnNode(da *docker.DockerAdapter, registryIP string) error {
 	cmds := []string{
-		"/bin/sh " + "-c " + `"echo ` + registryIP + "\tregistry " + `| tee -a /etc/hosts"`,
+		"/bin/sh " + "-c " + `"echo ` + registryIP + "\tregistry " + `"`,
 	}
 	for _, cmd := range cmds {
 		if _, err := da.SSH(cmd, true); err != nil {
