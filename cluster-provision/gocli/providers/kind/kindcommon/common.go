@@ -27,16 +27,20 @@ import (
 var f embed.FS
 
 type KindCommonProvider struct {
-	Client k8s.K8sDynamicClient
-	CRI    cri.ContainerClient
+	Client   k8s.K8sDynamicClient
+	CRI      cri.ContainerClient
+	provider *kind.Provider
 
-	nodes           int
-	version         string
-	provider        *kind.Provider
-	runEtcdOnMemory bool
-	ipFamily        string
-	withCPUManager  bool
-	registryProxy   string
+	*KindConfig
+}
+type KindConfig struct {
+	Nodes           int
+	RegistryPort    string
+	Version         string
+	RunEtcdOnMemory bool
+	IpFamily        string
+	WithCPUManager  bool
+	RegistryProxy   string
 }
 
 const (
@@ -45,7 +49,7 @@ const (
 	registryImage     = "quay.io/kubevirtci/library-registry:2.7.1"
 )
 
-func NewKindCommondProvider(version string, nodeNum int) (*KindCommonProvider, error) {
+func NewKindCommondProvider(kindConfig *KindConfig) (*KindCommonProvider, error) {
 	// use podman first
 	providerCRIOpt, err := kind.DetectNodeProvider()
 	if err != nil {
@@ -54,10 +58,9 @@ func NewKindCommondProvider(version string, nodeNum int) (*KindCommonProvider, e
 
 	k := kind.NewProvider(providerCRIOpt)
 	return &KindCommonProvider{
-		CRI:      dockercri.NewDockerClient(),
-		nodes:    nodeNum,
-		provider: k,
-		version:  version,
+		CRI:        dockercri.NewDockerClient(),
+		provider:   k,
+		KindConfig: kindConfig,
 	}, nil
 }
 
@@ -67,13 +70,13 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 		return err
 	}
 
-	err = k.provider.Create(k.version, kind.CreateWithRawConfig([]byte(cluster)), kind.CreateWithNodeImage(kind128Image))
+	err = k.provider.Create(k.Version, kind.CreateWithRawConfig([]byte(cluster)), kind.CreateWithNodeImage(kind128Image))
 	if err != nil {
 		return err
 	}
-	logrus.Infof("Kind %s base cluster started\n", k.version)
+	logrus.Infof("Kind %s base cluster started\n", k.Version)
 
-	kubeconf, err := k.provider.KubeConfig(k.version, true)
+	kubeconf, err := k.provider.KubeConfig(k.Version, true)
 	if err != nil {
 		return err
 	}
@@ -93,7 +96,7 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 		return err
 	}
 	k.Client = k8sClient
-	nodes, err := k.provider.ListNodes(k.version)
+	nodes, err := k.provider.ListNodes(k.Version)
 	if err != nil {
 		return err
 	}
@@ -107,8 +110,6 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 	if err != nil {
 		return nil
 	}
-
-	k.CRI = dockercri.NewDockerClient()
 
 	_, registryIP, err := k.runRegistry("5000") // read from flag
 	if err != nil {
@@ -126,7 +127,7 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 		if err = k.setupNetwork(da); err != nil {
 			return err
 		}
-		if k.registryProxy != "" {
+		if k.RegistryProxy != "" {
 			if err = k.setupRegistryProxy(da); err != nil {
 				return err
 			}
@@ -157,22 +158,22 @@ func (k *KindCommonProvider) prepareClusterYaml() (string, error) {
 		return "", err
 	}
 
-	for i := 0; i < k.nodes; i++ {
+	for i := 0; i < k.Nodes; i++ {
 		cluster = append(cluster, wp...)
 		cluster = append(cluster, []byte("\n")...)
-		if k.withCPUManager {
+		if k.WithCPUManager {
 			cluster = append(cluster, cpump...)
 		}
 	}
 
-	if k.ipFamily != "" {
-		cluster = append(cluster, []byte(string(ipf)+k.ipFamily)...)
+	if k.IpFamily != "" {
+		cluster = append(cluster, []byte(string(ipf)+k.IpFamily)...)
 	}
 	return string(cluster), nil
 }
 
 func (k *KindCommonProvider) Delete() error {
-	if err := k.provider.Delete(k.version, ""); err != nil {
+	if err := k.provider.Delete(k.Version, ""); err != nil {
 		return err
 	}
 	if err := k.deleteRegistry(); err != nil {
@@ -223,7 +224,7 @@ func (k *KindCommonProvider) setupCNI(da *docker.DockerAdapter) error {
 }
 
 func (k *KindCommonProvider) setupRegistryProxy(da *docker.DockerAdapter) error {
-	setupUrl := "http://" + k.registryProxy + ":3128/setup/systemd"
+	setupUrl := "http://" + k.RegistryProxy + ":3128/setup/systemd"
 	cmds := []string{
 		"curl " + setupUrl + " > proxyscript.sh",
 		"sed s/docker.service/containerd.service/g proxyscript.sh",
@@ -239,12 +240,12 @@ func (k *KindCommonProvider) setupRegistryProxy(da *docker.DockerAdapter) error 
 }
 
 func (k *KindCommonProvider) deleteRegistry() error {
-	return k.CRI.Remove(k.version + "-registry")
+	return k.CRI.Remove(k.Version + "-registry")
 }
 
 func (k *KindCommonProvider) runRegistry(hostPort string) (string, string, error) {
 	registryID, err := k.CRI.Create(registryImage, &cri.CreateOpts{
-		Name:          k.version + "-registry",
+		Name:          k.Version + "-registry",
 		Privileged:    true,
 		Network:       "kind",
 		RestartPolicy: "always",

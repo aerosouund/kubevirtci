@@ -25,7 +25,10 @@ func runKind(cmd *cobra.Command, args []string) error {
 	}
 	k8sVersion := args[0]
 
-	kindProvider, err := kind.NewKindCommondProvider(k8sVersion, int(nodes))
+	kindProvider, err := kind.NewKindCommondProvider(&kind.KindConfig{
+		Nodes:   int(nodes),
+		Version: k8sVersion,
+	})
 	if err != nil {
 		return err
 	}
