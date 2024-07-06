@@ -37,6 +37,7 @@ func NewRootCommand() *cobra.Command {
 		NewSetContextCommand(),
 		NewRun2Command(),
 		NewRunKindCommand(),
+		NewRemoveKindCommand(),
 	)
 
 	return root

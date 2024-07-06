@@ -8,8 +8,8 @@ import (
 func NewRemoveKindCommand() *cobra.Command {
 
 	rm := &cobra.Command{
-		Use:   "rm",
-		Short: "rm deletes all traces of a cluster",
+		Use:   "rm-kind",
+		Short: "rm deletes all traces of a kind cluster",
 		RunE:  rmKind,
 		Args:  cobra.ExactArgs(1),
 	}
