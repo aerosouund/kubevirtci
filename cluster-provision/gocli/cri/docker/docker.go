@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -82,7 +83,7 @@ func (dc *DockerClient) Create(image string, createOpts *cri.CreateOpts) (string
 
 	containerID, err := cmd.Output()
 	if err != nil {
-		return "", err
+		fmt.Println(err)
 	}
 	logrus.Info("created container with id: ", containerID)
 	return string(containerID), nil
