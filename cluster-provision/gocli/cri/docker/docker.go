@@ -48,7 +48,9 @@ func (dc *DockerClient) Start(containerID string) error {
 		"start",
 		containerID)
 
-	if err := cmd.Run(); err != nil {
+	logrus.Info(cmd)
+
+	if _, err := cmd.CombinedOutput(); err != nil {
 		return err
 	}
 	return nil
@@ -88,7 +90,7 @@ func (dc *DockerClient) Create(image string, createOpts *cri.CreateOpts) (string
 	if err != nil {
 		fmt.Println(err)
 	}
-	logrus.Info("created container with id: ", string(containerID))
+	logrus.Info("created registry container with id: ", string(containerID))
 	return string(containerID), nil
 }
 
