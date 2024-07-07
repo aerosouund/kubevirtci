@@ -29,7 +29,7 @@ var f embed.FS
 type KindCommonProvider struct {
 	Client   k8s.K8sDynamicClient
 	CRI      cri.ContainerClient
-	provider *kind.Provider
+	Provider *kind.Provider
 
 	*KindConfig
 }
@@ -59,7 +59,7 @@ func NewKindCommondProvider(kindConfig *KindConfig) (*KindCommonProvider, error)
 	k := kind.NewProvider(providerCRIOpt)
 	return &KindCommonProvider{
 		CRI:        dockercri.NewDockerClient(),
-		provider:   k,
+		Provider:   k,
 		KindConfig: kindConfig,
 	}, nil
 }
@@ -70,13 +70,13 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 		return err
 	}
 
-	err = k.provider.Create(k.Version, kind.CreateWithRawConfig([]byte(cluster)), kind.CreateWithNodeImage(kind128Image))
+	err = k.Provider.Create(k.Version, kind.CreateWithRawConfig([]byte(cluster)), kind.CreateWithNodeImage(kind128Image))
 	if err != nil {
 		return err
 	}
 	logrus.Infof("Kind %s base cluster started\n", k.Version)
 
-	kubeconf, err := k.provider.KubeConfig(k.Version, true)
+	kubeconf, err := k.Provider.KubeConfig(k.Version, true)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 		return err
 	}
 	k.Client = k8sClient
-	nodes, err := k.provider.ListNodes(k.Version)
+	nodes, err := k.Provider.ListNodes(k.Version)
 	if err != nil {
 		return err
 	}
@@ -137,6 +137,16 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 	return nil
 }
 
+func (k *KindCommonProvider) Delete() error {
+	if err := k.Provider.Delete(k.Version, ""); err != nil {
+		return err
+	}
+	if err := k.deleteRegistry(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (k *KindCommonProvider) prepareClusterYaml() (string, error) {
 	cluster, err := f.ReadFile("manifests/kind.yaml")
 	if err != nil {
@@ -170,16 +180,6 @@ func (k *KindCommonProvider) prepareClusterYaml() (string, error) {
 		cluster = append(cluster, []byte(string(ipf)+k.IpFamily)...)
 	}
 	return string(cluster), nil
-}
-
-func (k *KindCommonProvider) Delete() error {
-	if err := k.provider.Delete(k.Version, ""); err != nil {
-		return err
-	}
-	if err := k.deleteRegistry(); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (k *KindCommonProvider) setupNetwork(da *docker.DockerAdapter) error {
