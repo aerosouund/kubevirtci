@@ -11,23 +11,23 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
-	kind "kubevirt.io/kubevirtci/cluster-provision/gocli/providers/kind/kindcommon"
+	kind "kubevirt.io/kubevirtci/cluster-provision/gocli/providers/kind/kindbase"
 )
 
 type KindSriov struct {
 	pfs            []string
 	pfCountPerNode int
 
-	*kind.KindCommonProvider
+	*kind.KindBaseProvider
 }
 
 func NewKindSriovProvider(kindConfig *kind.KindConfig) (*KindSriov, error) {
-	kindBase, err := kind.NewKindCommondProvider(kindConfig)
+	kindBase, err := kind.NewKindBaseProvider(kindConfig)
 	if err != nil {
 		return nil, err
 	}
 	return &KindSriov{
-		KindCommonProvider: kindBase,
+		KindBaseProvider: kindBase,
 	}, nil
 }
 
@@ -42,7 +42,7 @@ func (ks *KindSriov) Start(ctx context.Context, cancel context.CancelFunc) error
 		return fmt.Errorf("Not enough virtual functions available, there are %d functions on the host", len(devs))
 	}
 
-	if err = ks.KindCommonProvider.Start(ctx, cancel); err != nil {
+	if err = ks.KindBaseProvider.Start(ctx, cancel); err != nil {
 		return err
 	}
 
@@ -57,6 +57,8 @@ func (ks *KindSriov) Start(ctx context.Context, cancel context.CancelFunc) error
 		return err
 	}
 	pfOffset := 0
+
+	controlPlaneAdapter := docker.NewDockerAdapter(cli, ks.Version+"-control-plane")
 
 	for _, node := range nodes {
 		nodeName := node.String()
@@ -95,6 +97,9 @@ func (ks *KindSriov) Start(ctx context.Context, cancel context.CancelFunc) error
 			}
 		}
 
+		if _, err = controlPlaneAdapter.SSH("kubectl label node "+nodeName+" sriov_capable=true", true); err != nil {
+			return err
+		}
 	}
 	return nil
 }

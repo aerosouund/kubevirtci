@@ -2,10 +2,14 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/spf13/cobra"
-	kind "kubevirt.io/kubevirtci/cluster-provision/gocli/providers/kind/kindcommon"
+	kind "kubevirt.io/kubevirtci/cluster-provision/gocli/providers/kind/kindbase"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/providers/kind/sriov"
 )
+
+var kindProvider kind.KindProvider
 
 func NewRunKindCommand() *cobra.Command {
 	rk := &cobra.Command{
@@ -23,15 +27,29 @@ func runKind(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	k8sVersion := args[0]
-
-	kindProvider, err := kind.NewKindCommondProvider(&kind.KindConfig{
+	kindVersion := args[0]
+	conf := &kind.KindConfig{
 		Nodes:   int(nodes),
-		Version: k8sVersion,
-	})
-	if err != nil {
-		return err
+		Version: kindVersion,
 	}
+
+	switch kindVersion {
+	case "k8s-1.28":
+		kindProvider, err = kind.NewKindBaseProvider(conf)
+		if err != nil {
+			return err
+		}
+	case "sriov":
+		kindProvider, err = sriov.NewKindSriovProvider(conf)
+		if err != nil {
+			return err
+		}
+	case "ovn":
+	case "vgpu":
+	default:
+		return fmt.Errorf("Invalid k8s version passed, please use one of k8s-1.28, sriov, ovn or vgpu")
+	}
+
 	b := context.Background()
 	ctx, cancel := context.WithCancel(b)
 

@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	kind "kubevirt.io/kubevirtci/cluster-provision/gocli/providers/kind/kindcommon"
+	kind "kubevirt.io/kubevirtci/cluster-provision/gocli/providers/kind/kindbase"
 )
 
 func NewRemoveKindCommand() *cobra.Command {
@@ -18,7 +18,7 @@ func NewRemoveKindCommand() *cobra.Command {
 func rmKind(cmd *cobra.Command, args []string) error {
 	prefix := args[0]
 
-	kindProvider, err := kind.NewKindCommondProvider(&kind.KindConfig{Version: prefix})
+	kindProvider, err := kind.NewKindBaseProvider(&kind.KindConfig{Version: prefix})
 	if err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-package kindcommon
+package kindbase
 
 import (
 	"context"
@@ -26,7 +26,12 @@ import (
 //go:embed manifests/*
 var f embed.FS
 
-type KindCommonProvider struct {
+type KindProvider interface {
+	Start(ctx context.Context, cancel context.CancelFunc) error
+	Delete() error
+}
+
+type KindBaseProvider struct {
 	Client   k8s.K8sDynamicClient
 	CRI      cri.ContainerClient
 	Provider *kind.Provider
@@ -49,7 +54,7 @@ const (
 	registryImage     = "quay.io/kubevirtci/library-registry:2.7.1"
 )
 
-func NewKindCommondProvider(kindConfig *KindConfig) (*KindCommonProvider, error) {
+func NewKindBaseProvider(kindConfig *KindConfig) (*KindBaseProvider, error) {
 	// use podman first
 	providerCRIOpt, err := kind.DetectNodeProvider()
 	if err != nil {
@@ -57,14 +62,14 @@ func NewKindCommondProvider(kindConfig *KindConfig) (*KindCommonProvider, error)
 	}
 
 	k := kind.NewProvider(providerCRIOpt)
-	return &KindCommonProvider{
+	return &KindBaseProvider{
 		CRI:        dockercri.NewDockerClient(),
 		Provider:   k,
 		KindConfig: kindConfig,
 	}, nil
 }
 
-func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFunc) error {
+func (k *KindBaseProvider) Start(ctx context.Context, cancel context.CancelFunc) error {
 	cluster, err := k.prepareClusterYaml()
 	if err != nil {
 		return err
@@ -137,7 +142,7 @@ func (k *KindCommonProvider) Start(ctx context.Context, cancel context.CancelFun
 	return nil
 }
 
-func (k *KindCommonProvider) Delete() error {
+func (k *KindBaseProvider) Delete() error {
 	if err := k.Provider.Delete(k.Version, ""); err != nil {
 		return err
 	}
@@ -147,7 +152,7 @@ func (k *KindCommonProvider) Delete() error {
 	return nil
 }
 
-func (k *KindCommonProvider) prepareClusterYaml() (string, error) {
+func (k *KindBaseProvider) prepareClusterYaml() (string, error) {
 	cluster, err := f.ReadFile("manifests/kind.yaml")
 	if err != nil {
 		return "", err
@@ -182,7 +187,7 @@ func (k *KindCommonProvider) prepareClusterYaml() (string, error) {
 	return string(cluster), nil
 }
 
-func (k *KindCommonProvider) setupNetwork(da *docker.DockerAdapter) error {
+func (k *KindBaseProvider) setupNetwork(da *docker.DockerAdapter) error {
 	cmds := []string{
 		"modprobe br_netfilter",
 		"sysctl -w net.bridge.bridge-nf-call-arptables=1",
@@ -198,7 +203,7 @@ func (k *KindCommonProvider) setupNetwork(da *docker.DockerAdapter) error {
 	return nil
 }
 
-func (k *KindCommonProvider) setupRegistryOnNode(da *docker.DockerAdapter, registryIP string) error {
+func (k *KindBaseProvider) setupRegistryOnNode(da *docker.DockerAdapter, registryIP string) error {
 	cmds := []string{
 		"echo " + registryIP + "\tregistry | tee -a /etc/hosts",
 	}
@@ -210,7 +215,7 @@ func (k *KindCommonProvider) setupRegistryOnNode(da *docker.DockerAdapter, regis
 	return nil
 }
 
-func (k *KindCommonProvider) setupCNI(da *docker.DockerAdapter) error {
+func (k *KindBaseProvider) setupCNI(da *docker.DockerAdapter) error {
 	file, err := os.Open(cniArchieFilename)
 	if err != nil {
 		return err
@@ -223,7 +228,7 @@ func (k *KindCommonProvider) setupCNI(da *docker.DockerAdapter) error {
 	return nil
 }
 
-func (k *KindCommonProvider) setupRegistryProxy(da *docker.DockerAdapter) error {
+func (k *KindBaseProvider) setupRegistryProxy(da *docker.DockerAdapter) error {
 	setupUrl := "http://" + k.RegistryProxy + ":3128/setup/systemd"
 	cmds := []string{
 		"curl " + setupUrl + " > proxyscript.sh",
@@ -239,11 +244,11 @@ func (k *KindCommonProvider) setupRegistryProxy(da *docker.DockerAdapter) error 
 	return nil
 }
 
-func (k *KindCommonProvider) deleteRegistry() error {
+func (k *KindBaseProvider) deleteRegistry() error {
 	return k.CRI.Remove(k.Version + "-registry")
 }
 
-func (k *KindCommonProvider) runRegistry(hostPort string) (string, string, error) {
+func (k *KindBaseProvider) runRegistry(hostPort string) (string, string, error) {
 	registryID, err := k.CRI.Create(registryImage, &cri.CreateOpts{
 		Name:          k.Version + "-registry",
 		Privileged:    true,
@@ -277,7 +282,7 @@ func (k *KindCommonProvider) runRegistry(hostPort string) (string, string, error
 	return registryID, registryJSON[0].NetworkSettings.Networks["kind"].IPAddress, nil
 }
 
-func (k *KindCommonProvider) downloadCNI() error {
+func (k *KindBaseProvider) downloadCNI() error {
 	out, err := os.Create(cniArchieFilename)
 	if err != nil {
 		return err
