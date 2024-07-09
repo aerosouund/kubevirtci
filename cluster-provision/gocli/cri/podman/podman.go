@@ -18,6 +18,26 @@ func NewPodman() *Podman {
 	return &Podman{}
 }
 
+type PodmanSSHClient struct {
+	containerName string
+}
+
+func NewPodmanSSHClient(containerName string) *PodmanSSHClient {
+	return &PodmanSSHClient{
+		containerName: containerName,
+	}
+}
+
+// fiux this
+func (p *Podman) SSH(cmd string, stdOut bool) (string, error) {
+	command := exec.Command("podman", "exec", "-ti", "/bin/sh", "-c", cmd)
+	out, err := command.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
 func (p *Podman) ImagePull(image string) error {
 	cmd := exec.Command("podman", "pull", image)
 	if err := cmd.Run(); err != nil {

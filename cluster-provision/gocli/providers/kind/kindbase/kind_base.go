@@ -17,7 +17,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
-	dockercri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/docker"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri/podman"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	kind "sigs.k8s.io/kind/pkg/cluster"
@@ -56,14 +56,14 @@ const (
 
 func NewKindBaseProvider(kindConfig *KindConfig) (*KindBaseProvider, error) {
 	// use podman first
-	providerCRIOpt, err := kind.DetectNodeProvider()
-	if err != nil {
-		return nil, err
-	}
+	// providerCRIOpt, err := kind.DetectNodeProvider()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	k := kind.NewProvider(providerCRIOpt)
+	k := kind.NewProvider(kind.ProviderWithPodman())
 	return &KindBaseProvider{
-		CRI:        dockercri.NewDockerClient(),
+		CRI:        podman.NewPodman(),
 		Provider:   k,
 		KindConfig: kindConfig,
 	}, nil
@@ -116,7 +116,7 @@ func (k *KindBaseProvider) Start(ctx context.Context, cancel context.CancelFunc)
 		return nil
 	}
 
-	_, registryIP, err := k.runRegistry("5000") // read from flag
+	_, registryIP, err := k.runRegistry(k.RegistryPort) // read from flag
 	if err != nil {
 		return err
 	}
