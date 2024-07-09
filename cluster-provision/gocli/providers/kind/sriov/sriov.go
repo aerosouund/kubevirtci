@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -17,6 +20,7 @@ import (
 type KindSriov struct {
 	pfs            []string
 	pfCountPerNode int
+	vfsCount       int
 
 	*kind.KindBaseProvider
 }
@@ -105,10 +109,142 @@ func (ks *KindSriov) Start(ctx context.Context, cancel context.CancelFunc) error
 	return nil
 }
 
-// func (ks *KindSriov) createVfsOnNode(sshClient utils.SSHClient) error {
-// 	cmds := []string{}
-// 	return nil
-// }
+func (ks *KindSriov) createVfsOnNode(da docker.DockerAdapter) error {
+	sysfs, err := da.SSH(`grep -Po 'sysfs.*\K(ro|rw)' /proc/mounts`, false)
+	if err != nil {
+		return nil
+	}
+	if sysfs != "rw" {
+		return fmt.Errorf("FATAL: sysfs is read-only, try to remount as RW")
+	}
+
+	mod, err := da.SSH(`grep vfio_pci /proc/modules`, false)
+	if err != nil {
+		return nil
+	}
+
+	if _, err = da.SSH("modprobe -i vfio_pci", true); err != nil {
+		return err
+	}
+
+	if mod == "" {
+		return fmt.Errorf("System doesn't have the vfio_pci module, provisioning failed")
+	}
+
+	pfsString, err := da.SSH(`find /sys/class/net/*/device/sriov_numvfs`, false)
+	if err != nil {
+		return nil
+	}
+	pfs := strings.Split(pfsString, " ")
+	if len(pfs) == 0 {
+		return fmt.Errorf("No physical functions found on node, exiting")
+	}
+
+	for _, pf := range pfs {
+		pfDevice, err := da.SSH("dirname "+pf, false)
+		if err != nil {
+			return err
+		}
+
+		vfsSysFsDevices, err := ks.createVFsforPF(da, pfDevice)
+		for _, vfDevice := range vfsSysFsDevices {
+			err = ks.bindToVfio(da, vfDevice)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (ks *KindSriov) createVFsforPF(sshClient docker.DockerAdapter, id string) ([]string, error) {
+	pfName, err := sshClient.SSH("basename "+id, false)
+	if err != nil {
+		return nil, err
+	}
+
+	pfSysFsDevice, err := sshClient.SSH("readlink -e "+id, false)
+	if err != nil {
+		return nil, err
+	}
+	totalVfs, err := sshClient.SSH("cat "+pfSysFsDevice+"/sriov_totalvfs", false)
+	if err != nil {
+		return nil, err
+	}
+
+	totalVfsCount, err := strconv.Atoi(totalVfs)
+	if err != nil {
+		return nil, err
+	}
+
+	if totalVfsCount < ks.vfsCount {
+		return nil, fmt.Errorf("FATAL: PF %s, VF's count should be up to sriov_totalvfs: %d", pfName, totalVfsCount)
+	}
+
+	cmds := []string{
+		"echo 0 >> " + pfSysFsDevice + "/sriov_numvfs",
+		"echo " + totalVfs + " >> " + pfSysFsDevice + "/sriov_numvfs",
+	}
+
+	for _, cmd := range cmds {
+		if _, err := sshClient.SSH(cmd, true); err != nil {
+			return nil, err
+		}
+	}
+
+	vfsString, err := sshClient.SSH(`readlink -e `+pfName+`/virtfn*`, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return strings.Split(vfsString, " "), nil
+}
+
+func (ks *KindSriov) bindToVfio(sshClient docker.DockerAdapter, sysFsDevice string) error {
+	devSysfsPath, err := sshClient.SSH("basename "+sysFsDevice, false)
+	if err != nil {
+		return err
+	}
+
+	driverPath := devSysfsPath + "/driver"
+	driverOverride := devSysfsPath + "/driver_override"
+
+	vfBusPciDeviceDriver, err := sshClient.SSH("readlink "+driverPath+" | awk -F'/' '{print $NF}'", false)
+	if err != nil {
+		return err
+	}
+	vfBusPciDeviceDriver = strings.TrimSuffix(vfBusPciDeviceDriver, "\n")
+	vfDriverName, err := sshClient.SSH("basename "+vfBusPciDeviceDriver, false)
+	if err != nil {
+		return err
+	}
+
+	if _, err := sshClient.SSH("modprobe -i vfio-pci", false); err != nil {
+		return fmt.Errorf("Error loading vfio-pci module: %v", err)
+	}
+
+	for i := 0; i < 10; i++ {
+		if _, err := sshClient.SSH("ls /sys/bus/pci/drivers/vfio-pci", false); err != nil {
+			fmt.Println("module not loaded properly, sleeping 1 second and trying again")
+			time.Sleep(time.Second * 1)
+			sshClient.SSH("modprobe -i vfio-pci", false)
+		} else {
+			break
+		}
+	}
+
+	cmds := []string{
+		"[[ '" + vfDriverName + "' != 'vfio-pci' ]] && echo " + devSysfsPath + " > " + driverPath + "/unbind && echo 'vfio-pci' > " + driverOverride + " && echo " + devSysfsPath + " > /sys/bus/pci/drivers/vfio-pci/bind",
+	}
+
+	for _, cmd := range cmds {
+		if _, err := sshClient.SSH(cmd, true); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 func (ks *KindSriov) assignPfsToNode(pfs []string, nodeName string) error {
 	for _, pf := range pfs {
