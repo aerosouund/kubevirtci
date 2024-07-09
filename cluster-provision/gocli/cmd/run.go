@@ -659,19 +659,19 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	sshClient, _ := sshutils.NewSSHClient(sshPort, 1, false)
 	n := nodesconfig.NewNodeK8sConfig(cephEnabled, prometheusEnabled, prometheusAlertmanagerEnabled, grafanaEnabled, istioEnabled, nfsCsiEnabled, cnaoEnabled)
 
-	err = sshClient.CopyRemoteFile(sshPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
+	err = sshClient.CopyRemoteFile("/etc/kubernetes/admin.conf", ".kubeconfig")
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	config, err := k8s.InitConfig(".kubeconfig", apiServerPort)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	k8sClient, err := k8s.NewDynamicClient(config)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	if err = provisionK8sOptions(sshClient, n, k8sClient); err != nil {
