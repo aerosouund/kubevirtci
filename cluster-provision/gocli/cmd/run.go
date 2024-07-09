@@ -793,8 +793,12 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 	} else {
 		if n.GpuAddress != "" {
 			// move the assigned PCI device to a vfio-pci driver to prepare for assignment
-			err := prepareDeviceForAssignment(sshClient, "", n.GpuAddress)
+			gpuDeviceID, err := getDevicePCIID(n.GpuAddress)
 			if err != nil {
+				return err
+			}
+			bindVfioOpt := bindvfio.NewBindVfioOpt(sshClient, gpuDeviceID)
+			if err := bindVfioOpt.Exec(); err != nil {
 				return err
 			}
 		}
