@@ -23,9 +23,10 @@ type NodeK8sConfig struct {
 	Grafana      bool
 	Istio        bool
 	NfsCsi       bool
+	Cnao         bool
 }
 
-func NewNodeK8sConfig(ceph, prometheus, alertmanager, grafana, istio, nfsCsi bool) *NodeK8sConfig {
+func NewNodeK8sConfig(ceph, prometheus, alertmanager, grafana, istio, nfsCsi, cnao bool) *NodeK8sConfig {
 	return &NodeK8sConfig{
 		Ceph:         ceph,
 		Prometheus:   prometheus,
@@ -33,6 +34,7 @@ func NewNodeK8sConfig(ceph, prometheus, alertmanager, grafana, istio, nfsCsi boo
 		Grafana:      grafana,
 		Istio:        istio,
 		NfsCsi:       nfsCsi,
+		Cnao:         cnao,
 	}
 }
 

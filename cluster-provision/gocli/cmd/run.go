@@ -113,6 +113,7 @@ func NewRunCommand() *cobra.Command {
 	run.Flags().String("nfs-data", "", "path to data which should be exposed via nfs to the nodes")
 	run.Flags().Bool("enable-ceph", false, "enables dynamic storage provisioning using Ceph")
 	run.Flags().Bool("enable-istio", false, "deploys Istio service mesh")
+	run.Flags().Bool("enable-cnao", false, "enable network extensions with istio")
 	run.Flags().Bool("enable-nfs-csi", false, "deploys nfs csi dynamic storage")
 	run.Flags().Bool("enable-prometheus", false, "deploys Prometheus operator")
 	run.Flags().Bool("enable-prometheus-alertmanager", false, "deploys Prometheus alertmanager")
@@ -310,6 +311,10 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 	fipsEnabled, err := cmd.Flags().GetBool("enable-fips")
+	if err != nil {
+		return err
+	}
+	cnaoEnabled, err := cmd.Flags().GetBool("enable-cnao")
 	if err != nil {
 		return err
 	}
@@ -652,7 +657,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	sshClient, _ := sshutils.NewSSHClient(sshPort, 1, false)
-	n := nodesconfig.NewNodeK8sConfig(cephEnabled, prometheusEnabled, prometheusAlertmanagerEnabled, grafanaEnabled, istioEnabled, nfsCsiEnabled)
+	n := nodesconfig.NewNodeK8sConfig(cephEnabled, prometheusEnabled, prometheusAlertmanagerEnabled, grafanaEnabled, istioEnabled, nfsCsiEnabled, cnaoEnabled)
 
 	err = sshClient.CopyRemoteFile(sshPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
 	if err != nil {
@@ -699,7 +704,7 @@ func provisionK8sOptions(sshClient sshutils.SSHClient, n *nodesconfig.NodeK8sCon
 	}
 
 	if n.Istio {
-		istioOpt := istio.NewIstioOpt(sshClient, k8sClient, cnaoEnabled)
+		istioOpt := istio.NewIstioOpt(sshClient, k8sClient, n.Cnao)
 		if err := istioOpt.Exec(); err != nil {
 			return err
 		}
