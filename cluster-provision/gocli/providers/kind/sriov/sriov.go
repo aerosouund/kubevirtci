@@ -100,9 +100,15 @@ func (ks *KindSriov) Start(ctx context.Context, cancel context.CancelFunc) error
 		if _, err = controlPlaneAdapter.SSH("kubectl label node "+nodeName+" sriov_capable=true", true); err != nil {
 			return err
 		}
+
 	}
 	return nil
 }
+
+// func (ks *KindSriov) createVfsOnNode(sshClient utils.SSHClient) error {
+// 	cmds := []string{}
+// 	return nil
+// }
 
 func (ks *KindSriov) assignPfsToNode(pfs []string, nodeName string) error {
 	for _, pf := range pfs {
