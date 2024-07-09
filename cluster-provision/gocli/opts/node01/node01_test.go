@@ -10,7 +10,7 @@ import (
 
 func TestNodeProvisionerOpt(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
-	opt := NewNode01Provisioner(sshClient, 2020)
+	opt := NewNode01Provisioner(sshClient)
 
 	cgroupv2, err := f.ReadFile("conf/00-cgroupv2.conf")
 	advAudit, err := f.ReadFile("conf/adv-audit.yaml")
