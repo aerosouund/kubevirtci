@@ -11,7 +11,7 @@ import (
 
 func TestRealTimeOpt(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
-	opt := NewEtcdInMemOpt(sshClient, 2020, 1, "512M")
+	opt := NewEtcdInMemOpt(sshClient, "512M")
 
 	cmds := []string{
 		"mkdir -p /var/lib/etcd",

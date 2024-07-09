@@ -11,15 +11,11 @@ import (
 var f embed.FS
 
 type NodesProvisioner struct {
-	sshPort   uint16
-	nodeIdx   int
 	sshClient utils.SSHClient
 }
 
-func NewNodesProvisioner(sc utils.SSHClient, sshPort uint16, nodeIdx int) *NodesProvisioner {
+func NewNodesProvisioner(sc utils.SSHClient) *NodesProvisioner {
 	return &NodesProvisioner{
-		sshPort:   sshPort,
-		nodeIdx:   nodeIdx,
 		sshClient: sc,
 	}
 }

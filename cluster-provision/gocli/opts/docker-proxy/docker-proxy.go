@@ -11,17 +11,13 @@ import (
 var f embed.FS
 
 type DockerProxyOpt struct {
-	sshPort   uint16
 	proxy     string
-	nodeIdx   int
 	sshClient utils.SSHClient
 }
 
-func NewDockerProxyOpt(sc utils.SSHClient, port uint16, idx int, proxy string) *DockerProxyOpt {
+func NewDockerProxyOpt(sc utils.SSHClient, proxy string) *DockerProxyOpt {
 	return &DockerProxyOpt{
-		sshPort:   port,
 		proxy:     proxy,
-		nodeIdx:   idx,
 		sshClient: sc,
 	}
 }

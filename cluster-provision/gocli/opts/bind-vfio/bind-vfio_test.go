@@ -10,7 +10,7 @@ import (
 
 func TestBindVfio(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
-	opt := NewBindVfioOpt(sshClient, 2020, 1, "8086:2668")
+	opt := NewBindVfioOpt(sshClient, "8086:2668")
 
 	sshClient.EXPECT().SSH("lspci -D -d "+opt.pciID, false).Return("testpciaddr something something", nil)
 

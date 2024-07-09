@@ -17,17 +17,15 @@ import (
 var f embed.FS
 
 type IstioOpt struct {
-	sshPort     uint16
 	cnaoEnabled bool
 	client      k8s.K8sDynamicClient
 	version     string
 	sshClient   utils.SSHClient
 }
 
-func NewIstioOpt(sc utils.SSHClient, c k8s.K8sDynamicClient, sshPort uint16, cnaoEnabled bool) *IstioOpt {
+func NewIstioOpt(sc utils.SSHClient, c k8s.K8sDynamicClient, cnaoEnabled bool) *IstioOpt {
 	return &IstioOpt{
 		client:      c,
-		sshPort:     sshPort,
 		cnaoEnabled: cnaoEnabled,
 		version:     "1.15.0",
 		sshClient:   sc,

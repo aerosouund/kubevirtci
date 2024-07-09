@@ -10,7 +10,7 @@ import (
 
 func TestRealTimeOpt(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
-	opt := NewRealtimeOpt(sshClient, 2020, 1)
+	opt := NewRealtimeOpt(sshClient)
 
 	sshClient.EXPECT().SSH("echo kernel.sched_rt_runtime_us=-1 > /etc/sysctl.d/realtime.conf", true)
 	sshClient.EXPECT().SSH("sysctl --system", true)

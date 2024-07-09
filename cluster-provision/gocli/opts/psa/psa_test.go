@@ -10,7 +10,7 @@ import (
 
 func TestRealTimeOpt(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
-	opt := NewPsaOpt(sshClient, 2020)
+	opt := NewPsaOpt(sshClient)
 	psa, _ := f.ReadFile("manifests/psa.yaml")
 
 	sshClient.EXPECT().SSH("rm /etc/kubernetes/psa.yaml", true)

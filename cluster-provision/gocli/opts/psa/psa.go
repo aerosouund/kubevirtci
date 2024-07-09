@@ -10,13 +10,11 @@ import (
 var f embed.FS
 
 type PsaOpt struct {
-	sshPort   uint16
 	sshClient utils.SSHClient
 }
 
-func NewPsaOpt(sc utils.SSHClient, p uint16) *PsaOpt {
+func NewPsaOpt(sc utils.SSHClient) *PsaOpt {
 	return &PsaOpt{
-		sshPort:   p,
 		sshClient: sc,
 	}
 }

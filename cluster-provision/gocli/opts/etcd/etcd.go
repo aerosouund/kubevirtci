@@ -7,20 +7,16 @@ import (
 )
 
 type EtcdInMemOpt struct {
-	sshPort   uint16
-	nodeIdx   int
 	etcdSize  string
 	sshClient utils.SSHClient
 }
 
-func NewEtcdInMemOpt(sc utils.SSHClient, p uint16, idx int, s string) *EtcdInMemOpt {
-	if s == "" {
-		s = "512M"
+func NewEtcdInMemOpt(sc utils.SSHClient, size string) *EtcdInMemOpt {
+	if size == "" {
+		size = "512M"
 	}
 	return &EtcdInMemOpt{
-		sshPort:   p,
-		nodeIdx:   idx,
-		etcdSize:  s,
+		etcdSize:  size,
 		sshClient: sc,
 	}
 }

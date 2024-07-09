@@ -9,16 +9,12 @@ import (
 )
 
 type BindVfioOpt struct {
-	sshPort   uint16
-	nodeIdx   int
 	pciID     string
 	sshClient utils.SSHClient
 }
 
-func NewBindVfioOpt(sshClient utils.SSHClient, sshPort uint16, nodeIdx int, id string) *BindVfioOpt {
+func NewBindVfioOpt(sshClient utils.SSHClient, id string) *BindVfioOpt {
 	return &BindVfioOpt{
-		sshPort:   sshPort,
-		nodeIdx:   nodeIdx,
 		pciID:     id,
 		sshClient: sshClient,
 	}

@@ -12,12 +12,10 @@ var f embed.FS
 
 type Node01Provisioner struct {
 	sshClient utils.SSHClient
-	sshPort   uint16
 }
 
-func NewNode01Provisioner(sc utils.SSHClient, sshPort uint16) *Node01Provisioner {
+func NewNode01Provisioner(sc utils.SSHClient) *Node01Provisioner {
 	return &Node01Provisioner{
-		sshPort:   sshPort,
 		sshClient: sc,
 	}
 }
