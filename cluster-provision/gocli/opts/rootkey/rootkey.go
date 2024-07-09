@@ -35,7 +35,7 @@ func (r *RootKey) Exec() error {
 	}
 
 	for _, cmd := range cmds {
-		if _, err := r.sshClient.JumpSSH(r.sshPort, r.nodeIdx, cmd, false, false); err != nil {
+		if _, err := r.sshClient.SSH(cmd, false); err != nil {
 			return err
 		}
 	}

@@ -46,7 +46,7 @@ func (n *NodesProvisioner) Exec() error {
 	}
 
 	for _, cmd := range cmds {
-		_, err := n.sshClient.JumpSSH(n.sshPort, n.nodeIdx, cmd, true, true)
+		_, err := n.sshClient.SSH(cmd, true)
 		if err != nil {
 			return fmt.Errorf("error executing %s: %s", cmd, err)
 		}

@@ -50,7 +50,7 @@ func (l *LinuxProvisioner) Exec() error {
 		"dnf install -y NetworkManager NetworkManager-ovs NetworkManager-config-server",
 	}
 	for _, cmd := range cmds {
-		if _, err := l.sshClient.JumpSSH(l.sshPort, 1, cmd, true, true); err != nil {
+		if _, err := l.sshClient.SSH(cmd, true); err != nil {
 			return err
 		}
 	}

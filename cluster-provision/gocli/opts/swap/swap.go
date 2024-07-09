@@ -28,11 +28,11 @@ func NewSwapOpt(sc utils.SSHClient, sshPort uint16, idx int, swapiness int, us b
 
 func (o *SwapOpt) Exec() error {
 	if o.size != "" {
-		if _, err := o.sshClient.JumpSSH(o.sshPort, 1, "dd if=/dev/zero of=/swapfile count="+o.size+" bs=1G", true, true); err != nil {
+		if _, err := o.sshClient.SSH("dd if=/dev/zero of=/swapfile count="+o.size+" bs=1G", true); err != nil {
 			return err
 		}
 	}
-	if _, err := o.sshClient.JumpSSH(o.sshPort, 1, "swapon -a", true, true); err != nil {
+	if _, err := o.sshClient.SSH("swapon -a", true); err != nil {
 		return err
 	}
 
@@ -42,7 +42,7 @@ func (o *SwapOpt) Exec() error {
 			"sysctl vm.swappiness=" + fmt.Sprintf("%d", o.swapiness),
 		}
 		for _, cmd := range cmds {
-			if _, err := o.sshClient.JumpSSH(o.sshPort, 1, cmd, true, true); err != nil {
+			if _, err := o.sshClient.SSH(cmd, true); err != nil {
 				return err
 			}
 		}
@@ -54,7 +54,7 @@ func (o *SwapOpt) Exec() error {
 			"systemctl restart kubelet",
 		}
 		for _, cmd := range cmds {
-			if _, err := o.sshClient.JumpSSH(o.sshPort, 1, cmd, true, true); err != nil {
+			if _, err := o.sshClient.SSH(cmd, true); err != nil {
 				return err
 			}
 		}

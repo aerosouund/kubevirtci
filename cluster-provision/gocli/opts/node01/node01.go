@@ -51,7 +51,7 @@ func (n *Node01Provisioner) Exec() error {
 		"chcon -t container_file_t /var/lib/rook",
 	}
 	for _, cmd := range cmds {
-		_, err := n.sshClient.JumpSSH(n.sshPort, 1, cmd, true, true)
+		_, err := n.sshClient.SSH(cmd, true)
 		if err != nil {
 			return fmt.Errorf("error executing %s: %s", cmd, err)
 		}

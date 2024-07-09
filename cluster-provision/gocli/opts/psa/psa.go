@@ -31,7 +31,7 @@ func (o *PsaOpt) Exec() error {
 		"echo '" + string(psa) + "' | sudo tee /etc/kubernetes/psa.yaml > /dev/null",
 	}
 	for _, cmd := range cmds {
-		if _, err := o.sshClient.JumpSSH(o.sshPort, 1, cmd, true, true); err != nil {
+		if _, err := o.sshClient.SSH(cmd, true); err != nil {
 			return err
 		}
 	}

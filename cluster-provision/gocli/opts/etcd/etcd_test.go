@@ -19,7 +19,7 @@ func TestRealTimeOpt(t *testing.T) {
 		fmt.Sprintf("mount -t tmpfs -o size=%s tmpfs /var/lib/etcd", opt.etcdSize),
 	}
 	for _, cmd := range cmds {
-		sshClient.EXPECT().JumpSSH(opt.sshPort, opt.nodeIdx, cmd, true, true)
+		sshClient.EXPECT().SSH(cmd, true)
 	}
 
 	err := opt.Exec()

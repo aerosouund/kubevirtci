@@ -13,8 +13,8 @@ func TestRealTimeOpt(t *testing.T) {
 	opt := NewPsaOpt(sshClient, 2020)
 	psa, _ := f.ReadFile("manifests/psa.yaml")
 
-	sshClient.EXPECT().JumpSSH(opt.sshPort, 1, "rm /etc/kubernetes/psa.yaml", true, true)
-	sshClient.EXPECT().JumpSSH(opt.sshPort, 1, "echo '"+string(psa)+"' | sudo tee /etc/kubernetes/psa.yaml > /dev/null", true, true)
+	sshClient.EXPECT().SSH("rm /etc/kubernetes/psa.yaml", true)
+	sshClient.EXPECT().SSH("echo '"+string(psa)+"' | sudo tee /etc/kubernetes/psa.yaml > /dev/null", true)
 	err := opt.Exec()
 	assert.NoError(t, err)
 }

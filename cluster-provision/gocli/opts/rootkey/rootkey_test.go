@@ -13,8 +13,8 @@ func TestRootKey(t *testing.T) {
 	opt := NewRootKey(sshClient, 2020, 1)
 	key, err := f.ReadFile("conf/vagrant.pub")
 
-	sshClient.EXPECT().JumpSSH(opt.sshPort, opt.nodeIdx, "echo '"+string(key)+"' | sudo tee /root/.ssh/authorized_keys > /dev/null", false, false)
-	sshClient.EXPECT().JumpSSH(opt.sshPort, opt.nodeIdx, "sudo service sshd restart", false, false)
+	sshClient.EXPECT().SSH("echo '"+string(key)+"' | sudo tee /root/.ssh/authorized_keys > /dev/null", false)
+	sshClient.EXPECT().SSH("sudo service sshd restart", false)
 	err = opt.Exec()
 	assert.NoError(t, err)
 }

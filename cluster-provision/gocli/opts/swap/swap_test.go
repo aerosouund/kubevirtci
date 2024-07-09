@@ -23,7 +23,7 @@ func TestSwapOpt(t *testing.T) {
 	}
 
 	for _, cmd := range cmds {
-		sshClient.EXPECT().JumpSSH(o.sshPort, o.nodeIdx, cmd, true, true)
+		sshClient.EXPECT().SSH(cmd, true)
 	}
 	err := o.Exec()
 	assert.NoError(t, err)

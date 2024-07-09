@@ -47,10 +47,10 @@ func (o *BindVfioOpt) Exec() error {
 	}
 
 	for i := 0; i < 10; i++ {
-		if _, err := o.sshClient.JumpSSH(o.sshPort, o.nodeIdx, "ls /sys/bus/pci/drivers/vfio-pci", true, false); err != nil {
+		if _, err := o.sshClient.SSH("ls /sys/bus/pci/drivers/vfio-pci", false); err != nil {
 			fmt.Println("module not loaded properly, sleeping 1 second and trying again")
 			time.Sleep(time.Second * 1)
-			o.sshClient.JumpSSH(o.sshPort, o.nodeIdx, "modprobe -i vfio-pci", true, false)
+			o.sshClient.SSH("modprobe -i vfio-pci", false)
 		} else {
 			break
 		}
@@ -63,7 +63,7 @@ func (o *BindVfioOpt) Exec() error {
 	}
 
 	for _, cmd := range cmds {
-		if _, err := o.sshClient.JumpSSH(o.sshPort, o.nodeIdx, cmd, true, true); err != nil {
+		if _, err := o.sshClient.SSH(cmd, true); err != nil {
 			return err
 		}
 	}

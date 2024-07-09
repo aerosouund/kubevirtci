@@ -27,7 +27,7 @@ func TestNodeProvisionerOpt(t *testing.T) {
 		"chcon -t container_file_t /var/lib/rook",
 	}
 	for _, cmd := range cmds {
-		sshClient.EXPECT().JumpSSH(opt.sshPort, 1, cmd, true, true)
+		sshClient.EXPECT().SSH(cmd, true)
 	}
 
 	err = opt.Exec()
