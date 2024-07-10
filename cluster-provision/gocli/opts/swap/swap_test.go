@@ -11,7 +11,7 @@ import (
 
 func TestSwapOpt(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
-	o := NewSwapOpt(sshClient, 2020, 1, 10, true, "1G")
+	o := NewSwapOpt(sshClient, 10, true, "1G")
 
 	cmds := []string{
 		"dd if=/dev/zero of=/swapfile count=" + o.size + " bs=1G",

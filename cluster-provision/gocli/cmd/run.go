@@ -36,6 +36,7 @@ import (
 	dockerproxy "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/docker-proxy"
 	etcdinmemory "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/etcd"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/istio"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/ksm"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/multus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
@@ -45,6 +46,7 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/realtime"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rookceph"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rootkey"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/swap"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 
@@ -892,7 +894,6 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 	if n.PSA {
 		psaOpt := psa.NewPsaOpt(sshClient)
 		opts = append(opts, psaOpt)
-
 	}
 
 	if n.NodeIdx == 1 {
@@ -912,6 +913,17 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 		n := nodesprovision.NewNodesProvisioner(sshClient)
 		opts = append(opts, n)
 	}
+
+	if n.KsmEnabled {
+		ksmOpt := ksm.NewKsmOpt(sshClient, n.KsmScanInterval, n.KsmPageCount)
+		opts = append(opts, ksmOpt)
+	}
+
+	if n.SwapEnabled {
+		swapOpt := swap.NewSwapOpt(sshClient, n.Swapiness, n.UnlimitedSwap, n.SwapSize)
+		opts = append(opts, swapOpt)
+	}
+
 	for _, o := range opts {
 		if err := o.Exec(); err != nil {
 			return err

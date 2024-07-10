@@ -8,18 +8,14 @@ import (
 
 type SwapOpt struct {
 	sshClient     utils.SSHClient
-	sshPort       uint16
-	nodeIdx       int
 	swapiness     int
 	unlimitedSwap bool
 	size          string
 }
 
-func NewSwapOpt(sc utils.SSHClient, sshPort uint16, idx int, swapiness int, us bool, size string) *SwapOpt {
+func NewSwapOpt(sc utils.SSHClient, swapiness int, us bool, size string) *SwapOpt {
 	return &SwapOpt{
 		sshClient:     sc,
-		sshPort:       sshPort,
-		nodeIdx:       idx,
 		swapiness:     swapiness,
 		unlimitedSwap: us,
 		size:          size,
