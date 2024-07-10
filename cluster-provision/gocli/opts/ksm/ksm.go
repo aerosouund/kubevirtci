@@ -8,19 +8,15 @@ import (
 
 type KsmOpt struct {
 	sshClient    utils.SSHClient
-	sshPort      uint16
 	scanInterval int
 	pagesToScan  int
-	nodeIdx      int
 }
 
-func NewKsmOpt(sc utils.SSHClient, sshPort uint16, idx, si, pages int) *KsmOpt {
+func NewKsmOpt(sc utils.SSHClient, si, pages int) *KsmOpt {
 	return &KsmOpt{
 		sshClient:    sc,
-		sshPort:      sshPort,
 		scanInterval: si,
 		pagesToScan:  pages,
-		nodeIdx:      idx,
 	}
 }
 

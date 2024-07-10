@@ -11,7 +11,7 @@ import (
 
 func TestKsmOPt(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
-	opt := NewKsmOpt(sshClient, 2020, 20, 10, 1)
+	opt := NewKsmOpt(sshClient, 20, 10)
 
 	cmds := []string{
 		"echo 1 | sudo tee /sys/kernel/mm/ksm/run >/dev/null",

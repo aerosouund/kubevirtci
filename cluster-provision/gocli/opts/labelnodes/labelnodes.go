@@ -6,14 +6,12 @@ import (
 
 type NodeLabler struct {
 	sshClient     utils.SSHClient
-	sshPort       uint16
 	labelSelector string
 }
 
 func NewNodeLabler(sc utils.SSHClient, p uint16, l string) *NodeLabler {
 	return &NodeLabler{
 		sshClient:     sc,
-		sshPort:       p,
 		labelSelector: l,
 	}
 }
