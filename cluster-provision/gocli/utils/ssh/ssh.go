@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -89,6 +90,7 @@ func (s *SSHClientImpl) SSH(cmd string, stdOut bool) (string, error) {
 			cmd = "sudo /bin/bash " + cmd
 		}
 	}
+	logrus.Infof("[node %d]: %s", s.nodeIdx, cmd)
 
 	err = session.Run(cmd)
 	if err != nil {
