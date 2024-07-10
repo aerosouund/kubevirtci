@@ -656,7 +656,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}(node.ID)
 	}
 
-	sshClient, _ := sshutils.NewSSHClient(sshPort, 1, false)
+	sshClient, _ := sshutils.NewSSHClient(sshPort, 1, true)
 	n := nodesconfig.NewNodeK8sConfig(cephEnabled, prometheusEnabled, prometheusAlertmanagerEnabled, grafanaEnabled, istioEnabled, nfsCsiEnabled, cnaoEnabled)
 
 	err = sshClient.CopyRemoteFile("/etc/kubernetes/admin.conf", ".kubeconfig")
