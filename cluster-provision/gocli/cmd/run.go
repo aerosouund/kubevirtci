@@ -36,6 +36,7 @@ import (
 	dockerproxy "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/docker-proxy"
 	etcdinmemory "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/etcd"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/istio"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/multus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
 	nodesprovision "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nodes"
@@ -794,14 +795,19 @@ func provisionK8sOptions(sshClient sshutils.SSHClient, k8sClient k8s.K8sDynamicC
 		opts = append(opts, nfsCsiOpt)
 	}
 
-	if n.Istio {
-		istioOpt := istio.NewIstioOpt(sshClient, k8sClient, n.Cnao)
-		opts = append(opts, istioOpt)
+	if n.Multus {
+		multusOpt := multus.NewMultusOpt(k8sClient)
+		opts = append(opts, multusOpt)
 	}
 
 	if n.Cnao {
 		cnaoOpt := cnao.NewCnaoOpt(k8sClient)
 		opts = append(opts, cnaoOpt)
+	}
+
+	if n.Istio {
+		istioOpt := istio.NewIstioOpt(sshClient, k8sClient, n.Cnao)
+		opts = append(opts, istioOpt)
 	}
 
 	if n.Prometheus {
@@ -833,7 +839,9 @@ func provisionK8sOptions(sshClient sshutils.SSHClient, k8sClient k8s.K8sDynamicC
 }
 
 func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig) error {
+	opts := []opts.Opt{}
 	nodeName := nodeNameFromIndex(n.NodeIdx)
+
 	if n.FipsEnabled {
 		for _, cmd := range []string{"sudo fips-mode-setup --enable", "sudo reboot"} {
 			if _, err := sshClient.SSH(cmd, true); err != nil {
@@ -849,32 +857,24 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 	if n.DockerProxy != "" {
 		//if dockerProxy has value, generate a shell script`/script/docker-proxy.sh` which can be applied to set proxy settings
 		dp := dockerproxy.NewDockerProxyOpt(sshClient, n.DockerProxy)
-		if err := dp.Exec(); err != nil {
-			return err
-		}
+		opts = append(opts, dp)
 	}
 
 	if n.EtcdInMemory {
 		logrus.Infof("Creating in-memory mount for etcd data on node %s", nodeName)
 		etcdinmem := etcdinmemory.NewEtcdInMemOpt(sshClient, n.EtcdSize)
-		if err := etcdinmem.Exec(); err != nil {
-			return err
-		}
+		opts = append(opts, etcdinmem)
 	}
 
 	if n.Realtime {
 		realtimeOpt := realtime.NewRealtimeOpt(sshClient)
-		if err := realtimeOpt.Exec(); err != nil {
-			return err
-		}
+		opts = append(opts, realtimeOpt)
 	}
 
 	for _, s := range soundcardPCIIDs {
 		// move the VM sound cards to a vfio-pci driver to prepare for assignment
 		bvfio := bindvfio.NewBindVfioOpt(sshClient, s)
-		if err := bvfio.Exec(); err != nil {
-			return err
-		}
+		opts = append(opts, bvfio)
 	}
 
 	if n.SingleStack {
@@ -891,17 +891,13 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 
 	if n.PSA {
 		psaOpt := psa.NewPsaOpt(sshClient)
-		if err := psaOpt.Exec(); err != nil {
-			return nil
-		}
+		opts = append(opts, psaOpt)
 
 	}
 
 	if n.NodeIdx == 1 {
 		n := node01.NewNode01Provisioner(sshClient)
-		if err := n.Exec(); err != nil {
-			return err
-		}
+		opts = append(opts, n)
 
 	} else {
 		if n.GpuAddress != "" {
@@ -911,16 +907,17 @@ func provisionNode(sshClient sshutils.SSHClient, n *nodesconfig.NodeLinuxConfig)
 				return err
 			}
 			bindVfioOpt := bindvfio.NewBindVfioOpt(sshClient, gpuDeviceID)
-			if err := bindVfioOpt.Exec(); err != nil {
-				return err
-			}
+			opts = append(opts, bindVfioOpt)
 		}
 		n := nodesprovision.NewNodesProvisioner(sshClient)
-		if err := n.Exec(); err != nil {
+		opts = append(opts, n)
+	}
+	for _, o := range opts {
+		if err := o.Exec(); err != nil {
 			return err
 		}
-
 	}
+
 	return nil
 }
 
