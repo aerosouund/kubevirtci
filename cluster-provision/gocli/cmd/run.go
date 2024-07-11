@@ -119,7 +119,6 @@ func NewRunCommand() *cobra.Command {
 	run.Flags().Bool("enable-ceph", false, "enables dynamic storage provisioning using Ceph")
 	run.Flags().Bool("enable-istio", false, "deploys Istio service mesh")
 	run.Flags().Bool("enable-cnao", false, "enable network extensions with istio")
-	run.Flags().Bool("deploy-cnao", false, "deploy the network extensions operator")
 	run.Flags().Bool("deploy-multus", false, "deploy multus")
 	run.Flags().Bool("deploy-cdi", true, "deploy cdi")
 	run.Flags().String("cdi-version", "", "cdi version")
@@ -130,11 +129,11 @@ func NewRunCommand() *cobra.Command {
 	run.Flags().Bool("enable-prometheus-alertmanager", false, "deploys Prometheus alertmanager")
 	run.Flags().Bool("enable-grafana", false, "deploys Grafana")
 	run.Flags().Bool("enable-ksm", false, "enables kernel memory same page merging")
-	run.Flags().Uint("ksm-page-count", 0, "number of pages to scan per time in ksm")
-	run.Flags().Uint("ksm-scan-interval", 0, "sleep interval in milliseconds for ksm")
+	run.Flags().Uint("ksm-page-count", 10, "number of pages to scan per time in ksm")
+	run.Flags().Uint("ksm-scan-interval", 20, "sleep interval in milliseconds for ksm")
 	run.Flags().Bool("enable-swap", false, "enable swap")
 	run.Flags().Bool("unlimited-swap", false, "unlimited swap")
-	run.Flags().String("swap-size", "", "swap memory size")
+	run.Flags().String("swap-size", "1", "swap memory size")
 	run.Flags().Uint("swapiness", 0, "swapiness")
 	run.Flags().String("docker-proxy", "", "sets network proxy for docker daemon")
 	run.Flags().String("container-registry", "quay.io", "the registry to pull cluster container from")
@@ -801,12 +800,12 @@ func provisionK8sOptions(sshClient sshutils.SSHClient, k8sClient k8s.K8sDynamicC
 	}
 
 	if n.Multus {
-		multusOpt := multus.NewMultusOpt(k8sClient)
+		multusOpt := multus.NewMultusOpt(k8sClient, sshClient)
 		opts = append(opts, multusOpt)
 	}
 
 	if n.Cnao {
-		cnaoOpt := cnao.NewCnaoOpt(k8sClient)
+		cnaoOpt := cnao.NewCnaoOpt(k8sClient, sshClient)
 		opts = append(opts, cnaoOpt)
 	}
 
@@ -821,13 +820,13 @@ func provisionK8sOptions(sshClient sshutils.SSHClient, k8sClient k8s.K8sDynamicC
 	}
 
 	if n.Cdi {
-		cdi := cdi.NewCdiOpt(k8sClient, n.CdiVersion)
+		cdi := cdi.NewCdiOpt(k8sClient, sshClient, n.CdiVersion)
 		opts = append(opts, cdi)
 	}
 
 	if n.AAQ {
 		if k8sVersion == "k8s-1.30" {
-			aaq := aaq.NewAaqOpt(k8sClient, n.CdiVersion)
+			aaq := aaq.NewAaqOpt(k8sClient, sshClient, n.CdiVersion)
 			opts = append(opts, aaq)
 		} else {
 			logrus.Info("AAQ was requested but k8s version is not k8s-1.30, skipping")

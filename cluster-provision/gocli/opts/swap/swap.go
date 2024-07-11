@@ -27,6 +27,9 @@ func (o *SwapOpt) Exec() error {
 		if _, err := o.sshClient.SSH("dd if=/dev/zero of=/swapfile count="+o.size+" bs=1G", true); err != nil {
 			return err
 		}
+		if _, err := o.sshClient.SSH("mkswap /swapfile", true); err != nil {
+			return err
+		}
 	}
 	if _, err := o.sshClient.SSH("swapon -a", true); err != nil {
 		return err

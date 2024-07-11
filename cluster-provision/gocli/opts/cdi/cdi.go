@@ -4,7 +4,9 @@ import (
 	"embed"
 	"regexp"
 
+	"github.com/sirupsen/logrus"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
+	utils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
 //go:embed manifests/*
@@ -12,12 +14,14 @@ var f embed.FS
 
 type CdiOpt struct {
 	client        k8s.K8sDynamicClient
+	sshClient     utils.SSHClient
 	customVersion string
 }
 
-func NewCdiOpt(c k8s.K8sDynamicClient, cv string) *CdiOpt {
+func NewCdiOpt(c k8s.K8sDynamicClient, sshClient utils.SSHClient, cv string) *CdiOpt {
 	return &CdiOpt{
 		client:        c,
+		sshClient:     sshClient,
 		customVersion: cv,
 	}
 }
@@ -46,5 +50,10 @@ func (o *CdiOpt) Exec() error {
 			return err
 		}
 	}
+
+	if _, err = o.sshClient.SSH("kubectl --kubeconfig=/etc/kubernetes/admin.conf wait --for=condition=Ready pod --timeout=180s --all --namespace cdi", true); err != nil {
+		return err
+	}
+	logrus.Info("AAQ Operator is ready!")
 	return nil
 }

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/sirupsen/logrus"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
+	utils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
 //go:embed manifests/*
@@ -13,13 +15,15 @@ var f embed.FS
 
 type AaqOpt struct {
 	client        k8s.K8sDynamicClient
+	sshClient     utils.SSHClient
 	customVersion string
 }
 
-func NewAaqOpt(c k8s.K8sDynamicClient, cv string) *AaqOpt {
+func NewAaqOpt(c k8s.K8sDynamicClient, sshClient utils.SSHClient, customVersion string) *AaqOpt {
 	return &AaqOpt{
 		client:        c,
-		customVersion: cv,
+		sshClient:     sshClient,
+		customVersion: customVersion,
 	}
 }
 
@@ -47,5 +51,10 @@ func (o *AaqOpt) Exec() error {
 			return fmt.Errorf("error applying manifest at index %d, %s", i, err)
 		}
 	}
+
+	if _, err = o.sshClient.SSH("kubectl --kubeconfig=/etc/kubernetes/admin.conf wait --for=condition=Ready pod --timeout=180s --all --namespace aaq", true); err != nil {
+		return err
+	}
+	logrus.Info("AAQ Operator is ready!")
 	return nil
 }

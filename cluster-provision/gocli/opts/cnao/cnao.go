@@ -4,18 +4,21 @@ import (
 	"embed"
 
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
+	utils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
 //go:embed manifests/*
 var f embed.FS
 
 type CnaoOpt struct {
-	client k8s.K8sDynamicClient
+	client    k8s.K8sDynamicClient
+	sshClient utils.SSHClient
 }
 
-func NewCnaoOpt(c k8s.K8sDynamicClient) *CnaoOpt {
+func NewCnaoOpt(c k8s.K8sDynamicClient, sshClient utils.SSHClient) *CnaoOpt {
 	return &CnaoOpt{
-		client: c,
+		client:    c,
+		sshClient: sshClient,
 	}
 }
 
@@ -34,6 +37,10 @@ func (o *CnaoOpt) Exec() error {
 		if err := o.client.Apply(yamlData); err != nil {
 			return err
 		}
+	}
+
+	if _, err := o.sshClient.SSH("kubectl --kubeconfig=/etc/kubernetes/admin.conf wait deployment -n cluster-network-addons cluster-network-addons-operator --for condition=Available --timeout=200s", true); err != nil {
+		return err
 	}
 	return nil
 }

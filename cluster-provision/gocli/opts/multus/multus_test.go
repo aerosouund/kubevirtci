@@ -4,12 +4,18 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
+	kubevirtcimocks "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/mock"
 )
 
 func TestMultusOpt(t *testing.T) {
 	client := k8s.NewTestClient()
-	opt := NewMultusOpt(client)
+	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
+
+	opt := NewMultusOpt(client, sshClient)
+	sshClient.EXPECT().SSH("kubectl --kubeconfig=/etc/kubernetes/admin.conf rollout status -n kube-system ds/kube-multus-ds --timeout=200s", true)
+
 	err := opt.Exec()
 	assert.NoError(t, err)
 }
