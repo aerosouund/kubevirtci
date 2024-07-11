@@ -738,7 +738,10 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		}(node.ID)
 	}
 
-	sshClient, _ := sshutils.NewSSHClient(sshPort, 1, true)
+	sshClient, err := sshutils.NewSSHClient(sshPort, 1, true)
+	if err != nil {
+		return err
+	}
 
 	k8sConfs := []nodesconfig.K8sConfigFunc{
 		nodesconfig.WithCeph(cephEnabled),
