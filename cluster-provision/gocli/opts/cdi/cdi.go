@@ -4,7 +4,6 @@ import (
 	"embed"
 	"regexp"
 
-	"github.com/sirupsen/logrus"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
 	utils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
@@ -54,6 +53,5 @@ func (o *CdiOpt) Exec() error {
 	if _, err = o.sshClient.SSH("kubectl --kubeconfig=/etc/kubernetes/admin.conf wait --for=condition=Ready pod --timeout=180s --all --namespace cdi", true); err != nil {
 		return err
 	}
-	logrus.Info("AAQ Operator is ready!")
 	return nil
 }
