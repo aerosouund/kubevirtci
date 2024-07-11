@@ -38,17 +38,31 @@ func (m *MockSSHClient) EXPECT() *MockSSHClientMockRecorder {
 	return m.recorder
 }
 
-// SSH mocks base method.
-func (m *MockSSHClient) SSH(cmd string) (error) {
+// CopyRemoteFile mocks base method.
+func (m *MockSSHClient) CopyRemoteFile(remotePath, localPath string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SSH", cmd)
+	ret := m.ctrl.Call(m, "CopyRemoteFile", remotePath, localPath)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
 
-	ret1, _ := ret[0].(error)
-	return ret1
+// CopyRemoteFile indicates an expected call of CopyRemoteFile.
+func (mr *MockSSHClientMockRecorder) CopyRemoteFile(remotePath, localPath any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CopyRemoteFile", reflect.TypeOf((*MockSSHClient)(nil).CopyRemoteFile), remotePath, localPath)
+}
+
+// SSH mocks base method.
+func (m *MockSSHClient) SSH(cmd string, stdOut bool) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SSH", cmd, stdOut)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // SSH indicates an expected call of SSH.
-func (mr *MockSSHClientMockRecorder) SSH(cmd string) *gomock.Call {
+func (mr *MockSSHClientMockRecorder) SSH(cmd, stdOut any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SSH", reflect.TypeOf((*MockSSHClient)(nil).SSH), cmd)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SSH", reflect.TypeOf((*MockSSHClient)(nil).SSH), cmd, stdOut)
 }
