@@ -19,6 +19,7 @@ func NewRunKindCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 	}
 	rk.Flags().UintP("nodes", "n", 1, "number of cluster nodes to start")
+	rk.Flags().String("registry-port", "5000", "forwarded host port for registry container")
 	return rk
 }
 
@@ -27,10 +28,15 @@ func runKind(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	port, err := cmd.Flags().GetString("registry-port")
+	if err != nil {
+		return err
+	}
 	kindVersion := args[0]
 	conf := &kind.KindConfig{
-		Nodes:   int(nodes),
-		Version: kindVersion,
+		Nodes:        int(nodes),
+		Version:      kindVersion,
+		RegistryPort: port,
 	}
 
 	switch kindVersion {
