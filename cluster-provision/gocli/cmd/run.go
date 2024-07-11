@@ -133,7 +133,7 @@ func NewRunCommand() *cobra.Command {
 	run.Flags().Uint("ksm-scan-interval", 20, "sleep interval in milliseconds for ksm")
 	run.Flags().Bool("enable-swap", false, "enable swap")
 	run.Flags().Bool("unlimited-swap", false, "unlimited swap")
-	run.Flags().String("swap-size", "1", "swap memory size")
+	run.Flags().Uint("swap-size", 0, "swap memory size in GB")
 	run.Flags().Uint("swapiness", 0, "swapiness")
 	run.Flags().String("docker-proxy", "", "sets network proxy for docker daemon")
 	run.Flags().String("container-registry", "quay.io", "the registry to pull cluster container from")
@@ -375,7 +375,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 
-	swapSize, err := cmd.Flags().GetString("swap-size")
+	swapSize, err := cmd.Flags().GetUint("swap-size")
 	if err != nil {
 		return err
 	}
@@ -721,7 +721,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 			nodesconfig.WithKsmScanInterval(int(ksmScanInterval)),
 			nodesconfig.WithSwap(enableSwap),
 			nodesconfig.WithSwapiness(int(swapiness)),
-			nodesconfig.WithSwapSize(swapSize),
+			nodesconfig.WithSwapSize(int(swapSize)),
 			nodesconfig.WithUnlimitedSwap(unlimitedSwap),
 		}
 

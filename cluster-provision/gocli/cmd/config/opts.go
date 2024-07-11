@@ -118,7 +118,7 @@ func WithUnlimitedSwap(unlimitedSwap bool) LinuxConfigFunc {
 	}
 }
 
-func WithSwapSize(swapSize string) LinuxConfigFunc {
+func WithSwapSize(swapSize int) LinuxConfigFunc {
 	return func(n *NodeLinuxConfig) {
 		n.SwapSize = swapSize
 	}

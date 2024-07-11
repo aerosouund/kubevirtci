@@ -19,7 +19,7 @@ type NodeLinuxConfig struct {
 	KsmScanInterval int
 	Swapiness       int
 	UnlimitedSwap   bool
-	SwapSize        string
+	SwapSize        int
 }
 
 // NodeK8sConfig type is a holder for all the config k8s options for kubevirt cluster

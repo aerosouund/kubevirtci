@@ -10,10 +10,10 @@ type SwapOpt struct {
 	sshClient     utils.SSHClient
 	swapiness     int
 	unlimitedSwap bool
-	size          string
+	size          int
 }
 
-func NewSwapOpt(sc utils.SSHClient, swapiness int, us bool, size string) *SwapOpt {
+func NewSwapOpt(sc utils.SSHClient, swapiness int, us bool, size int) *SwapOpt {
 	return &SwapOpt{
 		sshClient:     sc,
 		swapiness:     swapiness,
@@ -23,8 +23,8 @@ func NewSwapOpt(sc utils.SSHClient, swapiness int, us bool, size string) *SwapOp
 }
 
 func (o *SwapOpt) Exec() error {
-	if o.size != "" {
-		if _, err := o.sshClient.SSH("dd if=/dev/zero of=/swapfile count="+o.size+" bs=1G", true); err != nil {
+	if o.size != 0 {
+		if _, err := o.sshClient.SSH("dd if=/dev/zero of=/swapfile count="+fmt.Sprintf("%d", o.size)+" bs=1G", true); err != nil {
 			return err
 		}
 		if _, err := o.sshClient.SSH("mkswap /swapfile", true); err != nil {

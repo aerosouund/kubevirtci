@@ -11,10 +11,10 @@ import (
 
 func TestSwapOpt(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
-	o := NewSwapOpt(sshClient, 10, true, "1G")
+	o := NewSwapOpt(sshClient, 10, true, 1)
 
 	cmds := []string{
-		"dd if=/dev/zero of=/swapfile count=" + o.size + " bs=1G",
+		"dd if=/dev/zero of=/swapfile count=" + fmt.Sprintf("%d", o.size) + " bs=1G",
 		"swapon -a",
 		"/bin/su -c \"echo vm.swappiness = " + fmt.Sprintf("%d", o.swapiness) + " >> /etc/sysctl.conf\"",
 		"sysctl vm.swappiness=" + fmt.Sprintf("%d", o.swapiness),
