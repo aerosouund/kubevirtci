@@ -171,7 +171,7 @@ func (c *K8sDynamicClientImpl) Apply(manifest []byte) error {
 		if err != nil {
 			return err
 		}
-		logrus.Infof("Object %v applied successfully\n", obj.GetName())
+		logrus.Infof("Object %v applied successfully", obj.GetName())
 	}
 
 	return nil
