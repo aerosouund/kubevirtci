@@ -11,10 +11,7 @@ import (
 func TestRealTimeOpt(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
 	opt := NewPsaOpt(sshClient)
-	psa, _ := f.ReadFile("manifests/psa.yaml")
-
-	sshClient.EXPECT().SSH("rm /etc/kubernetes/psa.yaml", true)
-	sshClient.EXPECT().SSH("echo '"+string(psa)+"' | sudo tee /etc/kubernetes/psa.yaml > /dev/null", true)
+	AddExpectCalls(sshClient)
 	err := opt.Exec()
 	assert.NoError(t, err)
 }

@@ -5,7 +5,6 @@ go 1.22.3
 require (
 	github.com/aerosouund/rook/pkg/apis v0.0.0-20240521094914-cfb3faf99740
 	github.com/alessio/shellescape v1.4.2
-	github.com/bramvdbogaerde/go-scp v1.2.0
 	github.com/docker/docker v24.0.9+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/onsi/ginkgo/v2 v2.18.0

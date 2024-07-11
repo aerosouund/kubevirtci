@@ -82,7 +82,7 @@ func NewDynamicClient(config *rest.Config) (*K8sDynamicClientImpl, error) {
 	}, nil
 }
 
-func NewTestClient(reactors ...ReactorConfig) K8sDynamicClient {
+func NewTestClient(reactors ...ReactorConfig) *K8sDynamicClientImpl {
 	s := runtime.NewScheme()
 	scheme.AddToScheme(s)
 

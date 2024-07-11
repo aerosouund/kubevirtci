@@ -1,7 +1,6 @@
 package etcdinmemory
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,15 +11,7 @@ import (
 func TestRealTimeOpt(t *testing.T) {
 	sshClient := kubevirtcimocks.NewMockSSHClient(gomock.NewController(t))
 	opt := NewEtcdInMemOpt(sshClient, "512M")
-
-	cmds := []string{
-		"mkdir -p /var/lib/etcd",
-		"test -d /var/lib/etcd",
-		fmt.Sprintf("mount -t tmpfs -o size=%s tmpfs /var/lib/etcd", opt.etcdSize),
-	}
-	for _, cmd := range cmds {
-		sshClient.EXPECT().SSH(cmd, true)
-	}
+	AddExpectCalls(sshClient, opt.etcdSize)
 
 	err := opt.Exec()
 	assert.NoError(t, err)

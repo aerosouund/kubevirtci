@@ -19,7 +19,6 @@ var f embed.FS
 type IstioOpt struct {
 	cnaoEnabled bool
 	client      k8s.K8sDynamicClient
-	version     string
 	sshClient   utils.SSHClient
 }
 
@@ -27,7 +26,6 @@ func NewIstioOpt(sc utils.SSHClient, c k8s.K8sDynamicClient, cnaoEnabled bool) *
 	return &IstioOpt{
 		client:      c,
 		cnaoEnabled: cnaoEnabled,
-		version:     "1.15.0",
 		sshClient:   sc,
 	}
 }
@@ -43,7 +41,7 @@ func (o *IstioOpt) Exec() error {
 
 	cmds := []string{
 		"source /var/lib/kubevirtci/shared_vars.sh",
-		"PATH=/opt/istio-" + o.version + "/bin:$PATH istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
+		"PATH=/opt/istio-1.15.0/bin:$PATH istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
 	}
 	for _, cmd := range cmds {
 		if _, err := o.sshClient.SSH(cmd, true); err != nil {
