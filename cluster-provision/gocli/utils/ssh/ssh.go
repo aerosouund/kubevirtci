@@ -31,7 +31,7 @@ func NewSSHClient(port uint16, idx int, root bool) (*SSHClientImpl, error) {
 	if err != nil {
 		return nil, err
 	}
-	u := "vagrant"
+	u := "bullshit"
 	if root {
 		u = "root"
 	}
