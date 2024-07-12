@@ -22,6 +22,7 @@ import (
 	"golang.org/x/net/context"
 	containers2 "kubevirt.io/kubevirtci/cluster-provision/gocli/containers"
 	provisionopt "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/provision"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rootkey"
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
@@ -236,12 +237,11 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	if err != nil {
 		return err
 	}
-	fmt.Println("connection established")
 
-	// rootkey := rootkey.NewRootKey(sshClient)
-	// if err = rootkey.Exec(); erconr != nil {
-	// 	fmt.Println(err)
-	// }
+	rootkey := rootkey.NewRootKey(sshClient)
+	if err = rootkey.Exec(); err != nil {
+		fmt.Println(err)
+	}
 
 	sshClient, err = sshutils.NewSSHClient(sshPort, 1, true)
 	if err != nil {
