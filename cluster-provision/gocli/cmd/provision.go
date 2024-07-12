@@ -234,7 +234,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	}
 	sshClient, err = sshutils.NewSSHClient(sshPort, 1, false)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	// rootkey := rootkey.NewRootKey(sshClient)
@@ -244,7 +244,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 
 	sshClient, err = sshutils.NewSSHClient(sshPort, 1, true)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	// copy provider scripts
