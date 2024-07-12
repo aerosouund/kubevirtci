@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/alessio/shellescape"
 	"github.com/docker/docker/api/types"
@@ -235,18 +236,20 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	}
 	sshClient, err = sshutils.NewSSHClient(sshPort, 1, false)
 	if err != nil {
-		return err
+		fmt.Println(err)
 	}
 
 	rootkey := rootkey.NewRootKey(sshClient)
 	if err = rootkey.Exec(); err != nil {
-		return err
+		fmt.Println(err)
 	}
 
 	sshClient, err = sshutils.NewSSHClient(sshPort, 1, true)
 	if err != nil {
-		return err
+		fmt.Println(err)
 	}
+
+	time.Sleep(time.Second * 1000000)
 
 	// copy provider scripts
 	err = copyDirectory(ctx, cli, node.ID, scripts, "/scripts")
