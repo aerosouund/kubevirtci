@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
@@ -55,7 +56,15 @@ func NewSSHClient(port uint16, idx int, root bool) (*SSHClientImpl, error) {
 func (s *SSHClientImpl) SSH(cmd string, stdOut bool) (string, error) {
 	client, err := ssh.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(s.sshPort)), s.config)
 	if err != nil {
-		return "", fmt.Errorf("Failed to connect to SSH server: %v", err)
+		for i := 0; i < 10; i++ {
+			client, err = ssh.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(s.sshPort)), s.config)
+			if err != nil {
+				fmt.Println("error, sleeping")
+				time.Sleep(time.Second * 4)
+			} else {
+				break
+			}
+		}
 	}
 	defer client.Close()
 
