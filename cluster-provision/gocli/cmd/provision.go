@@ -21,6 +21,9 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	containers2 "kubevirt.io/kubevirtci/cluster-provision/gocli/containers"
+	provisionopt "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/provision"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rootkey"
+	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
@@ -167,6 +170,22 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 
+	dm, err := cli.ContainerInspect(context.Background(), dnsmasq.ID)
+	if err != nil {
+		return err
+	}
+
+	sshPort, err := utils.GetPublicPort(utils.PortSSH, dm.NetworkSettings.Ports)
+	if err != nil {
+		return err
+	}
+	sshClient, err = sshutils.NewSSHClient(sshPort, 1, false)
+	rootkey := rootkey.NewRootKey(sshClient)
+	if err = rootkey.Exec(); err != nil {
+		return err
+	}
+	sshClient, err = sshutils.NewSSHClient(sshPort, 1, true)
+
 	nodeName := nodeNameFromIndex(1)
 	nodeNum := fmt.Sprintf("%02d", 1)
 
@@ -238,14 +257,12 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	if err != nil {
 		return err
 	}
-
 	envVars := fmt.Sprintf("version=%s slim=%t", version, slim)
-	if strings.Contains(phases, "linux") {
-		err = performPhase(cli, nodeContainer(prefix, nodeName), "/scripts/provision.sh", envVars)
-		if err != nil {
-			return err
-		}
+	provisionOpt := provisionopt.NewLinuxProvisioner(sshClient)
+	if err = provisionOpt.Exec(); err != nil {
+		return nil
 	}
+
 	if strings.Contains(phases, "k8s") {
 		// copy provider scripts
 		err = copyDirectory(ctx, cli, node.ID, scripts, "/scripts")
