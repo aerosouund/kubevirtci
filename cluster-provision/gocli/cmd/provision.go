@@ -22,6 +22,7 @@ import (
 	"golang.org/x/net/context"
 	containers2 "kubevirt.io/kubevirtci/cluster-provision/gocli/containers"
 	provisionopt "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/provision"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rootkey"
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
@@ -179,12 +180,6 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 
-	// rootkey := rootkey.NewRootKey(sshClient)
-	// // if err = rootkey.Exec(); err != nil {
-	// // 	return err
-	// // }
-	// sshClient, err = sshutils.NewSSHClient(sshPort, 1, true)
-
 	nodeName := nodeNameFromIndex(1)
 	nodeNum := fmt.Sprintf("%02d", 1)
 
@@ -239,6 +234,19 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 	sshClient, err = sshutils.NewSSHClient(sshPort, 1, false)
+	if err != nil {
+		return err
+	}
+
+	rootkey := rootkey.NewRootKey(sshClient)
+	if err = rootkey.Exec(); err != nil {
+		return err
+	}
+
+	sshClient, err = sshutils.NewSSHClient(sshPort, 1, true)
+	if err != nil {
+		return err
+	}
 
 	// copy provider scripts
 	err = copyDirectory(ctx, cli, node.ID, scripts, "/scripts")
