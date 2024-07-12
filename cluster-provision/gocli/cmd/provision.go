@@ -236,9 +236,10 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	if err != nil {
 		return err
 	}
+	fmt.Println("connection established")
 
 	// rootkey := rootkey.NewRootKey(sshClient)
-	// if err = rootkey.Exec(); err != nil {
+	// if err = rootkey.Exec(); erconr != nil {
 	// 	fmt.Println(err)
 	// }
 
