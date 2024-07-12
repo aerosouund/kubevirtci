@@ -233,20 +233,6 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	if err := cli.ContainerStart(ctx, node.ID, types.ContainerStartOptions{}); err != nil {
 		return err
 	}
-	sshClient, err = sshutils.NewSSHClient(sshPort, 1, false)
-	if err != nil {
-		return err
-	}
-
-	rootkey := rootkey.NewRootKey(sshClient)
-	if err = rootkey.Exec(); err != nil {
-		fmt.Println(err)
-	}
-
-	sshClient, err = sshutils.NewSSHClient(sshPort, 1, true)
-	if err != nil {
-		return err
-	}
 
 	// copy provider scripts
 	err = copyDirectory(ctx, cli, node.ID, scripts, "/scripts")
@@ -262,6 +248,20 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 
 	// Wait for the VM to be up
 	err = _cmd(cli, nodeContainer(prefix, nodeName), "ssh.sh echo VM is up", "waiting for node to come up")
+	if err != nil {
+		return err
+	}
+	sshClient, err = sshutils.NewSSHClient(sshPort, 1, false)
+	if err != nil {
+		return err
+	}
+
+	rootkey := rootkey.NewRootKey(sshClient)
+	if err = rootkey.Exec(); err != nil {
+		fmt.Println(err)
+	}
+
+	sshClient, err = sshutils.NewSSHClient(sshPort, 1, true)
 	if err != nil {
 		return err
 	}
