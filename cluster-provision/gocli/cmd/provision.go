@@ -41,7 +41,7 @@ func NewProvisionCommand() *cobra.Command {
 	provision.Flags().StringP("memory", "m", "3096M", "amount of ram per node")
 	provision.Flags().UintP("cpu", "c", 2, "number of cpu cores per node")
 	provision.Flags().String("qemu-args", "", "additional qemu args to pass through to the nodes")
-	provision.Flags().Bool("random-ports", false, "expose all ports on random localhost ports")
+	provision.Flags().Bool("random-ports", true, "expose all ports on random localhost ports")
 	provision.Flags().Bool("slim", false, "create slim provider (uncached images)")
 	provision.Flags().Uint("vnc-port", 0, "port on localhost for vnc")
 	provision.Flags().Uint("ssh-port", 0, "port on localhost for ssh server")
