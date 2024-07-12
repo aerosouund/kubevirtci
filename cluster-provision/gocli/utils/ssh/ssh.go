@@ -54,16 +54,15 @@ func NewSSHClient(port uint16, idx int, root bool) (*SSHClientImpl, error) {
 // SSH performs two ssh connections, one to the forwarded port by dnsmasq to the local which is the ssh port of the control plane node
 // then a hop to the designated host where the command is desired to be ran
 func (s *SSHClientImpl) SSH(cmd string, stdOut bool) (string, error) {
-	client, err := ssh.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(s.sshPort)), s.config)
-	if err != nil {
-		for i := 0; i < 10; i++ {
-			client, err = ssh.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(s.sshPort)), s.config)
-			if err != nil {
-				fmt.Println("error, sleeping")
-				time.Sleep(time.Second * 4)
-			} else {
-				break
-			}
+	var client *ssh.Client
+	var err error
+	for i := 0; i < 10; i++ {
+		client, err = ssh.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(s.sshPort)), s.config)
+		if err != nil {
+			logrus.Infof("Attempt %d. Error establishing connection: %s, sleeping 4 seconds", i, err.Error())
+			time.Sleep(time.Second * 4)
+		} else {
+			break
 		}
 	}
 	defer client.Close()
