@@ -27,6 +27,7 @@ func (l *LinuxProvisioner) Exec() error {
 	}
 
 	cmds := []string{
+		"touch /var/lib/kubevirtci/shared_vars.sh",
 		`echo '` + string(sharedVars) + `' |  tee /var/lib/kubevirtci/shared_vars.sh > /dev/null`,
 		`dnf install -y "kernel-modules-$(uname -r)"`,
 		"dnf install -y cloud-utils-growpart",
