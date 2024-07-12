@@ -27,7 +27,6 @@ func (l *LinuxProvisioner) Exec() error {
 	}
 
 	cmds := []string{
-
 		"mkdir /var/lib/kubevirtci && touch /var/lib/kubevirtci/shared_vars.sh",
 		`echo '` + string(sharedVars) + `' |  tee /var/lib/kubevirtci/shared_vars.sh > /dev/null`,
 		`dnf install -y "kernel-modules-$(uname -r)"`,
