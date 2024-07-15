@@ -269,7 +269,9 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	envVars := fmt.Sprintf("version=%s slim=%t", version, slim)
 	_ = envVars
 	provisionOpt := provisionopt.NewLinuxProvisioner(sshClient)
-	_ = provisionOpt
+	if err = provisionOpt.Exec(); err != nil {
+		return err
+	}
 	if true {
 		// copy provider scripts
 		err = copyDirectory(ctx, cli, node.ID, scripts, "/scripts")
