@@ -187,6 +187,8 @@ func (k *K8sProvisioner) Exec() error {
 
 	cmds = []string{
 		"mkdir /provision",
+		"yum install -y patch || true",
+		"dnf install -y patch || true",
 		"cp /tmp/cni.do-not-change.yaml /provision/cni.yaml",
 		"mv /tmp/cni.do-not-change.yaml /provision/cni_ipv6.yaml",
 		"echo '" + string(cniPatch) + "' | tee /tmp/cni_patch.diff >> /dev/null",
