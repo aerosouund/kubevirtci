@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	containers2 "kubevirt.io/kubevirtci/cluster-provision/gocli/containers"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/k8sprovision"
 	provisionopt "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/provision"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rootkey"
 	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
@@ -266,22 +267,15 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 	envVars := fmt.Sprintf("version=%s slim=%t", version, slim)
+	_ = envVars
 	provisionOpt := provisionopt.NewLinuxProvisioner(sshClient)
 	if err = provisionOpt.Exec(); err != nil {
 		return nil
 	}
 
-	if strings.Contains(phases, "k8s") {
+	if true {
 		// copy provider scripts
 		err = copyDirectory(ctx, cli, node.ID, scripts, "/scripts")
-		if err != nil {
-			return err
-		}
-		err = _cmd(cli, nodeContainer(prefix, nodeName), "if [ -f /scripts/extra-pre-pull-images ]; then scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 /scripts/extra-pre-pull-images vagrant@192.168.66.101:/tmp/extra-pre-pull-images; fi", "copying /scripts/extra-pre-pull-images if existing")
-		if err != nil {
-			return err
-		}
-		err = _cmd(cli, nodeContainer(prefix, nodeName), "if [ -f /scripts/fetch-images.sh ]; then scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 /scripts/fetch-images.sh vagrant@192.168.66.101:/tmp/fetch-images.sh; fi", "copying /scripts/fetch-images.sh if existing")
 		if err != nil {
 			return err
 		}
@@ -296,8 +290,8 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 
-		err = performPhase(cli, nodeContainer(prefix, nodeName), "/scripts/k8s_provision.sh", envVars)
-		if err != nil {
+		provisionK8sOpt := k8sprovision.NewK8sProvisioner(sshClient, "1.28.11")
+		if err = provisionK8sOpt.Exec(); err != nil {
 			return err
 		}
 	}
