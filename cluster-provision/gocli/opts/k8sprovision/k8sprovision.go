@@ -161,7 +161,7 @@ func (k *K8sProvisioner) Exec() error {
 		return err
 	}
 
-	_, err = k.sshClient.SSH(`grep -iE /tmp/test '(image|value): '"`+imageRegexDoubleQuotes+`"`, true)
+	_, err = k.sshClient.SSH(`grep -iE '(image|value): '"`+imageRegexDoubleQuotes+`" /tmp/test`, true)
 	if err != nil {
 		return err
 	}
