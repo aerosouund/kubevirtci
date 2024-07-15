@@ -192,6 +192,7 @@ func (k *K8sProvisioner) Exec() error {
 
 	cmds = []string{
 		"echo '" + string(cni) + "' | tee /provision/cni_ipv6.yaml /provision/cni.yaml >> /dev/null",
+		"echo '" + string(cni) + "' | tee /provision/cni.yaml >> /dev/null",
 		"echo '" + string(cniPatch) + "' | tee /tmp/cni_patch.diff >> /dev/null",
 		"echo '" + string(cniV6Patch) + "' | tee /tmp/cni_v6_patch.diff >> /dev/null",
 		"patch /provision/cni.yaml /tmp/cni_patch.diff",
