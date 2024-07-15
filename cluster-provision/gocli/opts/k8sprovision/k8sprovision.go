@@ -91,12 +91,12 @@ func (k *K8sProvisioner) Exec() error {
 		return err
 	}
 
-	controllerManagerPatch, err := patchFs.ReadFile("kube-controller-manager/k8s.yaml")
+	controllerManagerPatch, err := patchFs.ReadFile("patches/kube-controller-manager.yaml")
 	if err != nil {
 		return err
 	}
 
-	schedulerPatch, err := patchFs.ReadFile("kube-scheduler/k8s.yaml")
+	schedulerPatch, err := patchFs.ReadFile("patches/kube-scheduler.yaml")
 	if err != nil {
 		return err
 	}
