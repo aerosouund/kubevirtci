@@ -36,7 +36,7 @@ func (k *K8sProvisioner) Exec() error {
 		return err
 	}
 
-	images, err := k.sshClient.SSH(`image_regex='([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+' image_regex_w_double_quotes='"?'"${image_regex}"'"?' grep -ioE "${image_regex_w_double_quotes}" /tmp/test`, false)
+	images, err := k.sshClient.SSH(`image_regex='([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+' && image_regex_w_double_quotes='"?'"${image_regex}"'"?' && grep -ioE "${image_regex_w_double_quotes}" /tmp/test`, false)
 	if err != nil {
 		return err
 	}
