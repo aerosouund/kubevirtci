@@ -31,11 +31,6 @@ func NewK8sProvisioner(sshClient utils.SSHClient, version string) *K8sProvisione
 }
 
 func (k *K8sProvisioner) Exec() error {
-	_, err := k.sshClient.SSH(`image_regex='([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+' image_regex_w_double_quotes='"?'"${image_regex}"'"?' find /tmp -type f -name '*.yaml' -print0 | xargs -0 grep -iE '(image|value): '"${image_regex_w_double_quotes}" | grep -ioE "${image_regex_w_double_quotes}"'$' | sort | uniq`, true)
-	if err != nil {
-		return nil
-	}
-
 	crio, err := f.ReadFile("conf/crio-yum.repo")
 	if err != nil {
 		return err
@@ -156,14 +151,14 @@ func (k *K8sProvisioner) Exec() error {
 		}
 	}
 
-	// images, err := k.sshClient.SSH(fmt.Sprintf("find /tmp -type f -name '*.yaml' -print0 | xargs -0 grep -iE '(image|value): '%[1]s | grep -ioE %[1]s'$' | sort | uniq", imageRegexDoubleQuotes), false)
-	// if err != nil {
-	// 	return err
-	// }
-
-	images, err := k.sshClient.SSH("find /tmp -type f -name '*.yaml' -print0 | tee /tmp/test", true)
+	_, err = k.sshClient.SSH(`image_regex='([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+' image_regex_w_double_quotes='"?'"${image_regex}"'"?' find /tmp -type f -name '*.yaml' -print0 | xargs -0 grep -iE '(image|value): '"${image_regex_w_double_quotes}" > test`, true)
 	if err != nil {
-		return err
+		return nil
+	}
+
+	images, err := k.sshClient.SSH(`image_regex='([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+' image_regex_w_double_quotes='"?'"${image_regex}"'"?' grep -ioE "${image_regex_w_double_quotes}" test`, false)
+	if err != nil {
+		return nil
 	}
 
 	imagesList := strings.Split(images, "\n")
