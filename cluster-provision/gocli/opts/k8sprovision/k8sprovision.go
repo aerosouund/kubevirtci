@@ -42,6 +42,11 @@ func (k *K8sProvisioner) Exec() error {
 		return err
 	}
 
+	storage, err := f.ReadFile("conf/storage.conf")
+	if err != nil {
+		return err
+	}
+
 	k8sRepo, err := f.ReadFile("conf/kubernetes.repo")
 	if err != nil {
 		return err
@@ -133,17 +138,17 @@ func (k *K8sProvisioner) Exec() error {
 	kubeAdmConf := strings.Replace(string(kubeAdm), "VERSION", k.version, 1)
 	kubeAdm6Conf := strings.Replace(string(kubeAdm6), "VERSION", k.version, 1)
 
-	// imageRegexDoubleQuotes := `"?'([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+'"?`
-
 	cmds := []string{
-		// "source /var/lib/kubevirtci/shared_vars.sh",
+		"source /var/lib/kubevirtci/shared_vars.sh",
 		"echo '" + string(crio) + "' | tee /etc/yum.repos.d/devel_kubic_libcontainers_stable_cri-o_v1.28.repo >> /dev/null",
 		"dnf install -y cri-o",
-		"systemctl enable --now crio || true", // err journalctl
 		"echo '" + string(registries) + "' | tee /etc/containers/registries.conf >> /dev/null",
+		"echo '" + string(storage) + "' | tee /etc/containers/storage.conf >> /dev/null",
+		"systemctl restart crio",
+		"systemctl enable --now crio",
 		"echo '" + k8sRepoWithVersion + "' | tee /etc/yum.repos.d/kubernetes.repo >> /dev/null",
 		fmt.Sprintf("dnf install --skip-broken --nobest --nogpgcheck --disableexcludes=kubernetes -y kubectl-%[1]s kubeadm-%[1]s kubelet-%[1]s kubernetes-cni", packagesVersion),
-		"kubeadm config images pull --kubernetes-version " + k.version + " || true", // err cant dial containerd socket
+		"kubeadm config images pull --kubernetes-version " + k.version, // err cant dial containerd socket
 	}
 
 	for _, cmd := range cmds {
@@ -157,17 +162,18 @@ func (k *K8sProvisioner) Exec() error {
 		return err
 	}
 
-	_, err = k.sshClient.SSH(`image_regex='([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+' image_regex_w_double_quotes='"?'"${image_regex}"'"?' find /tmp -type f -name '*.yaml' -print0 | xargs -0 grep -iE '(image|value): '"${image_regex_w_double_quotes}" > /tmp/test`, true)
+	_, err = k.sshClient.SSH(`image_regex='([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+' image_regex_w_double_quotes='"?'"${image_regex}"'"?' find /tmp -type f -name '*.yaml' -print0 | xargs -0 grep -iE '(image|value): '"${image_regex_w_double_quotes}" > /tmp/images`, true)
 	if err != nil {
 		return err
 	}
 
-	images, err := k.sshClient.SSH(`image_regex='([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+' && image_regex_w_double_quotes='"?'"${image_regex}"'"?' && grep -ioE "${image_regex_w_double_quotes}" /tmp/test`, false)
+	images, err := k.sshClient.SSH(`image_regex='([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+' && image_regex_w_double_quotes='"?'"${image_regex}"'"?' && grep -ioE "${image_regex_w_double_quotes}" /tmp/images`, false)
 	if err != nil {
 		return err
 	}
 
 	imagesList := strings.Split(images, "\n")
+	imagesList = []string{}
 	for _, image := range imagesList {
 		err := k.pullImageRetry(image)
 		if err != nil {
@@ -176,6 +182,7 @@ func (k *K8sProvisioner) Exec() error {
 	}
 
 	imagesList = strings.Split(string(extraImg), "\n")
+	imagesList = []string{}
 	for _, image := range imagesList {
 		err := k.pullImageRetry(image)
 		if err != nil {
