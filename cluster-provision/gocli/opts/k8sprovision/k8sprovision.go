@@ -232,6 +232,7 @@ func (k *K8sProvisioner) Exec() error {
 		"echo '" + kubeAdm6Conf + "' | tee /etc/kubernetes/kubeadm_ipv6.conf >> /dev/null",
 		"until ip address show dev eth0 | grep global | grep inet6; do sleep 1; done",
 		"swapoff -a",
+		"systemctl restart kubelet",
 		"kubeadm init --config /etc/kubernetes/kubeadm.conf -v5",
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf patch deployment coredns -n kube-system -p " + string(secContextPatch),
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f /provision/cni.yaml",
