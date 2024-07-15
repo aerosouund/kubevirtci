@@ -161,7 +161,7 @@ func (k *K8sProvisioner) Exec() error {
 		return err
 	}
 
-	_, err = k.sshClient.SSH(`find /tmp -type f -name '*.yaml' -print0 | xargs -0 grep -iE '(image|value): '"'"?'"([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+"'"?'"`, true)
+	_, err = k.sshClient.SSH(`image_regex='([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+' image_regex_w_double_quotes='"?'"${image_regex}"'"?' find /tmp -type f -name '*.yaml' -print0 | xargs -0 grep -iE '(image|value): '"${image_regex_w_double_quotes}"`, true)
 	if err != nil {
 		return err
 	}
