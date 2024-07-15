@@ -52,11 +52,6 @@ func (k *K8sProvisioner) Exec() error {
 		return err
 	}
 
-	cni, err := f.ReadFile("conf/cni.yaml")
-	if err != nil {
-		return err
-	}
-
 	cniPatch, err := f.ReadFile("conf/cni.diff")
 	if err != nil {
 		return err
@@ -192,8 +187,8 @@ func (k *K8sProvisioner) Exec() error {
 
 	cmds = []string{
 		"mkdir /provision",
-		"echo '" + string(cni) + "' | tee /provision/cni_ipv6.yaml >> /dev/null",
-		"echo '" + string(cni) + "' | tee /provision/cni.yaml >> /dev/null",
+		"cp /tmp/cni.do-not-change.yaml /provision/cni.yaml",
+		"mv /tmp/cni.do-not-change.yaml /provision/cni_ipv6.yaml",
 		"echo '" + string(cniPatch) + "' | tee /tmp/cni_patch.diff >> /dev/null",
 		"echo '" + string(cniV6Patch) + "' | tee /tmp/cni_v6_patch.diff >> /dev/null",
 		"patch /provision/cni.yaml /tmp/cni_patch.diff",
