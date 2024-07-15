@@ -31,6 +31,11 @@ func NewK8sProvisioner(sshClient utils.SSHClient, version string) *K8sProvisione
 }
 
 func (k *K8sProvisioner) Exec() error {
+	_, err := k.sshClient.SSH(`image_regex='([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+' image_regex_w_double_quotes='"?'"${image_regex}"'"?' find /tmp -type f -name '*.yaml' -print0 | xargs -0 grep -iE '(image|value): '"${image_regex_w_double_quotes}"`, true)
+	if err != nil {
+		return err
+	}
+
 	crio, err := f.ReadFile("conf/crio-yum.repo")
 	if err != nil {
 		return err
@@ -157,11 +162,6 @@ func (k *K8sProvisioner) Exec() error {
 	// }
 
 	images, err := k.sshClient.SSH("find /tmp -type f -name '*.yaml' -print0 | tee /tmp/test", true)
-	if err != nil {
-		return err
-	}
-
-	_, err = k.sshClient.SSH(`image_regex='([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+' image_regex_w_double_quotes='"?'"${image_regex}"'"?' find /tmp -type f -name '*.yaml' -print0 | xargs -0 grep -iE '(image|value): '"${image_regex_w_double_quotes}"`, true)
 	if err != nil {
 		return err
 	}
