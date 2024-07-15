@@ -139,7 +139,7 @@ func (k *K8sProvisioner) Exec() error {
 	kubeAdm6Conf := strings.Replace(string(kubeAdm6), "VERSION", k.version, 1)
 
 	cmds := []string{
-		"source /var/lib/kubevirtci/shared_vars.sh",
+		// "source /var/lib/kubevirtci/shared_vars.sh",
 		"echo '" + string(crio) + "' | tee /etc/yum.repos.d/devel_kubic_libcontainers_stable_cri-o_v1.28.repo >> /dev/null",
 		"dnf install -y cri-o",
 		"echo '" + string(registries) + "' | tee /etc/containers/registries.conf >> /dev/null",
