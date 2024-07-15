@@ -135,6 +135,7 @@ func (k *K8sProvisioner) Exec() error {
 	imageRegexDoubleQuotes := `"?'([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+'"?`
 
 	cmds := []string{
+		"source /var/lib/kubevirtci/shared_vars.sh",
 		"echo '" + string(crio) + "' | tee /etc/yum.repos.d/devel_kubic_libcontainers_stable_cri-o_v1.28.repo >> /dev/null",
 		"dnf install -y cri-o",
 		"systemctl enable --now crio || true", // err
