@@ -251,6 +251,7 @@ func (k *K8sProvisioner) Exec() error {
 			return err
 		}
 	}
+	fmt.Println("")
 
 	return nil
 }
