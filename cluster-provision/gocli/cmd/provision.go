@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -133,20 +132,20 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	}
 	ctx := context.Background()
 
-	stop := make(chan error, 10)
-	containers, volumes, done := docker.NewCleanupHandler(cli, stop, cmd.OutOrStderr(), true)
+	// stop := make(chan error, 10)
+	// containers, volumes, done := docker.NewCleanupHandler(cli, stop, cmd.OutOrStderr(), true)
 
-	defer func() {
-		stop <- retErr
-		<-done
-	}()
+	// defer func() {
+	// 	stop <- retErr
+	// 	<-done
+	// }()
 
-	go func() {
-		interrupt := make(chan os.Signal, 1)
-		signal.Notify(interrupt, os.Interrupt)
-		<-interrupt
-		stop <- fmt.Errorf("Interrupt received, clean up")
-	}()
+	// go func() {
+	// 	interrupt := make(chan os.Signal, 1)
+	// 	signal.Notify(interrupt, os.Interrupt)
+	// 	<-interrupt
+	// 	stop <- fmt.Errorf("Interrupt received, clean up")
+	// }()
 
 	// Pull the base image
 	err = docker.ImagePull(cli, ctx, base, types.ImagePullOptions{})
@@ -166,7 +165,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	if err != nil {
 		return err
 	}
-	containers <- dnsmasq.ID
+	// containers <- dnsmasq.ID
 	if err := cli.ContainerStart(ctx, dnsmasq.ID, types.ContainerStartOptions{}); err != nil {
 		return err
 	}
@@ -190,7 +189,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	if err != nil {
 		return err
 	}
-	volumes <- vol.Name
+	// volumes <- vol.Name
 	registryVol, err := cli.VolumeCreate(ctx, volume.CreateOptions{
 		Name: fmt.Sprintf("%s-%s", prefix, "registry"),
 	})
@@ -230,7 +229,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	if err != nil {
 		return err
 	}
-	containers <- node.ID
+	// containers <- node.ID
 	if err := cli.ContainerStart(ctx, node.ID, types.ContainerStartOptions{}); err != nil {
 		return err
 	}
