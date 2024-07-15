@@ -137,7 +137,7 @@ func (k *K8sProvisioner) Exec() error {
 	cmds := []string{
 		"echo '" + string(crio) + "' | tee /etc/yum.repos.d/devel_kubic_libcontainers_stable_cri-o_v1.28.repo >> /dev/null",
 		"dnf install -y cri-o",
-		"systemctl enable --now crio",
+		"systemctl enable --now crio || true", // err
 		"echo '" + string(registries) + "' | tee /etc/containers/registries.conf >> /dev/null",
 		"echo '" + k8sRepoWithVersion + "' | tee /etc/yum.repos.d/kubernetes.repo >> /dev/null",
 		fmt.Sprintf("dnf install --skip-broken --nobest --nogpgcheck --disableexcludes=kubernetes -y kubectl-%[1]s kubeadm-%[1]s kubelet-%[1]s kubernetes-cni", packagesVersion),
