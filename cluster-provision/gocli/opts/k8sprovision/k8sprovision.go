@@ -41,6 +41,14 @@ func (k *K8sProvisioner) Exec() error {
 		return err
 	}
 
+	imagesList := strings.Split(images, "\n")
+	for _, image := range imagesList {
+		err := k.pullImageRetry(image)
+		if err != nil {
+			logrus.Infof("Failed to pull image: %s, it will not be available offline", image)
+		}
+	}
+
 	crio, err := f.ReadFile("conf/crio-yum.repo")
 	if err != nil {
 		return err
@@ -158,14 +166,6 @@ func (k *K8sProvisioner) Exec() error {
 	for _, cmd := range cmds {
 		if _, err := k.sshClient.SSH(cmd, true); err != nil {
 			return err
-		}
-	}
-
-	imagesList := strings.Split(images, "\n")
-	for _, image := range imagesList {
-		err := k.pullImageRetry(image)
-		if err != nil {
-			logrus.Infof("Failed to pull image: %s, it will not be available offline", image)
 		}
 	}
 
