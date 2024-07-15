@@ -234,7 +234,7 @@ func (k *K8sProvisioner) Exec() error {
 		"swapoff -a",
 		"systemctl restart kubelet",
 		"kubeadm init --config /etc/kubernetes/kubeadm.conf -v5",
-		"kubectl --kubeconfig=/etc/kubernetes/admin.conf patch deployment coredns -n kube-system -p " + string(secContextPatch),
+		"kubectl --kubeconfig=/etc/kubernetes/admin.conf patch deployment coredns -n kube-system -p '" + string(secContextPatch) + "'",
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f /provision/cni.yaml",
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf wait --for=condition=Ready pods --all -n kube-system --timeout=300s",
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf get pods -n kube-system",
