@@ -142,7 +142,7 @@ func (k *K8sProvisioner) Exec() error {
 		"echo '" + string(registries) + "' | tee /etc/containers/registries.conf >> /dev/null",
 		"echo '" + k8sRepoWithVersion + "' | tee /etc/yum.repos.d/kubernetes.repo >> /dev/null",
 		fmt.Sprintf("dnf install --skip-broken --nobest --nogpgcheck --disableexcludes=kubernetes -y kubectl-%[1]s kubeadm-%[1]s kubelet-%[1]s kubernetes-cni", packagesVersion),
-		"kubeadm config images pull --kubernetes-version || true" + k.version, // err cant dial containerd socket
+		"kubeadm config images pull --kubernetes-version " + k.version + " || true", // err cant dial containerd socket
 	}
 
 	for _, cmd := range cmds {
