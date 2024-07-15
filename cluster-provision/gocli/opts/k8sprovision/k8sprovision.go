@@ -151,10 +151,21 @@ func (k *K8sProvisioner) Exec() error {
 		}
 	}
 
-	images, err := k.sshClient.SSH(fmt.Sprintf("find /tmp -type f -name '*.yaml' -print0 | xargs -0 grep -iE '(image|value): '%[1]s | grep -ioE %[1]s'$' | sort | uniq", imageRegexDoubleQuotes), false)
+	// images, err := k.sshClient.SSH(fmt.Sprintf("find /tmp -type f -name '*.yaml' -print0 | xargs -0 grep -iE '(image|value): '%[1]s | grep -ioE %[1]s'$' | sort | uniq", imageRegexDoubleQuotes), false)
+	// if err != nil {
+	// 	return err
+	// }
+
+	images, err := k.sshClient.SSH("find /tmp -type f -name '*.yaml' -print0 | tee /tmp/test", true)
 	if err != nil {
 		return err
 	}
+
+	_, err = k.sshClient.SSH("grep -iE '(image|value): "+imageRegexDoubleQuotes, true)
+	if err != nil {
+		return err
+	}
+
 	imagesList := strings.Split(images, "\n")
 	for _, image := range imagesList {
 		err := k.pullImageRetry(image)
