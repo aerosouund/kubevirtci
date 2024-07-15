@@ -132,7 +132,7 @@ func (k *K8sProvisioner) Exec() error {
 	kubeAdmConf := strings.Replace(string(kubeAdm), "VERSION", k.version, 1)
 	kubeAdm6Conf := strings.Replace(string(kubeAdm6), "VERSION", k.version, 1)
 
-	imageRegexDoubleQuotes := `"?'([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+'"?`
+	// imageRegexDoubleQuotes := `"?'([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+'"?`
 
 	cmds := []string{
 		// "source /var/lib/kubevirtci/shared_vars.sh",
@@ -161,7 +161,7 @@ func (k *K8sProvisioner) Exec() error {
 		return err
 	}
 
-	_, err = k.sshClient.SSH(`grep -iE '(image|value): '"`+imageRegexDoubleQuotes+`" /tmp/test`, true)
+	_, err = k.sshClient.SSH(`find manifests/ -type f -name '*.yaml' -print0 | xargs -0 grep -iE '(image|value): '"'"?'"([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+"'"?'"`, true)
 	if err != nil {
 		return err
 	}
