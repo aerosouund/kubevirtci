@@ -41,6 +41,8 @@ func (k *K8sProvisioner) Exec() error {
 		return err
 	}
 
+	time.Sleep(time.Second * 500)
+
 	crio, err := f.ReadFile("conf/crio-yum.repo")
 	if err != nil {
 		return err
