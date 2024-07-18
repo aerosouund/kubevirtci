@@ -152,6 +152,7 @@ func (k *KindBaseProvider) Start(ctx context.Context, cancel context.CancelFunc)
 	if err != nil {
 		return err
 	}
+
 	var sshClient libssh.Client
 	for _, node := range nodes {
 		switch k.CRI.(type) {
