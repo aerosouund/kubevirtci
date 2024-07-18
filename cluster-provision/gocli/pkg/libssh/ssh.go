@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"io/fs"
 	"net"
 	"os"
 	"strconv"
@@ -22,6 +23,7 @@ var sshKey []byte
 type Client interface {
 	Command(cmd string, stdOut bool) (string, error)
 	CopyRemoteFile(remotePath, localPath string) error
+	SCP(destPath string, contents fs.File) error
 }
 
 // Represents an interface to run a command on a node in the kubevirt cluster
@@ -59,7 +61,6 @@ func NewSSHClient(port uint16, idx int, root bool) (*SSHClientImpl, error) {
 
 // SSH performs two ssh connections, one to the forwarded port by dnsmasq to the local which is the ssh port of the control plane node
 // then a hop to the designated host where the command is desired to be ran
-
 func (s *SSHClientImpl) Command(cmd string, stdOut bool) (string, error) {
 	client, err := ssh.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(s.sshPort)), s.config)
 	if err != nil {
