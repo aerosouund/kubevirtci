@@ -19,6 +19,7 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
 	dockercri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/docker"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
+	setupregistry "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/setup-registry"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/k8s"
 	kind "sigs.k8s.io/kind/pkg/cluster"
 )
@@ -131,9 +132,12 @@ func (k *KindBaseProvider) Start(ctx context.Context, cancel context.CancelFunc)
 		if err := k.setupCNI(da); err != nil {
 			return err
 		}
-		if err = k.setupRegistryOnNode(da, registryIP); err != nil {
+
+		sr := setupregistry.NewSetupRegistry(da, registryIP)
+		if err = sr.Exec(); err != nil {
 			return err
 		}
+
 		if err = k.setupNetwork(da); err != nil {
 			return err
 		}

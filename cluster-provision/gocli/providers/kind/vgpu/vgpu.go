@@ -78,7 +78,7 @@ func (kv *KindVGPU) remountSysFS(sshClient *docker.DockerAdapter) error {
 	}
 
 	for _, cmd := range cmds {
-		if _, err := sshClient.SSH(cmd, true); err != nil {
+		if _, err := sshClient.Command(cmd, true); err != nil {
 			return err
 		}
 	}

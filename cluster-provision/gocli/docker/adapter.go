@@ -41,3 +41,8 @@ func (d *DockerAdapter) Command(cmd string, stdOut bool) (string, error) {
 func (d *DockerAdapter) SCP(destPath string, contents fs.File) error {
 	return d.dockerClient.CopyToContainer(context.Background(), d.nodeName, destPath, contents, types.CopyToContainerOptions{})
 }
+
+// todo
+func (d *DockerAdapter) CopyRemoteFile(remotePath, localPath string) error {
+	return nil
+}

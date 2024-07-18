@@ -2,6 +2,7 @@ package libssh
 
 import (
 	"bytes"
+	"context"
 	_ "embed"
 	"fmt"
 	"io"
@@ -109,6 +110,57 @@ func (s *SSHClientImpl) Command(cmd string, stdOut bool) (string, error) {
 		return "", fmt.Errorf("Failed to execute command: %v, %v", cmd, err)
 	}
 	return stdout.String(), nil
+}
+
+func (s *SSHClientImpl) SCP(fileName string, contents fs.File) error {
+	signer, err := ssh.ParsePrivateKey([]byte(sshKey))
+	if err != nil {
+		return err
+	}
+
+	config := &ssh.ClientConfig{
+		User: "vagrant",
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(signer),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+
+	client, err := ssh.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(s.sshPort)), config)
+	if err != nil {
+		return fmt.Errorf("Failed to connect to SSH server: %v", err)
+	}
+	defer client.Close()
+
+	conn, err := client.Dial("tcp", fmt.Sprintf("192.168.66.10%d:22", s.nodeIdx))
+	if err != nil {
+		return fmt.Errorf("Error establishing connection to the next hop host: %s", err)
+	}
+
+	ncc, chans, reqs, err := ssh.NewClientConn(conn, fmt.Sprintf("192.168.66.10%d:22", s.nodeIdx), config)
+	if err != nil {
+		return fmt.Errorf("Error creating forwarded ssh connection: %s", err)
+	}
+
+	jumpHost := ssh.NewClient(ncc, chans, reqs)
+	defer jumpHost.Close()
+
+	scpClient, err := scp.NewClientBySSH(jumpHost)
+	if err != nil {
+		return err
+	}
+
+	err = scpClient.Connect()
+	if err != nil {
+		return err
+	}
+
+	err = scpClient.CopyFile(context.Background(), contents, fileName, "0775")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *SSHClientImpl) CopyRemoteFile(remotePath, localPath string) error {

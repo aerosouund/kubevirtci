@@ -10,6 +10,7 @@
 package kubevirtcimocks
 
 import (
+	fs "io/fs"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -65,4 +66,18 @@ func (m *MockSSHClient) CopyRemoteFile(remotePath, localPath string) error {
 func (mr *MockClientMockRecorder) CopyRemoteFile(remotePath, localPath any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CopyRemoteFile", reflect.TypeOf((*MockSSHClient)(nil).CopyRemoteFile), remotePath, localPath)
+}
+
+// SCP mocks base method.
+func (m *MockSSHClient) SCP(destPath string, contents fs.File) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SCP", destPath, contents)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SCP indicates an expected call of SCP.
+func (mr *MockClientMockRecorder) SCP(destPath, contents any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SCP", reflect.TypeOf((*MockSSHClient)(nil).SCP), destPath, contents)
 }
