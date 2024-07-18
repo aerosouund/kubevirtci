@@ -6,7 +6,11 @@ import (
 	"path/filepath"
 
 	"github.com/docker/docker/client"
+	dockercri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/docker"
+	podmancri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/podman"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/remountsysfs"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/libssh"
 	kind "kubevirt.io/kubevirtci/cluster-provision/gocli/providers/kind/kindbase"
 )
 
@@ -51,11 +55,17 @@ func (kv *KindVGPU) Start(ctx context.Context, cancel context.CancelFunc) error 
 		return err
 	}
 
+	var sshClient libssh.Client
 	for _, node := range nodes {
-		nodeName := node.String()
-		da := docker.NewDockerAdapter(cli, nodeName)
-		err = kv.remountSysFS(da)
-		if err != nil {
+		switch kv.CRI.(type) {
+		case *dockercri.DockerClient:
+			sshClient = docker.NewDockerAdapter(cli, node.String())
+		case *podmancri.Podman:
+			sshClient = podmancri.NewPodmanSSHClient(node.String())
+		}
+
+		rsf := remountsysfs.NewRemountSysFSOpt(sshClient)
+		if err := rsf.Exec(); err != nil {
 			return err
 		}
 
@@ -65,23 +75,6 @@ func (kv *KindVGPU) Start(ctx context.Context, cancel context.CancelFunc) error 
 		}
 	}
 
-	return nil
-}
-
-// todo: put the kind code in a new branch based off the latest ssh changes to avoid explicitly using docker adapter
-// todo: make this an opt
-func (kv *KindVGPU) remountSysFS(sshClient *docker.DockerAdapter) error {
-	cmds := []string{
-		"mount -o remount,rw /sys",
-		"ls -la -Z /dev/vfio",
-		"chmod 0666 /dev/vfio/vfio",
-	}
-
-	for _, cmd := range cmds {
-		if _, err := sshClient.Command(cmd, true); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
