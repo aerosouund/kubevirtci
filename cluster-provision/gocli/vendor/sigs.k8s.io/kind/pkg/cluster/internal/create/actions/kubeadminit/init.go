@@ -60,38 +60,24 @@ func (a *action) Execute(ctx *actions.ActionContext) error {
 		return err
 	}
 
-	kubeVersionStr, err := nodeutils.KubeVersion(node)
-	if err != nil {
-		return errors.Wrap(err, "failed to get kubernetes version from node")
-	}
-	kubeVersion, err := version.ParseGeneric(kubeVersionStr)
-	if err != nil {
-		return errors.Wrapf(err, "failed to parse kubernetes version %q", kubeVersionStr)
+	// skip preflight checks, as these have undesirable side effects
+	// and don't tell us much. requires kubeadm 1.13+
+	skipPhases := "preflight"
+	if a.skipKubeProxy {
+		skipPhases += ",addon/kube-proxy"
 	}
 
-	args := []string{
+	// run kubeadm
+	cmd := node.Command(
 		// init because this is the control plane node
-		"init",
+		"kubeadm", "init",
+		"--skip-phases="+skipPhases,
 		// specify our generated config file
 		"--config=/kind/kubeadm.conf",
 		"--skip-token-print",
 		// increase verbosity for debugging
 		"--v=6",
-	}
-
-	// Newer versions set this in the config file.
-	if kubeVersion.LessThan(version.MustParseSemantic("v1.23.0")) {
-		// Skip preflight to avoid pulling images.
-		// Kind pre-pulls images and preflight may conflict with that.
-		skipPhases := "preflight"
-		if a.skipKubeProxy {
-			skipPhases += ",addon/kube-proxy"
-		}
-		args = append(args, "--skip-phases="+skipPhases)
-	}
-
-	// run kubeadm
-	cmd := node.Command("kubeadm", args...)
+	)
 	lines, err := exec.CombinedOutputLines(cmd)
 	ctx.Logger.V(3).Info(strings.Join(lines, "\n"))
 	if err != nil {
