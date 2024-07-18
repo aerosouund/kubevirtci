@@ -95,12 +95,12 @@ func (ks *KindSriov) Start(ctx context.Context, cancel context.CancelFunc) error
 		}
 
 		for _, cmd := range cmds {
-			if _, err := da.SSH(cmd, true); err != nil {
+			if _, err := da.Command(cmd, true); err != nil {
 				return err
 			}
 		}
 
-		if _, err = controlPlaneAdapter.SSH("kubectl label node "+nodeName+" sriov_capable=true", true); err != nil {
+		if _, err = controlPlaneAdapter.Command("kubectl label node "+nodeName+" sriov_capable=true", true); err != nil {
 			return err
 		}
 
@@ -109,7 +109,7 @@ func (ks *KindSriov) Start(ctx context.Context, cancel context.CancelFunc) error
 }
 
 func (ks *KindSriov) createVfsOnNode(da docker.DockerAdapter) error {
-	sysfs, err := da.SSH(`grep -Po 'sysfs.*\K(ro|rw)' /proc/mounts`, false)
+	sysfs, err := da.Command(`grep -Po 'sysfs.*\K(ro|rw)' /proc/mounts`, false)
 	if err != nil {
 		return nil
 	}
@@ -117,12 +117,12 @@ func (ks *KindSriov) createVfsOnNode(da docker.DockerAdapter) error {
 		return fmt.Errorf("FATAL: sysfs is read-only, try to remount as RW")
 	}
 
-	mod, err := da.SSH(`grep vfio_pci /proc/modules`, false)
+	mod, err := da.Command(`grep vfio_pci /proc/modules`, false)
 	if err != nil {
 		return nil
 	}
 
-	if _, err = da.SSH("modprobe -i vfio_pci", true); err != nil {
+	if _, err = da.Command("modprobe -i vfio_pci", true); err != nil {
 		return err
 	}
 
@@ -130,7 +130,7 @@ func (ks *KindSriov) createVfsOnNode(da docker.DockerAdapter) error {
 		return fmt.Errorf("System doesn't have the vfio_pci module, provisioning failed")
 	}
 
-	pfsString, err := da.SSH(`find /sys/class/net/*/device/sriov_numvfs`, false)
+	pfsString, err := da.Command(`find /sys/class/net/*/device/sriov_numvfs`, false)
 	if err != nil {
 		return nil
 	}
@@ -140,7 +140,7 @@ func (ks *KindSriov) createVfsOnNode(da docker.DockerAdapter) error {
 	}
 
 	for _, pf := range pfs {
-		pfDevice, err := da.SSH("dirname "+pf, false)
+		pfDevice, err := da.Command("dirname "+pf, false)
 		if err != nil {
 			return err
 		}
@@ -157,16 +157,16 @@ func (ks *KindSriov) createVfsOnNode(da docker.DockerAdapter) error {
 }
 
 func (ks *KindSriov) createVFsforPF(sshClient docker.DockerAdapter, id string) ([]string, error) {
-	pfName, err := sshClient.SSH("basename "+id, false)
+	pfName, err := sshClient.Command("basename "+id, false)
 	if err != nil {
 		return nil, err
 	}
 
-	pfSysFsDevice, err := sshClient.SSH("readlink -e "+id, false)
+	pfSysFsDevice, err := sshClient.Command("readlink -e "+id, false)
 	if err != nil {
 		return nil, err
 	}
-	totalVfs, err := sshClient.SSH("cat "+pfSysFsDevice+"/sriov_totalvfs", false)
+	totalVfs, err := sshClient.Command("cat "+pfSysFsDevice+"/sriov_totalvfs", false)
 	if err != nil {
 		return nil, err
 	}
@@ -186,12 +186,12 @@ func (ks *KindSriov) createVFsforPF(sshClient docker.DockerAdapter, id string) (
 	}
 
 	for _, cmd := range cmds {
-		if _, err := sshClient.SSH(cmd, true); err != nil {
+		if _, err := sshClient.Command(cmd, true); err != nil {
 			return nil, err
 		}
 	}
 
-	vfsString, err := sshClient.SSH(`readlink -e `+pfName+`/virtfn*`, false)
+	vfsString, err := sshClient.Command(`readlink -e `+pfName+`/virtfn*`, false)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +200,7 @@ func (ks *KindSriov) createVFsforPF(sshClient docker.DockerAdapter, id string) (
 }
 
 func (ks *KindSriov) bindToVfio(sshClient docker.DockerAdapter, sysFsDevice string) error {
-	devSysfsPath, err := sshClient.SSH("basename "+sysFsDevice, false)
+	devSysfsPath, err := sshClient.Command("basename "+sysFsDevice, false)
 	if err != nil {
 		return err
 	}
@@ -208,25 +208,25 @@ func (ks *KindSriov) bindToVfio(sshClient docker.DockerAdapter, sysFsDevice stri
 	driverPath := devSysfsPath + "/driver"
 	driverOverride := devSysfsPath + "/driver_override"
 
-	vfBusPciDeviceDriver, err := sshClient.SSH("readlink "+driverPath+" | awk -F'/' '{print $NF}'", false)
+	vfBusPciDeviceDriver, err := sshClient.Command("readlink "+driverPath+" | awk -F'/' '{print $NF}'", false)
 	if err != nil {
 		return err
 	}
 	vfBusPciDeviceDriver = strings.TrimSuffix(vfBusPciDeviceDriver, "\n")
-	vfDriverName, err := sshClient.SSH("basename "+vfBusPciDeviceDriver, false)
+	vfDriverName, err := sshClient.Command("basename "+vfBusPciDeviceDriver, false)
 	if err != nil {
 		return err
 	}
 
-	if _, err := sshClient.SSH("modprobe -i vfio-pci", false); err != nil {
+	if _, err := sshClient.Command("modprobe -i vfio-pci", false); err != nil {
 		return fmt.Errorf("Error loading vfio-pci module: %v", err)
 	}
 
 	for i := 0; i < 10; i++ {
-		if _, err := sshClient.SSH("ls /sys/bus/pci/drivers/vfio-pci", false); err != nil {
+		if _, err := sshClient.Command("ls /sys/bus/pci/drivers/vfio-pci", false); err != nil {
 			fmt.Println("module not loaded properly, sleeping 1 second and trying again")
 			time.Sleep(time.Second * 1)
-			sshClient.SSH("modprobe -i vfio-pci", false)
+			sshClient.Command("modprobe -i vfio-pci", false)
 		} else {
 			break
 		}
@@ -237,7 +237,7 @@ func (ks *KindSriov) bindToVfio(sshClient docker.DockerAdapter, sysFsDevice stri
 	}
 
 	for _, cmd := range cmds {
-		if _, err := sshClient.SSH(cmd, true); err != nil {
+		if _, err := sshClient.Command(cmd, true); err != nil {
 			return err
 		}
 	}

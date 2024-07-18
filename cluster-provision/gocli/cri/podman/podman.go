@@ -2,12 +2,13 @@ package podman
 
 import (
 	"fmt"
+	"io"
+	"io/fs"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/podman/v5/pkg/specgen"
 	"github.com/sirupsen/logrus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
 )
@@ -28,14 +29,75 @@ func NewPodmanSSHClient(containerName string) *PodmanSSHClient {
 	}
 }
 
-// fiux this
-func (p *Podman) SSH(cmd string, stdOut bool) (string, error) {
+func IsAvailable() bool {
+	cmd := exec.Command("podman", "-v")
+	out, err := cmd.Output()
+	if err != nil || len(out) != 1 {
+		return false
+	}
+	return strings.HasPrefix(string(out), "podman version")
+}
+
+func (p *PodmanSSHClient) Command(cmd string, stdOut bool) (string, error) {
 	command := exec.Command("podman", "exec", "-ti", "/bin/sh", "-c", cmd)
-	out, err := command.CombinedOutput()
-	if err != nil {
+	if !stdOut {
+		out, err := command.CombinedOutput()
+		if err != nil {
+			return "", err
+		}
+		return string(out), nil
+	}
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+
+	if err := command.Run(); err != nil {
 		return "", err
 	}
-	return string(out), nil
+	return "", nil
+}
+
+func (p *PodmanSSHClient) CopyRemoteFile(remotePath, localPath string) error {
+	cmd := exec.Command("podman", "cp", fmt.Sprintf("%s:%s", p.containerName, remotePath), localPath)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to copy file from container: %w, output: %s", err, output)
+	}
+
+	return nil
+}
+
+// todo
+func (p *PodmanSSHClient) SCP(destPath string, contents fs.File) error {
+	tempFile, err := os.CreateTemp("", "podman_cp_temp")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(tempFile.Name())
+
+	fileContents, err := io.ReadAll(contents)
+	if err != nil {
+		return fmt.Errorf("failed to read file contents: %w", err)
+	}
+
+	_, err = tempFile.Write(fileContents)
+	if err != nil {
+		return fmt.Errorf("failed to write to temp file: %w", err)
+	}
+
+	err = tempFile.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close temp file: %w", err)
+	}
+
+	cmd := exec.Command("podman", "cp", tempFile.Name(), destPath)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("podman cp command failed: %w. Output: %s", err, string(output))
+	}
+
+	return nil
 }
 
 func (p *Podman) ImagePull(image string) error {
@@ -112,16 +174,4 @@ func (p *Podman) Remove(containerID string) error {
 		return err
 	}
 	return nil
-}
-
-func (p *Podman) createOptsToSpec(s *specgen.SpecGenerator, co *cri.CreateOpts) *specgen.SpecGenerator {
-	s.CapAdd = co.Capabilities
-	s.Privileged = &co.Privileged
-	s.RestartPolicy = co.RestartPolicy
-	s.Command = co.Command
-	s.Networks = map[string]types.PerNetworkOptions{
-		co.Network: {},
-	}
-	s.Remove = &co.Remove
-	return s
 }

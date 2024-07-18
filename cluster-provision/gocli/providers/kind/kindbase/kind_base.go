@@ -18,9 +18,13 @@ import (
 	"github.com/sirupsen/logrus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
 	dockercri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/docker"
+	podmancri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/podman"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/network"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/registryproxy"
 	setupregistry "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/setup-registry"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/k8s"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/libssh"
 	kind "sigs.k8s.io/kind/pkg/cluster"
 )
 
@@ -58,16 +62,28 @@ const (
 )
 
 func NewKindBaseProvider(kindConfig *KindConfig) (*KindBaseProvider, error) {
-	providerCRIOpt, err := kind.DetectNodeProvider()
+	var (
+		cri cri.ContainerClient
+		k   *kind.Provider
+	)
+
+	runtime, err := DetectContainerRuntime()
 	if err != nil {
 		return nil, err
 	}
 
-	k := kind.NewProvider(providerCRIOpt)
+	switch runtime {
+	case "docker":
+		cri = dockercri.NewDockerClient()
+		k = kind.NewProvider(kind.ProviderWithDocker())
+	case "podman":
+		cri = podmancri.NewPodman()
+		k = kind.NewProvider(kind.ProviderWithPodman())
+	}
 
 	kp := &KindBaseProvider{
 		Image:      kind128Image,
-		CRI:        dockercri.NewDockerClient(),
+		CRI:        cri,
 		Provider:   k,
 		KindConfig: kindConfig,
 	}
@@ -78,6 +94,16 @@ func NewKindBaseProvider(kindConfig *KindConfig) (*KindBaseProvider, error) {
 
 	kp.Cluster = cluster
 	return kp, nil
+}
+
+func DetectContainerRuntime() (string, error) {
+	if dockercri.IsAvailable() {
+		return "docker", nil
+	}
+	if podmancri.IsAvailable() {
+		return "podman", nil
+	}
+	return "", fmt.Errorf("No valid container runtime found")
 }
 
 func (k *KindBaseProvider) Start(ctx context.Context, cancel context.CancelFunc) error {
@@ -126,25 +152,32 @@ func (k *KindBaseProvider) Start(ctx context.Context, cancel context.CancelFunc)
 	if err != nil {
 		return err
 	}
-
+	var sshClient libssh.Client
 	for _, node := range nodes {
-		da := docker.NewDockerAdapter(cli, node.String())
-		if err := k.setupCNI(da); err != nil {
+		switch k.CRI.(type) {
+		case *dockercri.DockerClient:
+			sshClient = docker.NewDockerAdapter(cli, node.String())
+		case *podmancri.Podman:
+			sshClient = podmancri.NewPodmanSSHClient(node.String())
+		}
+
+		if err := k.setupCNI(sshClient); err != nil {
 			return err
 		}
 
-		sr := setupregistry.NewSetupRegistry(da, registryIP)
+		sr := setupregistry.NewSetupRegistry(sshClient, registryIP)
 		if err = sr.Exec(); err != nil {
 			return err
 		}
 
-		if err = k.setupNetwork(da); err != nil {
+		n := network.NewNetworkOpt(sshClient)
+		if err = n.Exec(); err != nil {
 			return err
 		}
-		if k.RegistryProxy != "" {
-			if err = k.setupRegistryProxy(da); err != nil {
-				return err
-			}
+
+		rp := registryproxy.NewRegistryProxyOpt(sshClient, k.RegistryProxy)
+		if err = rp.Exec(); err != nil {
+			return err
 		}
 	}
 
@@ -215,59 +248,15 @@ func (k *KindBaseProvider) PrepareClusterYaml(withExtraMounts, withVfio bool) (s
 	return string(cluster), nil
 }
 
-func (k *KindBaseProvider) setupNetwork(da *docker.DockerAdapter) error {
-	cmds := []string{
-		"modprobe br_netfilter",
-		"sysctl -w net.bridge.bridge-nf-call-arptables=1",
-		"sysctl -w net.bridge.bridge-nf-call-iptables=1",
-		"sysctl -w net.bridge.bridge-nf-call-ip6tables=1",
-	}
-
-	for _, cmd := range cmds {
-		if _, err := da.SSH(cmd, true); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (k *KindBaseProvider) setupRegistryOnNode(da *docker.DockerAdapter, registryIP string) error {
-	cmds := []string{
-		"echo " + registryIP + "\tregistry | tee -a /etc/hosts",
-	}
-	for _, cmd := range cmds {
-		if _, err := da.SSH(cmd, true); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (k *KindBaseProvider) setupCNI(da *docker.DockerAdapter) error {
+func (k *KindBaseProvider) setupCNI(sshClient libssh.Client) error {
 	file, err := os.Open(cniArchieFilename)
 	if err != nil {
 		return err
 	}
 
-	err = da.SCP("/opt/cni/bin", file)
+	err = sshClient.SCP("/opt/cni/bin", file)
 	if err != nil {
 		return err
-	}
-	return nil
-}
-
-func (k *KindBaseProvider) setupRegistryProxy(da *docker.DockerAdapter) error {
-	setupUrl := "http://" + k.RegistryProxy + ":3128/setup/systemd"
-	cmds := []string{
-		"curl " + setupUrl + " > proxyscript.sh",
-		"sed s/docker.service/containerd.service/g proxyscript.sh",
-		`sed '/Environment/ s/$/ \"NO_PROXY=127.0.0.0\/8,10.0.0.0\/8,172.16.0.0\/12,192.168.0.0\/16\"/ proxyscript.sh`,
-		"/bin/bash -c proxyscript.sh",
-	}
-	for _, cmd := range cmds {
-		if _, err := da.SSH(cmd, true); err != nil {
-			return err
-		}
 	}
 	return nil
 }
