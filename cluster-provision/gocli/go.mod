@@ -5,6 +5,7 @@ go 1.22.3
 require (
 	github.com/aerosouund/rook/pkg/apis v0.0.0-20240521094914-cfb3faf99740
 	github.com/alessio/shellescape v1.4.2
+	github.com/bramvdbogaerde/go-scp v1.5.0
 	github.com/containers/common v0.59.2
 	github.com/containers/podman/v5 v5.1.2
 	github.com/docker/docker v26.1.3+incompatible

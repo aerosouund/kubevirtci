@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/bramvdbogaerde/go-scp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 )
