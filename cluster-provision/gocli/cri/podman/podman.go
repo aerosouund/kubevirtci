@@ -67,7 +67,6 @@ func (p *PodmanSSHClient) CopyRemoteFile(remotePath, localPath string) error {
 	return nil
 }
 
-// todo
 func (p *PodmanSSHClient) SCP(destPath string, contents fs.File) error {
 	tempFile, err := os.CreateTemp("", "podman_cp_temp")
 	if err != nil {
