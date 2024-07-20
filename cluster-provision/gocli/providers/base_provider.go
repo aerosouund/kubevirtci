@@ -36,6 +36,7 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/multus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nfscsi"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
+	nodesprovision "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nodes"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/prometheus"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/psa"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/realtime"
@@ -44,18 +45,15 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/swap"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/k8s"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/libssh"
-	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 )
 
 func NewKubevirtProvider(k8sversion string, image string, cli *client.Client,
 	options []KubevirtProviderOption,
-	sshClient sshutils.SSHClient,
 	nd, sd, ud []string) *KubevirtProvider {
 	kp := &KubevirtProvider{
 		Image:     image,
 		Version:   k8sversion,
 		Docker:    cli,
-		SSHClient: sshClient,
 		NvmeDisks: nd,
 		ScsiDisks: sd,
 		USBDisks:  ud,
@@ -91,13 +89,11 @@ func NewFromRunning(dnsmasqPrefix string) (*KubevirtProvider, error) {
 	if err != nil {
 		return nil, err
 	}
-	kp.SSHClient = &sshutils.SSHClientImpl{}
-	kp.Docker = cli
 
+	kp.Docker = cli
 	return kp, nil
 }
 
-// is the portmap also usable in kind ?
 func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc, portMap nat.PortMap) (retErr error) {
 	stop := make(chan error, 10)
 	containers, _, done := docker.NewCleanupHandler(kp.Docker, stop, os.Stdout, false)
@@ -151,12 +147,99 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 		containers <- nfsGanesha
 	}
 
-	err = kp.runNodes(ctx, containers)
+	wg := sync.WaitGroup{}
+	wg.Add(int(kp.Nodes))
+
+	// start one vm after each other
+	macCounter := 0
+
+	for x := 0; x < int(kp.Nodes); x++ {
+		nodeName := kp.nodeNameFromIndex(x + 1)
+		sshClient, err := libssh.NewSSHClient(kp.SSHPort, x+1, false)
+		if err != nil {
+			return err
+		}
+
+		nodeNum := fmt.Sprintf("%02d", x+1)
+		qemuCMD := kp.prepareQemuCmd(x)
+		macCounter++
+
+		vmContainerConfig := &container.Config{
+			Image: kp.Image,
+			Env: []string{
+				fmt.Sprintf("NODE_NUM=%s", nodeNum),
+			},
+			Cmd: []string{"/bin/bash", "-c", qemuCMD},
+		}
+		var deviceMappings []container.DeviceMapping
+
+		if kp.GPU != "" && x == int(kp.Nodes)-1 {
+			dm, err := kp.prepareDeviceMappings()
+			if err != nil {
+				return err
+			}
+			deviceMappings = dm
+			qemuCMD = fmt.Sprintf("%s -device vfio-pci,host=%s", qemuCMD, kp.GPU)
+		}
+
+		if kp.EnableCeph {
+			vmContainerConfig.Volumes = map[string]struct{}{
+				"/var/lib/rook": {},
+			}
+		}
+
+		node, err := kp.Docker.ContainerCreate(ctx, vmContainerConfig, &container.HostConfig{
+			Privileged:  true,
+			NetworkMode: container.NetworkMode("container:" + kp.DNSMasq),
+			Resources: container.Resources{
+				Devices: deviceMappings,
+			},
+		}, nil, nil, kp.Version+"-"+nodeName)
+		if err != nil {
+			return err
+		}
+		containers <- node.ID
+
+		if err := kp.Docker.ContainerStart(ctx, node.ID, container.StartOptions{}); err != nil {
+			return err
+		}
+
+		success, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"/bin/bash", "-c", "while [ ! -f /ssh_ready ] ; do sleep 1; done"}, os.Stdout)
+		if err != nil {
+			return err
+		}
+
+		if !success {
+			return fmt.Errorf("checking for ssh.sh script for node %s failed", nodeName)
+		}
+
+		err = kp.waitForVMToBeUp(kp.Version, nodeName)
+		if err != nil {
+			return err
+		}
+
+		rootkey := rootkey.NewRootKey(sshClient)
+		if err = rootkey.Exec(); err != nil {
+			return err
+		}
+		sshClient, err = libssh.NewSSHClient(kp.SSHPort, x+1, true)
+
+		if err = kp.ProvisionNode(sshClient, x+1); err != nil {
+			return err
+		}
+
+		go func(id string) {
+			kp.Docker.ContainerWait(ctx, id, container.WaitConditionNotRunning)
+			wg.Done()
+		}(node.ID)
+	}
+
+	sshClient, err := libssh.NewSSHClient(kp.SSHPort, 1, true)
 	if err != nil {
 		return err
 	}
 
-	err = kp.SSHClient.CopyRemoteFile(kp.SSHPort, "/etc/kubernetes/admin.conf", ".kubeconfig")
+	err = sshClient.CopyRemoteFile("/etc/kubernetes/admin.conf", ".kubeconfig")
 	if err != nil {
 		return err
 	}
@@ -291,116 +374,6 @@ func (kp *KubevirtProvider) runNFSGanesha(ctx context.Context) (string, error) {
 	return nfsGanesha.ID, nil
 }
 
-func (kp *KubevirtProvider) runNodes(ctx context.Context, containerChan chan string) error {
-	wg := sync.WaitGroup{}
-	wg.Add(int(kp.Nodes))
-
-	// start one vm after each other
-	macCounter := 0
-
-	for x := 0; x < int(kp.Nodes); x++ {
-		nodeName := kp.nodeNameFromIndex(x + 1)
-		sshClient, err := libssh.NewSSHClient(kp.SSHPort, x+1, false)
-		if err != nil {
-			return err
-		}
-
-		nodeNum := fmt.Sprintf("%02d", x+1)
-		qemuCMD := kp.prepareQemuCmd(x)
-		macCounter++
-
-		vmContainerConfig := &container.Config{
-			Image: kp.Image,
-			Env: []string{
-				fmt.Sprintf("NODE_NUM=%s", nodeNum),
-			},
-			Cmd: []string{"/bin/bash", "-c", qemuCMD},
-		}
-		var deviceMappings []container.DeviceMapping
-
-		if kp.GPU != "" && x == int(kp.Nodes)-1 {
-			dm, err := kp.prepareDeviceMappings()
-			if err != nil {
-				return err
-			}
-			deviceMappings = dm
-			qemuCMD = fmt.Sprintf("%s -device vfio-pci,host=%s", qemuCMD, kp.GPU)
-		}
-
-		if kp.EnableCeph {
-			vmContainerConfig.Volumes = map[string]struct{}{
-				"/var/lib/rook": {},
-			}
-		}
-
-		node, err := kp.Docker.ContainerCreate(ctx, vmContainerConfig, &container.HostConfig{
-			Privileged:  true,
-			NetworkMode: container.NetworkMode("container:" + kp.DNSMasq),
-			Resources: container.Resources{
-				Devices: deviceMappings,
-			},
-		}, nil, nil, kp.Version+"-"+nodeName)
-		if err != nil {
-			return err
-		}
-		containerChan <- node.ID
-
-		if err := kp.Docker.ContainerStart(ctx, node.ID, container.StartOptions{}); err != nil {
-			return err
-		}
-
-		// Wait for vm start
-		success, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"/bin/bash", "-c", "while [ ! -f /ssh_ready ] ; do sleep 1; done"}, os.Stdout)
-		if err != nil {
-			return err
-		}
-
-		if !success {
-			return fmt.Errorf("checking for ssh.sh script for node %s failed", nodeName)
-		}
-
-		err = kp.waitForVMToBeUp(kp.Version, nodeName)
-		if err != nil {
-			return err
-		}
-
-		rootkey := rootkey.NewRootKey(sshClient)
-		if err = rootkey.Exec(); err != nil {
-			return err
-		}
-		sshClient, err = libssh.NewSSHClient(kp.SSHPort, x+1, true)
-
-		if err = kp.ProvisionNode(sshClient, x+1); err != nil {
-			return err
-		}
-
-		go func(id string) {
-			kp.Docker.ContainerWait(ctx, id, container.WaitConditionNotRunning)
-			wg.Done()
-		}(node.ID)
-
-		if kp.Swap {
-			swapOpt := swap.NewSwapOpt(sshClient, int(kp.Swapiness), kp.UnlimitedSwap, kp.Swapsize)
-			if err := swapOpt.Exec(); err != nil {
-				return err
-			}
-		}
-
-		if kp.KSM {
-			ksmOpt := ksm.NewKsmOpt(sshClient, int(kp.KSMInterval), int(kp.KSMPages))
-			if err := ksmOpt.Exec(); err != nil {
-				return err
-			}
-		}
-
-		// if _, err := kp.SSHClient.JumpSSH(kp.SSHPort, x+1, "cp -uv /etc/cni/multus/net.d/*istio*.conf /etc/cni/net.d/", true, true); err != nil {
-		// 	return err
-		// }
-	}
-
-	return nil
-}
-
 func (kp *KubevirtProvider) ProvisionNode(sshClient libssh.Client, nodeIdx int) error {
 	opts := []opts.Opt{}
 	nodeName := kp.nodeNameFromIndex(nodeIdx)
@@ -462,9 +435,9 @@ func (kp *KubevirtProvider) ProvisionNode(sshClient libssh.Client, nodeIdx int) 
 		opts = append(opts, n)
 
 	} else {
-		if n.GpuAddress != "" {
+		if kp.GPU != "" {
 			// move the assigned PCI device to a vfio-pci driver to prepare for assignment
-			gpuDeviceID, err := getDevicePCIID(n.GpuAddress)
+			gpuDeviceID, err := kp.getDevicePCIID(kp.GPU)
 			if err != nil {
 				return err
 			}
@@ -481,7 +454,7 @@ func (kp *KubevirtProvider) ProvisionNode(sshClient libssh.Client, nodeIdx int) 
 	}
 
 	if kp.Swap {
-		swapOpt := swap.NewSwapOpt(sshClient, int(kp.Swapiness), kp.UnlimitedSwap, kp.Swapsize)
+		swapOpt := swap.NewSwapOpt(sshClient, int(kp.Swapiness), kp.UnlimitedSwap, int(kp.Swapsize))
 		opts = append(opts, swapOpt)
 	}
 

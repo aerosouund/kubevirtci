@@ -44,7 +44,7 @@ func WithSwapiness(s interface{}) KubevirtProviderOption {
 
 func WithSwapSize(s interface{}) KubevirtProviderOption {
 	return func(c *KubevirtProvider) {
-		c.Swapsize = s.(string)
+		c.Swapsize = s.(uint)
 	}
 }
 

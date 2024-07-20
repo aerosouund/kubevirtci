@@ -2,15 +2,13 @@ package providers
 
 import (
 	"github.com/docker/docker/client"
-	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/k8s"
-	utils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
+	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/k8s"
 )
 
 type KubevirtProvider struct {
-	Client    k8s.K8sDynamicClient `json:"-"`
-	Docker    *client.Client       `json:"-"`
-	SSHClient utils.SSHClient      `json:"-"`
-	DNSMasq   string               `json:"dnsmasq"`
+	Client  k8s.K8sDynamicClient `json:"-"`
+	Docker  *client.Client       `json:"-"`
+	DNSMasq string               `json:"dnsmasq"`
 
 	Version string `json:"version"`
 	Image   string `json:"image"`
@@ -55,7 +53,7 @@ type KubevirtProvider struct {
 	KSMPages                     uint     `flag:"ksm-page-count" json:"ksm_page_count"`
 	KSMInterval                  uint     `flag:"ksm-scan-interval" json:"ksm_scan_interval"`
 	Swap                         bool     `flag:"enable-swap" json:"enable_swap"`
-	Swapsize                     string   `flag:"swap-size" json:"swap_size"`
+	Swapsize                     uint     `flag:"swap-size" json:"swap_size"`
 	UnlimitedSwap                bool     `flag:"unlimited-swap" json:"unlimited_swap"`
 	Swapiness                    uint     `flag:"swapiness" json:"swapiness"`
 	NvmeDisks                    []string `flag:"nvme" json:"nvme"`
@@ -276,7 +274,7 @@ var FlagMap = map[string]FlagConfig{
 		ProviderOptFunc: WithUnlimitedSwap,
 	},
 	"swap-size": {
-		FlagType:        "string",
+		FlagType:        "uint",
 		ProviderOptFunc: WithSwapSize,
 	},
 	"swapiness": {
