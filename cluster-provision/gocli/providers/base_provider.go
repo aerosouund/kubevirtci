@@ -30,6 +30,7 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/cdi"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/cnao"
 	dockerproxy "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/docker-proxy"
+	etcd "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/etcd"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/istio"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/ksm"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/labelnodes"
@@ -200,7 +201,7 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 		}
 		containers <- node.ID
 
-		if err := kp.Docker.ContainerStart(ctx, node.ID, container.StartOptions{}); err != nil {
+		if err := kp.Docker.ContainerStart(ctx, node.ID, types.ContainerStartOptions{}); err != nil {
 			return err
 		}
 
@@ -255,7 +256,7 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 	}
 	kp.Client = k8sClient
 
-	if err = kp.runK8sOpts(); err != nil {
+	if err = kp.runK8sOpts(sshClient); err != nil {
 		return err
 	}
 
@@ -312,7 +313,7 @@ func (kp *KubevirtProvider) runDNSMasq(ctx context.Context, portMap nat.PortMap)
 		Mounts: dnsmasqMounts,
 	}, nil, nil, kp.Version+"-dnsmasq")
 
-	if err := kp.Docker.ContainerStart(ctx, dnsmasq.ID, container.StartOptions{}); err != nil {
+	if err := kp.Docker.ContainerStart(ctx, dnsmasq.ID, types.ContainerStartOptions{}); err != nil {
 		return "", err
 	}
 	return dnsmasq.ID, nil
@@ -333,7 +334,7 @@ func (kp *KubevirtProvider) runRegistry(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	if err := kp.Docker.ContainerStart(ctx, registry.ID, container.StartOptions{}); err != nil {
+	if err := kp.Docker.ContainerStart(ctx, registry.ID, types.ContainerStartOptions{}); err != nil {
 		return "", err
 	}
 
@@ -368,7 +369,7 @@ func (kp *KubevirtProvider) runNFSGanesha(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	if err := kp.Docker.ContainerStart(ctx, nfsGanesha.ID, container.StartOptions{}); err != nil {
+	if err := kp.Docker.ContainerStart(ctx, nfsGanesha.ID, types.ContainerStartOptions{}); err != nil {
 		return "", err
 	}
 	return nfsGanesha.ID, nil
@@ -392,13 +393,13 @@ func (kp *KubevirtProvider) ProvisionNode(sshClient libssh.Client, nodeIdx int) 
 
 	if kp.DockerProxy != "" {
 		//if dockerProxy has value, generate a shell script`/script/docker-proxy.sh` which can be applied to set proxy settings
-		dp := dockerproxy.NewDockerProxyOpt(sshClient, n.DockerProxy)
+		dp := dockerproxy.NewDockerProxyOpt(sshClient, kp.DockerProxy)
 		opts = append(opts, dp)
 	}
 
 	if kp.RunEtcdOnMemory {
 		logrus.Infof("Creating in-memory mount for etcd data on node %s", nodeName)
-		etcdinmem := etcdinmemory.NewEtcdInMemOpt(sshClient, n.EtcdSize)
+		etcdinmem := etcd.NewEtcdInMemOpt(sshClient, kp.EtcdCapacity)
 		opts = append(opts, etcdinmem)
 	}
 
@@ -407,7 +408,7 @@ func (kp *KubevirtProvider) ProvisionNode(sshClient libssh.Client, nodeIdx int) 
 		opts = append(opts, realtimeOpt)
 	}
 
-	for _, s := range soundcardPCIIDs {
+	for _, s := range []string{"8086:2668", "8086:2415"} {
 		// move the VM sound cards to a vfio-pci driver to prepare for assignment
 		bvfio := bindvfio.NewBindVfioOpt(sshClient, s)
 		opts = append(opts, bvfio)
@@ -415,13 +416,13 @@ func (kp *KubevirtProvider) ProvisionNode(sshClient libssh.Client, nodeIdx int) 
 
 	if kp.SingleStack {
 		if _, err := sshClient.Command("touch /home/vagrant/single_stack", false); err != nil {
-			return fmt.Errorf("provisioning node %d failed (setting singleStack phase): %s", n.NodeIdx, err)
+			return fmt.Errorf("provisioning node %d failed (setting singleStack phase): %s", nodeIdx, err)
 		}
 	}
 
 	if kp.EnableAudit {
 		if _, err := sshClient.Command("touch /home/vagrant/enable_audit", false); err != nil {
-			return fmt.Errorf("provisioning node %d failed (setting enableAudit phase): %s", n.NodeIdx, err)
+			return fmt.Errorf("provisioning node %d failed (setting enableAudit phase): %s", nodeIdx, err)
 		}
 	}
 
@@ -607,21 +608,21 @@ func (kp *KubevirtProvider) getDevicePCIID(pciAddress string) (string, error) {
 }
 
 // todo: write this as a map
-func (kp *KubevirtProvider) runK8sOpts() error {
+func (kp *KubevirtProvider) runK8sOpts(sshClient libssh.Client) error {
 	opts := []opts.Opt{}
 	labelSelector := "node-role.kubernetes.io/control-plane"
 	if kp.Nodes > 1 {
 		labelSelector = "!node-role.kubernetes.io/control-plane"
 	}
-	opts = append(opts, labelnodes.NewNodeLabler(kp.SSHClient, kp.SSHPort, labelSelector))
+	opts = append(opts, labelnodes.NewNodeLabler(sshClient, kp.SSHPort, labelSelector))
 
 	if kp.CDI {
-		opts = append(opts, cdi.NewCdiOpt(kp.Client, kp.CDIVersion))
+		opts = append(opts, cdi.NewCdiOpt(kp.Client, sshClient, kp.CDIVersion))
 	}
 
 	if kp.AAQ {
 		if kp.Version == "k8s-1.30" {
-			opts = append(opts, aaq.NewAaqOpt(kp.Client, kp.AAQVersion))
+			opts = append(opts, aaq.NewAaqOpt(kp.Client, sshClient, kp.AAQVersion))
 		} else {
 			logrus.Info("AAQ was requested but kubernetes version is less than 1.30, skipping")
 		}
@@ -640,15 +641,15 @@ func (kp *KubevirtProvider) runK8sOpts() error {
 	}
 
 	if kp.EnableMultus {
-		opts = append(opts, multus.NewMultusOpt(kp.Client))
+		opts = append(opts, multus.NewMultusOpt(kp.Client, sshClient))
 	}
 
 	if kp.EnableCNAO {
-		opts = append(opts, cnao.NewCnaoOpt(kp.Client))
+		opts = append(opts, cnao.NewCnaoOpt(kp.Client, sshClient))
 	}
 
 	if kp.EnableIstio {
-		opts = append(opts, istio.NewIstioOpt(kp.SSHClient, kp.Client, kp.SSHPort, kp.EnableCNAO))
+		opts = append(opts, istio.NewIstioOpt(sshClient, kp.Client, kp.EnableCNAO))
 	}
 
 	for _, opt := range opts {
