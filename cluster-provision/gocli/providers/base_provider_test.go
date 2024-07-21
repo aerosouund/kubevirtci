@@ -37,6 +37,7 @@ var _ = Describe("Node Provisioning", func() {
 
 		k8sClient = k8s.NewTestClient(reactors...)
 		kp = NewKubevirtProvider("k8s-1.30", "", &client.Client{}, []KubevirtProviderOption{
+			WithNodes(1),
 			WithEnablePSA(true),
 			WithEtcdCapacity("512M"),
 			WithRunEtcdOnMemory(true),
