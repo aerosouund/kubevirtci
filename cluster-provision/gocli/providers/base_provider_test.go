@@ -1,10 +1,10 @@
-package cmd
+package providers
 
 import (
+	"github.com/docker/docker/client"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
-	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/nodesconfig"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/aaq"
 	bindvfio "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/bind-vfio"
 	etcdinmemory "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/etcd"
@@ -23,6 +23,7 @@ var _ = Describe("Node Provisioning", func() {
 		sshClient *kubevirtcimocks.MockSSHClient
 		reactors  []k8s.ReactorConfig
 		k8sClient k8s.K8sDynamicClient
+		kp        *KubevirtProvider
 	)
 
 	BeforeEach(func() {
@@ -35,6 +36,18 @@ var _ = Describe("Node Provisioning", func() {
 		}
 
 		k8sClient = k8s.NewTestClient(reactors...)
+		kp = NewKubevirtProvider("k8s-1.30", "", &client.Client{}, []KubevirtProviderOption{
+			WithEnablePSA(true),
+			WithEtcdCapacity("512M"),
+			WithRunEtcdOnMemory(true),
+			WithEnableCeph(true),
+			WithEnablePrometheus(true),
+			WithEnablePrometheusAlertManager(true),
+			WithEnableIstio(true),
+			WithAAQ(true),
+			WithEnableNFSCSI(true),
+			WithEnableGrafana(true),
+		})
 	})
 
 	AfterEach(func() {
@@ -45,42 +58,25 @@ var _ = Describe("Node Provisioning", func() {
 
 	Describe("ProvisionNode", func() {
 		It("should execute the correct commands", func() {
-			linuxConfigFuncs := []nodesconfig.LinuxConfigFunc{
-				nodesconfig.WithEtcdInMemory(true),
-				nodesconfig.WithEtcdSize("512M"),
-				nodesconfig.WithPSA(true),
-			}
-
-			n := nodesconfig.NewNodeLinuxConfig(1, "k8s-1.30", linuxConfigFuncs)
-
 			etcdinmemory.AddExpectCalls(sshClient, "512M")
 			bindvfio.AddExpectCalls(sshClient, "8086:2668")
 			bindvfio.AddExpectCalls(sshClient, "8086:2415")
 			psa.AddExpectCalls(sshClient)
 			node01.AddExpectCalls(sshClient)
 
-			err := provisionNode(sshClient, n)
+			err := kp.provisionNode(sshClient, 1)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 
 	Describe("ProvisionNodeK8sOpts", func() {
 		It("should execute the correct K8s option commands", func() {
-			k8sConfs := []nodesconfig.K8sConfigFunc{
-				nodesconfig.WithCeph(true),
-				nodesconfig.WithPrometheus(true),
-				nodesconfig.WithAlertmanager(true),
-				nodesconfig.WithGrafana(true),
-				nodesconfig.WithIstio(true),
-				nodesconfig.WithNfsCsi(true),
-				nodesconfig.WithAAQ(true),
-			}
-			n := nodesconfig.NewNodeK8sConfig(k8sConfs)
+			kp.Client = k8sClient
 
 			istio.AddExpectCalls(sshClient)
 			aaq.AddExpectCalls(sshClient)
 
-			err := provisionK8sOptions(sshClient, k8sClient, n, "k8s-1.30")
+			err := kp.provisionK8sOpts(sshClient)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})

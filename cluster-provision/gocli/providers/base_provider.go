@@ -60,15 +60,11 @@ var versionMap = map[string]string{
 }
 
 func NewKubevirtProvider(k8sversion string, image string, cli *client.Client,
-	options []KubevirtProviderOption,
-	nd, sd, ud []string) *KubevirtProvider {
+	options []KubevirtProviderOption) *KubevirtProvider {
 	kp := &KubevirtProvider{
-		Image:     image,
-		Version:   k8sversion,
-		Docker:    cli,
-		NvmeDisks: nd,
-		ScsiDisks: sd,
-		USBDisks:  ud,
+		Image:   image,
+		Version: k8sversion,
+		Docker:  cli,
 	}
 
 	for _, option := range options {
@@ -109,6 +105,10 @@ func NewFromRunning(dnsmasqPrefix string) (*KubevirtProvider, error) {
 func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.CancelFunc, portMap nat.PortMap) (retErr error) {
 	prefix := fmt.Sprintf("k8s-%s-provision", kp.Version)
 	target := fmt.Sprintf("quay.io/kubevirtci/k8s-%s", kp.Version)
+	if kp.Phases == "linux" {
+		target = kp.Image + "-base"
+	}
+
 	stop := make(chan error, 10)
 	containers, volumes, done := docker.NewCleanupHandler(kp.Docker, stop, os.Stdout, true)
 
@@ -117,12 +117,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		<-done
 	}()
 
-	go func() {
-		interrupt := make(chan os.Signal, 1)
-		signal.Notify(interrupt, os.Interrupt)
-		<-interrupt
-		stop <- fmt.Errorf("Interrupt received, clean up")
-	}()
+	go kp.handleInterrupt(cancel, stop)
 
 	// Pull the base image
 	err := docker.ImagePull(kp.Docker, ctx, kp.Image, types.ImagePullOptions{})
@@ -421,7 +416,7 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 		}
 		sshClient, err = libssh.NewSSHClient(kp.SSHPort, x+1, true)
 
-		if err = kp.ProvisionNode(sshClient, x+1); err != nil {
+		if err = kp.provisionNode(sshClient, x+1); err != nil {
 			return err
 		}
 
@@ -452,7 +447,7 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 	}
 	kp.Client = k8sClient
 
-	if err = kp.runK8sOpts(sshClient); err != nil {
+	if err = kp.provisionK8sOpts(sshClient); err != nil {
 		return err
 	}
 
@@ -571,7 +566,7 @@ func (kp *KubevirtProvider) runNFSGanesha(ctx context.Context) (string, error) {
 	return nfsGanesha.ID, nil
 }
 
-func (kp *KubevirtProvider) ProvisionNode(sshClient libssh.Client, nodeIdx int) error {
+func (kp *KubevirtProvider) provisionNode(sshClient libssh.Client, nodeIdx int) error {
 	opts := []opts.Opt{}
 	nodeName := kp.nodeNameFromIndex(nodeIdx)
 
@@ -804,7 +799,7 @@ func (kp *KubevirtProvider) getDevicePCIID(pciAddress string) (string, error) {
 }
 
 // todo: write this as a map
-func (kp *KubevirtProvider) runK8sOpts(sshClient libssh.Client) error {
+func (kp *KubevirtProvider) provisionK8sOpts(sshClient libssh.Client) error {
 	opts := []opts.Opt{}
 	labelSelector := "node-role.kubernetes.io/control-plane"
 	if kp.Nodes > 1 {
