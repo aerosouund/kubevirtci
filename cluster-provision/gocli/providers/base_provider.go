@@ -119,13 +119,11 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 
 	go kp.handleInterrupt(cancel, stop)
 
-	// Pull the base image
 	err := docker.ImagePull(kp.Docker, ctx, kp.Image, types.ImagePullOptions{})
 	if err != nil {
 		return err
 	}
 
-	// Start dnsmasq
 	dnsmasq, err := kp.runDNSMasq(ctx, portMap)
 	if err != nil {
 		return err
