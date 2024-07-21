@@ -21,14 +21,27 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	containers2 "kubevirt.io/kubevirtci/cluster-provision/gocli/containers"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/k8sprovision"
+	provisionopt "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/provision"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rootkey"
+	sshutils "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/ssh"
 
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 )
 
+var versionMap = map[string]string{
+	"1.30": "1.30.2",
+	"1.29": "1.29.6",
+	"1.28": "1.28.11",
+}
+
+const baseLinuxPhase = "quay.io/kubevirtci/centos9"
+
+const baseK8sPhase = "quay.io/kubevirtci/centos9:2406250402-b7986c3"
+
 // NewProvisionCommand provision given cluster
 func NewProvisionCommand() *cobra.Command {
-
 	provision := &cobra.Command{
 		Use:   "provision",
 		Short: "provision starts a given cluster",
@@ -38,8 +51,8 @@ func NewProvisionCommand() *cobra.Command {
 	provision.Flags().StringP("memory", "m", "3096M", "amount of ram per node")
 	provision.Flags().UintP("cpu", "c", 2, "number of cpu cores per node")
 	provision.Flags().String("qemu-args", "", "additional qemu args to pass through to the nodes")
-	provision.Flags().Bool("random-ports", false, "expose all ports on random localhost ports")
-	provision.Flags().Bool("slim", false, "create slim provider (uncached images)")
+	provision.Flags().Bool("random-ports", true, "expose all ports on random localhost ports")
+	provision.Flags().Bool("slim", true, "create slim provider (uncached images)")
 	provision.Flags().Uint("vnc-port", 0, "port on localhost for vnc")
 	provision.Flags().Uint("ssh-port", 0, "port on localhost for ssh server")
 	provision.Flags().String("container-suffix", "", "use additional suffix for the provisioned container image")
@@ -51,43 +64,42 @@ func NewProvisionCommand() *cobra.Command {
 
 func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	var base string
-	packagePath := args[0]
-	versionBytes, err := os.ReadFile(filepath.Join(packagePath, "version"))
-	if err != nil {
-		return err
+	versionNoMinor := args[0]
+
+	allowedVersions := []string{"k8s-1.30", "k8s-1.29", "k8s-1.28"}
+	validVersion := false
+	for _, ver := range allowedVersions {
+		if versionNoMinor == ver {
+			validVersion = true
+		}
 	}
-	version := strings.TrimSpace(string(versionBytes))
-	baseBytes, err := os.ReadFile(filepath.Join(packagePath, "base"))
-	if err != nil {
-		return err
+
+	if !validVersion {
+		return fmt.Errorf("Invalid version passed, please pass one of k8s-1.30, k8s-1.29 or k8s-1.28")
 	}
+
 	phases, err := cmd.Flags().GetString("phases")
 	if err != nil {
 		return err
 	}
 
 	if strings.Contains(phases, "linux") {
-		base = fmt.Sprintf("quay.io/kubevirtci/%s", strings.TrimSpace(string(baseBytes)))
+		base = baseLinuxPhase
 	} else {
-		k8sPath := fmt.Sprintf("%s/../", packagePath)
-		baseImageBytes, err := os.ReadFile(filepath.Join(k8sPath, "base-image"))
-		if err != nil {
-			return err
-		}
-		base = strings.TrimSpace(string(baseImageBytes))
+		base = baseK8sPhase
 	}
 
 	containerSuffix, err := cmd.Flags().GetString("container-suffix")
 	if err != nil {
 		return err
 	}
-	name := filepath.Base(packagePath)
+	name := filepath.Base(versionNoMinor)
 	if len(containerSuffix) > 0 {
 		name = fmt.Sprintf("%s-%s", name, containerSuffix)
 	}
 	prefix := fmt.Sprintf("k8s-%s-provision", name)
 	target := fmt.Sprintf("quay.io/kubevirtci/k8s-%s", name)
-	scripts := filepath.Join(packagePath)
+	scripts := filepath.Join(versionNoMinor)
 
 	if phases == "linux" {
 		target = base + "-base"
@@ -167,6 +179,16 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 
+	dm, err := cli.ContainerInspect(context.Background(), dnsmasq.ID)
+	if err != nil {
+		return err
+	}
+
+	sshPort, err := utils.GetPublicPort(utils.PortSSH, dm.NetworkSettings.Ports)
+	if err != nil {
+		return err
+	}
+
 	nodeName := nodeNameFromIndex(1)
 	nodeNum := fmt.Sprintf("%02d", 1)
 
@@ -228,7 +250,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	}
 
 	// Wait for ssh.sh script to exist
-	err = _cmd(cli, nodeContainer(prefix, nodeName), "while [ ! -f /ssh_ready ] ; do sleep 1; done", "checking for ssh.sh script")
+	_, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"bin/bash", "-c", "while [ ! -f /ssh_ready ] ; do sleep 1; done", "checking for ssh.sh script"}, os.Stdout)
 	if err != nil {
 		return err
 	}
@@ -238,31 +260,33 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	if err != nil {
 		return err
 	}
-
-	envVars := fmt.Sprintf("version=%s slim=%t", version, slim)
-	if strings.Contains(phases, "linux") {
-		err = performPhase(cli, nodeContainer(prefix, nodeName), "/scripts/provision.sh", envVars)
-		if err != nil {
-			return err
-		}
+	sshClient, err = sshutils.NewSSHClient(sshPort, 1, false)
+	if err != nil {
+		return err
 	}
-	if strings.Contains(phases, "k8s") {
+
+	rootkey := rootkey.NewRootKey(sshClient)
+	if err = rootkey.Exec(); err != nil {
+		fmt.Println(err)
+	}
+
+	sshClient, err = sshutils.NewSSHClient(sshPort, 1, true)
+	if err != nil {
+		return err
+	}
+
+	provisionOpt := provisionopt.NewLinuxProvisioner(sshClient)
+	if err = provisionOpt.Exec(); err != nil {
+		return err
+	}
+	if true {
 		// copy provider scripts
 		err = copyDirectory(ctx, cli, node.ID, scripts, "/scripts")
 		if err != nil {
 			return err
 		}
-		err = _cmd(cli, nodeContainer(prefix, nodeName), "if [ -f /scripts/extra-pre-pull-images ]; then scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 /scripts/extra-pre-pull-images vagrant@192.168.66.101:/tmp/extra-pre-pull-images; fi", "copying /scripts/extra-pre-pull-images if existing")
-		if err != nil {
-			return err
-		}
-		err = _cmd(cli, nodeContainer(prefix, nodeName), "if [ -f /scripts/fetch-images.sh ]; then scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 /scripts/fetch-images.sh vagrant@192.168.66.101:/tmp/fetch-images.sh; fi", "copying /scripts/fetch-images.sh if existing")
-		if err != nil {
-			return err
-		}
 
-		err = _cmd(cli, nodeContainer(prefix, nodeName), "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key vagrant@192.168.66.101 'mkdir -p /tmp/ceph /tmp/cnao /tmp/nfs-csi /tmp/nodeports /tmp/prometheus /tmp/whereabouts /tmp/kwok'", "Create required manifest directories before copy")
-		if err != nil {
+		if _, err = sshClient.SSH("mkdir -p /tmp/ceph /tmp/cnao /tmp/nfs-csi /tmp/nodeports /tmp/prometheus /tmp/whereabouts /tmp/kwok", true); err != nil {
 			return err
 		}
 		// Copy manifests to the VM
@@ -271,13 +295,17 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 
-		err = performPhase(cli, nodeContainer(prefix, nodeName), "/scripts/k8s_provision.sh", envVars)
-		if err != nil {
+		version, _ := versionMap[versionNoMinor]
+
+		provisionK8sOpt := k8sprovision.NewK8sProvisioner(sshClient, version, slim)
+		if err = provisionK8sOpt.Exec(); err != nil {
 			return err
 		}
 	}
 
-	_cmd(cli, nodeContainer(prefix, nodeName), "ssh.sh sudo shutdown now -h", "shutting down the node")
+	if _, err = sshClient.SSH("sudo shutdown now -h", true); err != nil {
+		return err
+	}
 	err = _cmd(cli, nodeContainer(prefix, nodeName), "rm /usr/local/bin/ssh.sh", "removing the ssh.sh script")
 	if err != nil {
 		return err
@@ -366,15 +394,4 @@ func _cmd(cli *client.Client, container string, cmd string, description string) 
 		return fmt.Errorf("%s failed", cmd)
 	}
 	return nil
-}
-
-func performPhase(cli *client.Client, container string, script string, envVars string) error {
-	err := _cmd(cli, container, fmt.Sprintf("test -f %s", script), "checking provision scripts")
-	if err != nil {
-		return err
-	}
-
-	return _cmd(cli, container,
-		fmt.Sprintf("ssh.sh sudo %s /bin/bash < %s", envVars, script),
-		fmt.Sprintf("provisioning the node (%s)", script))
 }
