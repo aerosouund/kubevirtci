@@ -59,6 +59,8 @@ type KubevirtProvider struct {
 	NvmeDisks                    []string `flag:"nvme" json:"nvme"`
 	ScsiDisks                    []string `flag:"scsi" json:"scsi"`
 	USBDisks                     []string `flag:"usb" json:"usb"`
+	AdditionalKernelArgs         []string `flag:"additional-persistent-kernel-arguments" json:"additional-persistent-kernel-arguments"`
+	Phases                       string   `flag:"phases" json:"phases"`
 	RunEtcdOnMemory              bool     `flag:"run-etcd-on-memory" json:"run_etcd_on_memory"`
 	EtcdCapacity                 string   `flag:"etcd-capacity" json:"etcd_capacity"`
 	Hugepages2M                  uint     `flag:"hugepages-2m" json:"hugepages_2m"`
@@ -76,7 +78,50 @@ type FlagConfig struct {
 	ProviderOptFunc func(interface{}) KubevirtProviderOption
 }
 
-var FlagMap = map[string]FlagConfig{
+var ProvisionFlagMap = map[string]FlagConfig{
+	"nodes": {
+		FlagType:        "uint",
+		ProviderOptFunc: WithNodes,
+	},
+	"memory": {
+		FlagType:        "string",
+		ProviderOptFunc: WithMemory,
+	},
+	"cpu": {
+		FlagType:        "uint",
+		ProviderOptFunc: WithCPU,
+	},
+	"slim": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithSlim,
+	},
+	"random-ports": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithRandomPorts,
+	},
+	"phases": {
+		FlagType:        "string",
+		ProviderOptFunc: WithPhases,
+	},
+	"additional-persistent-kernel-arguments": {
+		FlagType:        "[]string",
+		ProviderOptFunc: WithAdditionalKernelArgs,
+	},
+	"vnc-port": {
+		FlagType:        "uint16",
+		ProviderOptFunc: WithVNCPort,
+	},
+	"ssh-port": {
+		FlagType:        "uint16",
+		ProviderOptFunc: WithSSHPort,
+	},
+	"qemu-args": {
+		FlagType:        "string",
+		ProviderOptFunc: WithQemuArgs,
+	},
+}
+
+var RunFlagMap = map[string]FlagConfig{
 	"nodes": {
 		FlagType:        "uint",
 		ProviderOptFunc: WithNodes,

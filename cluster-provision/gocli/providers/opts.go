@@ -314,3 +314,15 @@ func WithUSBDisks(usbDisks interface{}) KubevirtProviderOption {
 		c.USBDisks = usbDisks.([]string)
 	}
 }
+
+func WithAdditionalKernelArgs(ka interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.AdditionalKernelArgs = ka.([]string)
+	}
+}
+
+func WithPhases(p interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.Phases = p.(string)
+	}
+}
