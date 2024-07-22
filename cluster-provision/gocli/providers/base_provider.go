@@ -209,17 +209,13 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		fmt.Println(err)
 	}
 
-	sshClient, err = libssh.NewSSHClient(sshPort, 1, true)
-	if err != nil {
-		return err
-	}
-
 	// provisionOpt := provisionopt.NewLinuxProvisioner(sshClient)
 	// if err = provisionOpt.Exec(); err != nil {
 	// 	return err
 	// }
 	if strings.Contains(kp.Phases, "k8s") {
 		// copy provider scripts
+		// problem with permissions if created by root
 		if _, err = sshClient.Command("mkdir -p /tmp/ceph /tmp/cnao /tmp/nfs-csi /tmp/nodeports /tmp/prometheus /tmp/whereabouts /tmp/kwok", true); err != nil {
 			return err
 		}
@@ -231,6 +227,11 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 
 		if !success {
 			return fmt.Errorf("error copying shit to node")
+		}
+
+		sshClient, err = libssh.NewSSHClient(sshPort, 1, true)
+		if err != nil {
+			return err
 		}
 
 		version, _ := versionMap[kp.Version]
