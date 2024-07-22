@@ -109,6 +109,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	if kp.Phases == "linux" {
 		target = kp.Image + "-base"
 	}
+	version := kp.Version
 	kp.Version = prefix
 
 	stop := make(chan error, 10)
@@ -238,9 +239,12 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 			return fmt.Errorf("error copying shit to node")
 		}
 
-		version, _ := versionMap[kp.Version]
+		versionWithMinor, ok := versionMap[version]
+		if !ok {
+			return fmt.Errorf("Invalid version")
+		}
 
-		provisionK8sOpt := k8sprovision.NewK8sProvisioner(sshClient, version, kp.Slim)
+		provisionK8sOpt := k8sprovision.NewK8sProvisioner(sshClient, versionWithMinor, kp.Slim)
 		if err = provisionK8sOpt.Exec(); err != nil {
 			return err
 		}
