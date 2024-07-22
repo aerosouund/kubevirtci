@@ -63,18 +63,24 @@ func NewSSHClient(port uint16, idx int, root bool) (*SSHClientImpl, error) {
 
 func (s *SSHClientImpl) Command(cmd string, stdOut bool) (string, error) {
 	var (
-		client *ssh.Client
-		err    error
+		client      *ssh.Client
+		err         error
+		established bool
 	)
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 5; i++ {
 		client, err = ssh.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(s.sshPort)), s.config)
 		if err != nil {
-			logrus.Infof("Attempt %d. Error establishing connection: %s, sleeping 4 seconds", i+1, err.Error())
-			time.Sleep(time.Second * 4)
+			logrus.Infof("Attempt %d. Error establishing connection: %s, sleeping 6 seconds", i+1, err.Error())
+			time.Sleep(time.Second * 6)
 		} else {
+			established = true
 			break
 		}
+	}
+
+	if !established {
+		return "", fmt.Errorf("Error establishing connection after 10 attempts")
 	}
 
 	conn, err := client.Dial("tcp", fmt.Sprintf("192.168.66.10%d:22", s.nodeIdx))
