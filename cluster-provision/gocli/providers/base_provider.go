@@ -224,7 +224,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 			return err
 		}
 		// Copy manifests to the VM
-		success, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"scp", "-r", "-o", "UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 /scripts/manifests/* vagrant@192.168.66.101:/tmp"}, os.Stdout)
+		success, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"/bin/bash", "-c", "scp -r -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 /scripts/manifests/* vagrant@192.168.66.101:/tmp"}, os.Stdout)
 		if err != nil {
 			return err
 		}
