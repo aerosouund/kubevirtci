@@ -215,13 +215,15 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		return err
 	}
 
-	provisionOpt := provisionopt.NewLinuxProvisioner(sshClient)
-	if err = provisionOpt.Exec(); err != nil {
-		return err
+	if strings.Contains(kp.Phases, "linux") {
+		provisionOpt := provisionopt.NewLinuxProvisioner(sshClient)
+		if err = provisionOpt.Exec(); err != nil {
+			return err
+		}
 	}
+
 	if strings.Contains(kp.Phases, "k8s") {
 		// copy provider scripts
-		// problem with permissions if created by root
 		if _, err = sshClient.Command("mkdir -p /tmp/ceph /tmp/cnao /tmp/nfs-csi /tmp/nodeports /tmp/prometheus /tmp/whereabouts /tmp/kwok", true); err != nil {
 			return err
 		}
