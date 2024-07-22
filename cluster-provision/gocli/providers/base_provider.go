@@ -43,6 +43,7 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
 	nodesprovision "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nodes"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/prometheus"
+	provisionopt "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/provision"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/psa"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/realtime"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rookceph"
@@ -209,10 +210,15 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		fmt.Println(err)
 	}
 
-	// provisionOpt := provisionopt.NewLinuxProvisioner(sshClient)
-	// if err = provisionOpt.Exec(); err != nil {
-	// 	return err
-	// }
+	sshClient, err = libssh.NewSSHClient(sshPort, 1, true)
+	if err != nil {
+		return err
+	}
+
+	provisionOpt := provisionopt.NewLinuxProvisioner(sshClient)
+	if err = provisionOpt.Exec(); err != nil {
+		return err
+	}
 	if strings.Contains(kp.Phases, "k8s") {
 		// copy provider scripts
 		// problem with permissions if created by root
@@ -220,18 +226,13 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 			return err
 		}
 		// Copy manifests to the VM
-		success, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"/bin/bash", "-c", "scp -r -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 /scripts/manifests/* vagrant@192.168.66.101:/tmp"}, os.Stdout)
+		success, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"/bin/bash", "-c", "scp -r -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 /scripts/manifests/* root@192.168.66.101:/tmp"}, os.Stdout)
 		if err != nil {
 			return err
 		}
 
 		if !success {
 			return fmt.Errorf("error copying shit to node")
-		}
-
-		sshClient, err = libssh.NewSSHClient(sshPort, 1, true)
-		if err != nil {
-			return err
 		}
 
 		version, _ := versionMap[kp.Version]
