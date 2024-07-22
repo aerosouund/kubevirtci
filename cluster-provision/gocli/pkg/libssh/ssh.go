@@ -70,7 +70,7 @@ func (s *SSHClientImpl) Command(cmd string, stdOut bool) (string, error) {
 	for i := 0; i < 10; i++ {
 		client, err = ssh.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(s.sshPort)), s.config)
 		if err != nil {
-			logrus.Infof("Attempt %d. Error establishing connection: %s, sleeping 4 seconds", i, err.Error())
+			logrus.Infof("Attempt %d. Error establishing connection: %s, sleeping 4 seconds", i+1, err.Error())
 			time.Sleep(time.Second * 4)
 		} else {
 			break

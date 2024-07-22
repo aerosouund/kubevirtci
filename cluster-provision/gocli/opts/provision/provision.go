@@ -27,7 +27,7 @@ func (l *LinuxProvisioner) Exec() error {
 	}
 
 	cmds := []string{
-		`echo '` + string(sharedVars) + `' |  tee /var/lib/kubevirtci/shared_vars.sh > /dev/null`,
+		`mkdir /var/lib/kubevirtci && echo '` + string(sharedVars) + `' |  tee /var/lib/kubevirtci/shared_vars.sh > /dev/null`,
 		`dnf install -y "kernel-modules-$(uname -r)"`,
 		"dnf install -y cloud-utils-growpart",
 		`if growpart /dev/vda 1; then  resize2fs /dev/vda1; fi`,
