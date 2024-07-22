@@ -65,6 +65,7 @@ func NewKubevirtProvider(k8sversion string, image string, cli *client.Client,
 		Image:   image,
 		Version: k8sversion,
 		Docker:  cli,
+		Nodes:   1, // start with nodes equal one and will be later modified by options that set a different value
 	}
 
 	for _, option := range options {

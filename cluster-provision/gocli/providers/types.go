@@ -79,10 +79,6 @@ type FlagConfig struct {
 }
 
 var ProvisionFlagMap = map[string]FlagConfig{
-	"nodes": {
-		FlagType:        "uint",
-		ProviderOptFunc: WithNodes,
-	},
 	"memory": {
 		FlagType:        "string",
 		ProviderOptFunc: WithMemory,
