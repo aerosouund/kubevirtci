@@ -20,9 +20,10 @@ var versionMap = map[string]string{
 	"1.28": "1.28.11",
 }
 
-const baseLinuxPhase = "quay.io/kubevirtci/centos9"
-
-const baseK8sPhase = "quay.io/kubevirtci/centos9:2406250402-b7986c3"
+const (
+	baseLinuxPhase = "quay.io/kubevirtci/centos9"
+	baseK8sPhase   = "quay.io/kubevirtci/centos9:2406250402-b7986c3"
+)
 
 // NewProvisionCommand provision given cluster
 func NewProvisionCommand() *cobra.Command {
