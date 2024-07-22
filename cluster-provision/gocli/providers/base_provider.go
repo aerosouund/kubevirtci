@@ -109,6 +109,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	if kp.Phases == "linux" {
 		target = kp.Image + "-base"
 	}
+	kp.Version = prefix
 
 	stop := make(chan error, 10)
 	containers, volumes, done := docker.NewCleanupHandler(kp.Docker, stop, os.Stdout, true)
