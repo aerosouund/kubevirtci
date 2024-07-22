@@ -3,7 +3,7 @@
 
 set -ex
 
-PHASES_DEFAULT="linux,k8s"
+PHASES_DEFAULT="k8s"
 PHASES="${PHASES:-$PHASES_DEFAULT}"
 CHECK_CLUSTER="${CHECK_CLUSTER:-false}"
 export SLIM="${SLIM:-false}"
