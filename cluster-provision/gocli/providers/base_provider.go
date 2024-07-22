@@ -92,6 +92,10 @@ func NewFromRunning(dnsmasqPrefix string) (*KubevirtProvider, error) {
 
 	var buf bytes.Buffer
 	_, err = docker.Exec(cli, containers[0].ID, []string{"cat", "provider.json"}, &buf)
+	if err != nil {
+		return nil, err
+	}
+
 	kp := &KubevirtProvider{}
 
 	err = json.Unmarshal(buf.Bytes(), kp)
