@@ -17,6 +17,8 @@ var _ = Describe("SR-IOV functionality", func() {
 	BeforeEach(func() {
 		mockCtrl = gomock.NewController(GinkgoT())
 		sshClient = kubevirtcimocks.NewMockSSHClient(mockCtrl)
+		ks = &KindSriov{}
+		ks.vfsCount = 6
 	})
 
 	AfterEach(func() {
@@ -35,4 +37,33 @@ var _ = Describe("SR-IOV functionality", func() {
 		})
 	})
 
+	Describe("createVFsforPF", func() {
+		It("should execute the correct commands", func() {
+			pfSysFsPath := "/sys/devices/pci/pciaddr/net/eth0/device"
+			sshClient.EXPECT().Command("readlink -e /sys/class/net/eth0/device", false).Return(pfSysFsPath, nil)
+			sshClient.EXPECT().Command("cat /sys/devices/pci/pciaddr/net/eth0/device/sriov_totalvfs", false).Return("6", nil)
+			sshClient.EXPECT().Command("echo 0 >> "+pfSysFsPath+"/sriov_numvfs", true)
+			sshClient.EXPECT().Command("echo 6 >> "+pfSysFsPath+"/sriov_numvfs", true)
+			sshClient.EXPECT().Command(`readlink -e `+pfSysFsPath+`/virtfn*`, false)
+
+			_, err := ks.createVFsforPF(sshClient, "/sys/class/net/eth0/device")
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+
+	Describe("bindToVfio", func() {
+		It("should execute the correct commands", func() {
+			vfSysFsPath := "/sys/devices/pci/pciaddr/net/eth0/device/virtfn1"
+			driverPath := vfSysFsPath + "/driver"
+			driverOverride := vfSysFsPath + "/driver_override"
+
+			sshClient.EXPECT().Command("basename "+vfSysFsPath, false).Return("virtfn1", nil)
+			sshClient.EXPECT().Command("readlink "+driverPath+" | awk -F'/' '{print $NF}'", false).Return("ixgbevf", nil)
+			sshClient.EXPECT().Command("basename ixgbevf", false).Return("ixgbevf", nil)
+			sshClient.EXPECT().Command("[[ 'ixgbevf' != 'vfio-pci' ]] && echo virtfn1"+" > "+driverPath+"/unbind && echo 'vfio-pci' > "+driverOverride+" && echo virtfn1"+" > /sys/bus/pci/drivers/vfio-pci/bind", true)
+
+			err := ks.bindToVfio(sshClient, vfSysFsPath)
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
 })

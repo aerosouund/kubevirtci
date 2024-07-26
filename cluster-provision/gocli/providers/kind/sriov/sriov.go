@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -241,13 +240,13 @@ func (ks *KindSriov) createVFsforPF(sshClient libssh.Client, vfSysClassNetPath s
 }
 
 func (ks *KindSriov) bindToVfio(sshClient libssh.Client, sysFsDevice string) error {
-	devSysfsPath, err := sshClient.Command("basename "+sysFsDevice, false)
+	pciAddr, err := sshClient.Command("basename "+sysFsDevice, false)
 	if err != nil {
 		return err
 	}
 
-	driverPath := devSysfsPath + "/driver"
-	driverOverride := devSysfsPath + "/driver_override"
+	driverPath := sysFsDevice + "/driver"
+	driverOverride := sysFsDevice + "/driver_override"
 
 	vfBusPciDeviceDriver, err := sshClient.Command("readlink "+driverPath+" | awk -F'/' '{print $NF}'", false)
 	if err != nil {
@@ -259,28 +258,8 @@ func (ks *KindSriov) bindToVfio(sshClient libssh.Client, sysFsDevice string) err
 		return err
 	}
 
-	if _, err := sshClient.Command("modprobe -i vfio-pci", false); err != nil {
-		return fmt.Errorf("Error loading vfio-pci module: %v", err)
-	}
-
-	for i := 0; i < 10; i++ {
-		if _, err := sshClient.Command("ls /sys/bus/pci/drivers/vfio-pci", false); err != nil {
-			fmt.Println("module not loaded properly, sleeping 1 second and trying again")
-			time.Sleep(time.Second * 1)
-			sshClient.Command("modprobe -i vfio-pci", false)
-		} else {
-			break
-		}
-	}
-
-	cmds := []string{
-		"[[ '" + vfDriverName + "' != 'vfio-pci' ]] && echo " + devSysfsPath + " > " + driverPath + "/unbind && echo 'vfio-pci' > " + driverOverride + " && echo " + devSysfsPath + " > /sys/bus/pci/drivers/vfio-pci/bind",
-	}
-
-	for _, cmd := range cmds {
-		if _, err := sshClient.Command(cmd, true); err != nil {
-			return err
-		}
+	if _, err := sshClient.Command("[[ '"+vfDriverName+"' != 'vfio-pci' ]] && echo "+pciAddr+" > "+driverPath+"/unbind && echo 'vfio-pci' > "+driverOverride+" && echo "+pciAddr+" > /sys/bus/pci/drivers/vfio-pci/bind", true); err != nil {
+		return err
 	}
 
 	return nil
