@@ -40,7 +40,15 @@ func NewKindVGPU(kindConfig *kind.KindConfig) (*KindVGPU, error) {
 }
 
 func (kv *KindVGPU) Start(ctx context.Context, cancel context.CancelFunc) error {
-	err := kv.KindBaseProvider.Start(ctx, cancel)
+	hasVGPUs, err := kv.doesHostHaveVGPUs()
+	if err != nil {
+		return err
+	}
+	if !hasVGPUs {
+		return fmt.Errorf("FATAL: Host has no VGPUs")
+	}
+
+	err = kv.KindBaseProvider.Start(ctx, cancel)
 	if err != nil {
 		return err
 	}
@@ -50,15 +58,15 @@ func (kv *KindVGPU) Start(ctx context.Context, cancel context.CancelFunc) error 
 		return err
 	}
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return err
-	}
-
 	var sshClient libssh.Client
 	for _, node := range nodes {
 		switch kv.CRI.(type) {
 		case *dockercri.DockerClient:
+			cli, err := client.NewClientWithOpts(client.FromEnv)
+			if err != nil {
+				return err
+			}
+
 			sshClient = docker.NewDockerAdapter(cli, node.String())
 		case *podmancri.Podman:
 			sshClient = podmancri.NewPodmanSSHClient(node.String())
@@ -67,14 +75,6 @@ func (kv *KindVGPU) Start(ctx context.Context, cancel context.CancelFunc) error 
 		rsf := remountsysfs.NewRemountSysFSOpt(sshClient)
 		if err := rsf.Exec(); err != nil {
 			return err
-		}
-
-		hasVGPUs, err := kv.doesHostHaveVGPUs()
-		if err != nil {
-			return err
-		}
-		if !hasVGPUs {
-			return fmt.Errorf("FATAL: Host has no VGPUs")
 		}
 	}
 
