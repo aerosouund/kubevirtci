@@ -68,6 +68,7 @@ func (kv *KindVGPU) Start(ctx context.Context, cancel context.CancelFunc) error 
 		if err := rsf.Exec(); err != nil {
 			return err
 		}
+
 		hasVGPUs, err := kv.doesHostHaveVGPUs()
 		if err != nil {
 			return err
