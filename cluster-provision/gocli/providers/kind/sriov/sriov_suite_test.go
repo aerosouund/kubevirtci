@@ -1,4 +1,4 @@
-package cmd
+package sriov
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestSRIOV(t *testing.T) {
+func TestCmd(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "SR-IOV Test Suite")
+	RunSpecs(t, "SR-IOV test suite")
 }

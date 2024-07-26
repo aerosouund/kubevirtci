@@ -133,6 +133,50 @@ func (ks *KindSriov) Start(ctx context.Context, cancel context.CancelFunc) error
 	return nil
 }
 
+func (ks *KindSriov) discoverHostPFs() ([]string, error) {
+	files, err := filepath.Glob("/sys/class/net/*/device/sriov_numvfs")
+	if err != nil {
+		return nil, err
+	}
+
+	if len(files) == 0 {
+		return nil, errors.New("FATAL: Could not find available sriov PFs on host")
+	}
+
+	pfNames := make([]string, 0)
+	for _, file := range files {
+		pfName := filepath.Base(filepath.Dir(filepath.Dir(file)))
+		pfNames = append(pfNames, pfName)
+	}
+
+	return pfNames, nil
+}
+
+func (ks *KindSriov) assignPfsToNode(pfs []string, nodeName string) error {
+	for _, pf := range pfs {
+		cmds := []string{
+			"link set " + pf + " netns " + nodeName,
+			"netns exec " + nodeName + " ip link set up dev " + pf,
+			"netns exec " + nodeName + " ip link show",
+		}
+		for _, cmd := range cmds {
+			cmd := exec.Command("ip", cmd)
+			if _, err := cmd.Output(); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (ks *KindSriov) linkNetNS(pid int, nodeName string) error {
+	cmd := exec.Command("ln", "-sf", "/proc/"+fmt.Sprintf("%d", pid)+"/ns/net", "/var/run/netns/"+nodeName)
+	if _, err := cmd.CombinedOutput(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (ks *KindSriov) fetchNodePfs(sshClient libssh.Client) ([]string, error) {
 	mod, err := sshClient.Command(`grep vfio_pci /proc/modules`, false)
 	if err != nil {
@@ -240,48 +284,4 @@ func (ks *KindSriov) bindToVfio(sshClient libssh.Client, sysFsDevice string) err
 	}
 
 	return nil
-}
-
-func (ks *KindSriov) assignPfsToNode(pfs []string, nodeName string) error {
-	for _, pf := range pfs {
-		cmds := []string{
-			"link set " + pf + " netns " + nodeName,
-			"netns exec " + nodeName + " ip link set up dev " + pf,
-			"netns exec " + nodeName + " ip link show",
-		}
-		for _, cmd := range cmds {
-			cmd := exec.Command("ip", cmd)
-			if _, err := cmd.Output(); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (ks *KindSriov) linkNetNS(pid int, nodeName string) error {
-	cmd := exec.Command("ln", "-sf", "/proc/"+fmt.Sprintf("%d", pid)+"/ns/net", "/var/run/netns/"+nodeName)
-	if _, err := cmd.CombinedOutput(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (ks *KindSriov) discoverHostPFs() ([]string, error) {
-	files, err := filepath.Glob("/sys/class/net/*/device/sriov_numvfs")
-	if err != nil {
-		return nil, err
-	}
-
-	if len(files) == 0 {
-		return nil, errors.New("FATAL: Could not find available sriov PFs on host")
-	}
-
-	pfNames := make([]string, 0)
-	for _, file := range files {
-		pfName := filepath.Base(filepath.Dir(filepath.Dir(file)))
-		pfNames = append(pfNames, pfName)
-	}
-
-	return pfNames, nil
 }
