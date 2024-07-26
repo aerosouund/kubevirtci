@@ -320,6 +320,7 @@ github.com/openshift/custom-resource-status/conditions/v1
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 ## explicit
+github.com/pmezard/go-difflib/difflib
 # github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.74.0
 ## explicit; go 1.21
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring
@@ -347,6 +348,7 @@ github.com/spf13/cobra
 github.com/spf13/pflag
 # github.com/stretchr/testify v1.9.0
 ## explicit; go 1.17
+github.com/stretchr/testify/assert
 # go.uber.org/mock v0.4.0
 ## explicit; go 1.20
 go.uber.org/mock/gomock

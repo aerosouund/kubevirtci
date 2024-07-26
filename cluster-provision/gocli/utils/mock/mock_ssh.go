@@ -16,31 +16,31 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockClient is a mock of Client interface.
-type MockClient struct {
+// MockSSHClient is a mock of SSHClient interface.
+type MockSSHClient struct {
 	ctrl     *gomock.Controller
-	recorder *MockClientMockRecorder
+	recorder *MockSSHClientMockRecorder
 }
 
-// MockClientMockRecorder is the mock recorder for MockClient.
-type MockClientMockRecorder struct {
-	mock *MockClient
+// MockSSHClientMockRecorder is the mock recorder for MockSSHClient.
+type MockSSHClientMockRecorder struct {
+	mock *MockSSHClient
 }
 
-// NewMockClient creates a new mock instance.
-func NewMockClient(ctrl *gomock.Controller) *MockClient {
-	mock := &MockClient{ctrl: ctrl}
-	mock.recorder = &MockClientMockRecorder{mock}
+// NewMockSSHClient creates a new mock instance.
+func NewMockSSHClient(ctrl *gomock.Controller) *MockSSHClient {
+	mock := &MockSSHClient{ctrl: ctrl}
+	mock.recorder = &MockSSHClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockClient) EXPECT() *MockClientMockRecorder {
+func (m *MockSSHClient) EXPECT() *MockSSHClientMockRecorder {
 	return m.recorder
 }
 
 // Command mocks base method.
-func (m *MockClient) Command(cmd string) error {
+func (m *MockSSHClient) Command(cmd string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Command", cmd)
 	ret0, _ := ret[0].(error)
@@ -48,13 +48,13 @@ func (m *MockClient) Command(cmd string) error {
 }
 
 // Command indicates an expected call of Command.
-func (mr *MockClientMockRecorder) Command(cmd any) *gomock.Call {
+func (mr *MockSSHClientMockRecorder) Command(cmd any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Command", reflect.TypeOf((*MockClient)(nil).Command), cmd)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Command", reflect.TypeOf((*MockSSHClient)(nil).Command), cmd)
 }
 
 // CommandWithNoStdOut mocks base method.
-func (m *MockClient) CommandWithNoStdOut(cmd string) (string, error) {
+func (m *MockSSHClient) CommandWithNoStdOut(cmd string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CommandWithNoStdOut", cmd)
 	ret0, _ := ret[0].(string)
@@ -63,13 +63,13 @@ func (m *MockClient) CommandWithNoStdOut(cmd string) (string, error) {
 }
 
 // CommandWithNoStdOut indicates an expected call of CommandWithNoStdOut.
-func (mr *MockClientMockRecorder) CommandWithNoStdOut(cmd any) *gomock.Call {
+func (mr *MockSSHClientMockRecorder) CommandWithNoStdOut(cmd any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommandWithNoStdOut", reflect.TypeOf((*MockClient)(nil).CommandWithNoStdOut), cmd)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommandWithNoStdOut", reflect.TypeOf((*MockSSHClient)(nil).CommandWithNoStdOut), cmd)
 }
 
 // CopyRemoteFile mocks base method.
-func (m *MockClient) CopyRemoteFile(remotePath, localPath string) error {
+func (m *MockSSHClient) CopyRemoteFile(remotePath, localPath string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CopyRemoteFile", remotePath, localPath)
 	ret0, _ := ret[0].(error)
@@ -77,13 +77,13 @@ func (m *MockClient) CopyRemoteFile(remotePath, localPath string) error {
 }
 
 // CopyRemoteFile indicates an expected call of CopyRemoteFile.
-func (mr *MockClientMockRecorder) CopyRemoteFile(remotePath, localPath any) *gomock.Call {
+func (mr *MockSSHClientMockRecorder) CopyRemoteFile(remotePath, localPath any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CopyRemoteFile", reflect.TypeOf((*MockClient)(nil).CopyRemoteFile), remotePath, localPath)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CopyRemoteFile", reflect.TypeOf((*MockSSHClient)(nil).CopyRemoteFile), remotePath, localPath)
 }
 
 // SCP mocks base method.
-func (m *MockClient) SCP(destPath string, contents fs.File) error {
+func (m *MockSSHClient) SCP(destPath string, contents fs.File) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SCP", destPath, contents)
 	ret0, _ := ret[0].(error)
@@ -91,7 +91,7 @@ func (m *MockClient) SCP(destPath string, contents fs.File) error {
 }
 
 // SCP indicates an expected call of SCP.
-func (mr *MockClientMockRecorder) SCP(destPath, contents any) *gomock.Call {
+func (mr *MockSSHClientMockRecorder) SCP(destPath, contents any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SCP", reflect.TypeOf((*MockClient)(nil).SCP), destPath, contents)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SCP", reflect.TypeOf((*MockSSHClient)(nil).SCP), destPath, contents)
 }

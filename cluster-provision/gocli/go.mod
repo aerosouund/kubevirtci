@@ -5,6 +5,8 @@ go 1.22.3
 require (
 	github.com/aerosouund/rook/pkg/apis v0.0.0-20240521094914-cfb3faf99740
 	github.com/alessio/shellescape v1.4.2
+	github.com/bramvdbogaerde/go-scp v1.5.0
+	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/docker/docker v24.0.9+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/onsi/ginkgo/v2 v2.18.0
@@ -36,9 +38,7 @@ require (
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Microsoft/hcsshim v0.12.3 // indirect
-	github.com/bramvdbogaerde/go-scp v1.5.0 // indirect
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
-	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/containernetworking/cni v1.2.0-rc1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
