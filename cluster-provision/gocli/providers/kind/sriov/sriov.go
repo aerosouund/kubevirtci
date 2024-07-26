@@ -17,6 +17,7 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	multussriov "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/multus-sriov"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/remountsysfs"
+	sriovcomponents "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/sriov-components"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/libssh"
 	kind "kubevirt.io/kubevirtci/cluster-provision/gocli/providers/kind/kindbase"
 )
@@ -132,6 +133,11 @@ func (ks *KindSriov) Start(ctx context.Context, cancel context.CancelFunc) error
 
 	msrv := multussriov.NewMultusSriovOpt(ks.Client)
 	if err = msrv.Exec(); err != nil {
+		return err
+	}
+
+	components := sriovcomponents.NewSriovComponentsOpt(ks.Client)
+	if err = components.Exec(); err != nil {
 		return err
 	}
 	return nil

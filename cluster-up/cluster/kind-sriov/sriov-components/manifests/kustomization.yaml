@@ -5,23 +5,23 @@ resources:
 - sriov-ns.yaml
 - sriov-cni-daemonset.yaml
 - sriovdp-daemonset.yaml
-- sriovdp-config.yaml
+- sriovdp-config.yaml.in
 patchesJson6902:
 - target:
     group: apps
     version: v1
     kind: DaemonSet
     name: kube-sriov-cni-ds-amd64
-  path: patch-node-selector.yaml
+  path: patch-node-selector.yaml.in
 - target:
     group: apps
     version: v1
     kind: DaemonSet
     name: kube-sriov-device-plugin-amd64
-  path: patch-node-selector.yaml
+  path: patch-node-selector.yaml.in
 - target:
     group: apps
     version: v1
     kind: DaemonSet
     name: kube-sriov-device-plugin-amd64
-  path: patch-sriovdp-resource-prefix.yaml
+  path: patch-sriovdp-resource-prefix.yaml.in
