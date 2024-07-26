@@ -284,7 +284,6 @@ func (k *KindBaseProvider) runRegistry(hostPort string) (string, string, error) 
 		return "", "", err
 	}
 
-	// check if this will work for podman
 	registryJSON := []types.ContainerJSON{}
 
 	jsonData, err := k.CRI.Inspect(registryID)

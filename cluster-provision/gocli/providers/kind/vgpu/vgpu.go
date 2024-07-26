@@ -2,7 +2,7 @@ package vgpu
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"path/filepath"
 
 	"github.com/docker/docker/client"
@@ -68,31 +68,27 @@ func (kv *KindVGPU) Start(ctx context.Context, cancel context.CancelFunc) error 
 		if err := rsf.Exec(); err != nil {
 			return err
 		}
-
-		// what are we doing with the vgpus discovered ??
-		if _, err = kv.discoverHostVGPUs(); err != nil {
+		hasVGPUs, err := kv.doesHostHaveVGPUs()
+		if err != nil {
 			return err
+		}
+		if !hasVGPUs {
+			return fmt.Errorf("FATAL: Host has no VGPUs")
 		}
 	}
 
 	return nil
 }
 
-func (kv *KindVGPU) discoverHostVGPUs() ([]string, error) {
+func (kv *KindVGPU) doesHostHaveVGPUs() (bool, error) {
 	files, err := filepath.Glob("/sys/class/mdev_bus/*/mdev_supported_types")
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 
 	if len(files) == 0 {
-		return nil, errors.New("FATAL: Could not find available GPUs on host")
+		return false, nil
 	}
 
-	vpgus := make([]string, 0)
-	for _, file := range files {
-		vgpuName := filepath.Base(filepath.Dir(filepath.Dir(file)))
-		vpgus = append(vpgus, vgpuName)
-	}
-
-	return vpgus, nil
+	return true, nil
 }
