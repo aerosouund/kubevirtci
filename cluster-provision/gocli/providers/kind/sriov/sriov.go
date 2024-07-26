@@ -13,7 +13,11 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	dockercri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/docker"
+	podmancri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/podman"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/remountsysfs"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/libssh"
 	kind "kubevirt.io/kubevirtci/cluster-provision/gocli/providers/kind/kindbase"
 )
 
@@ -55,17 +59,29 @@ func (ks *KindSriov) Start(ctx context.Context, cancel context.CancelFunc) error
 		return err
 	}
 
-	// fix this by adding the ssh interface to the cri interface
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
 	}
-	controlPlaneAdapter := docker.NewDockerAdapter(cli, ks.Version+"-control-plane")
+	var sshClient, controlPlaneClient libssh.Client
+
+	switch ks.CRI.(type) {
+	case *dockercri.DockerClient:
+		controlPlaneClient = docker.NewDockerAdapter(cli, ks.Version+"-control-plane")
+	case *podmancri.Podman:
+		controlPlaneClient = podmancri.NewPodmanSSHClient(ks.Version + "-control-plane")
+	}
 
 	pfOffset := 0
 	for _, node := range nodes {
 		nodeName := node.String()
-		da := docker.NewDockerAdapter(cli, nodeName)
+		switch ks.CRI.(type) {
+		case *dockercri.DockerClient:
+			sshClient = docker.NewDockerAdapter(cli, node.String())
+		case *podmancri.Podman:
+			sshClient = podmancri.NewPodmanSSHClient(node.String())
+		}
+
 		nodeJson := []types.ContainerJSON{}
 		resp, err := ks.CRI.Inspect(nodeName)
 		if err != nil {
@@ -88,81 +104,62 @@ func (ks *KindSriov) Start(ctx context.Context, cancel context.CancelFunc) error
 		}
 
 		pfOffset += ks.pfCountPerNode
-		cmds := []string{
-			"mount -o remount,rw /sys",
-			"ls -la -Z /dev/vfio",
-			"chmod 0666 /dev/vfio/vfio",
-		}
 
-		for _, cmd := range cmds {
-			if _, err := da.Command(cmd, true); err != nil {
-				return err
-			}
-		}
-
-		if _, err = controlPlaneAdapter.Command("kubectl label node "+nodeName+" sriov_capable=true", true); err != nil {
+		rsf := remountsysfs.NewRemountSysFSOpt(sshClient)
+		if err := rsf.Exec(); err != nil {
 			return err
 		}
 
-	}
-	return nil
-}
-
-func (ks *KindSriov) createVfsOnNode(da docker.DockerAdapter) error {
-	sysfs, err := da.Command(`grep -Po 'sysfs.*\K(ro|rw)' /proc/mounts`, false)
-	if err != nil {
-		return nil
-	}
-	if sysfs != "rw" {
-		return fmt.Errorf("FATAL: sysfs is read-only, try to remount as RW")
-	}
-
-	mod, err := da.Command(`grep vfio_pci /proc/modules`, false)
-	if err != nil {
-		return nil
-	}
-
-	if _, err = da.Command("modprobe -i vfio_pci", true); err != nil {
-		return err
-	}
-
-	if mod == "" {
-		return fmt.Errorf("System doesn't have the vfio_pci module, provisioning failed")
-	}
-
-	pfsString, err := da.Command(`find /sys/class/net/*/device/sriov_numvfs`, false)
-	if err != nil {
-		return nil
-	}
-	pfs := strings.Split(pfsString, " ")
-	if len(pfs) == 0 {
-		return fmt.Errorf("No physical functions found on node, exiting")
-	}
-
-	for _, pf := range pfs {
-		pfDevice, err := da.Command("dirname "+pf, false)
+		pfs, err := ks.fetchNodePfs(sshClient)
 		if err != nil {
+			return nil
+		}
+
+		for _, pf := range pfs {
+			vfsSysFsDevices, err := ks.createVFsforPF(sshClient, pf)
+			for _, vfDevice := range vfsSysFsDevices {
+				err = ks.bindToVfio(sshClient, vfDevice)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		if _, err = controlPlaneClient.Command("kubectl label node "+nodeName+" sriov_capable=true", true); err != nil {
 			return err
 		}
 
-		vfsSysFsDevices, err := ks.createVFsforPF(da, pfDevice)
-		for _, vfDevice := range vfsSysFsDevices {
-			err = ks.bindToVfio(da, vfDevice)
-			if err != nil {
-				return err
-			}
-		}
 	}
 	return nil
 }
 
-func (ks *KindSriov) createVFsforPF(sshClient docker.DockerAdapter, id string) ([]string, error) {
-	pfName, err := sshClient.Command("basename "+id, false)
+func (ks *KindSriov) fetchNodePfs(sshClient libssh.Client) ([]string, error) {
+	mod, err := sshClient.Command(`grep vfio_pci /proc/modules`, false)
 	if err != nil {
 		return nil, err
 	}
+	if mod == "" {
+		return nil, fmt.Errorf("System doesn't have the vfio_pci module, provisioning failed")
+	}
 
-	pfSysFsDevice, err := sshClient.Command("readlink -e "+id, false)
+	if _, err = sshClient.Command("modprobe -i vfio_pci", true); err != nil {
+		return nil, err
+	}
+
+	pfsString, err := sshClient.Command(`find /sys/class/net/*/device/`, false)
+	if err != nil {
+		return nil, err
+	}
+	pfs := strings.Split(pfsString, "\n")
+	if len(pfs) == 0 {
+		return nil, fmt.Errorf("No physical functions found on node, exiting")
+	}
+
+	return pfs, nil
+}
+
+func (ks *KindSriov) createVFsforPF(sshClient libssh.Client, vfSysClassNetPath string) ([]string, error) {
+	pfSysFsDevice, err := sshClient.Command("readlink -e "+vfSysClassNetPath, false)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +174,7 @@ func (ks *KindSriov) createVFsforPF(sshClient docker.DockerAdapter, id string) (
 	}
 
 	if totalVfsCount < ks.vfsCount {
-		return nil, fmt.Errorf("FATAL: PF %s, VF's count should be up to sriov_totalvfs: %d", pfName, totalVfsCount)
+		return nil, fmt.Errorf("FATAL: PF %s, VF's count should be up to sriov_totalvfs: %d", vfSysClassNetPath, totalVfsCount)
 	}
 
 	cmds := []string{
@@ -191,7 +188,7 @@ func (ks *KindSriov) createVFsforPF(sshClient docker.DockerAdapter, id string) (
 		}
 	}
 
-	vfsString, err := sshClient.Command(`readlink -e `+pfName+`/virtfn*`, false)
+	vfsString, err := sshClient.Command(`readlink -e `+pfSysFsDevice+`/virtfn*`, false)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +196,7 @@ func (ks *KindSriov) createVFsforPF(sshClient docker.DockerAdapter, id string) (
 	return strings.Split(vfsString, " "), nil
 }
 
-func (ks *KindSriov) bindToVfio(sshClient docker.DockerAdapter, sysFsDevice string) error {
+func (ks *KindSriov) bindToVfio(sshClient libssh.Client, sysFsDevice string) error {
 	devSysfsPath, err := sshClient.Command("basename "+sysFsDevice, false)
 	if err != nil {
 		return err
