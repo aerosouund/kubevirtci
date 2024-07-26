@@ -15,6 +15,7 @@ import (
 	dockercri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/docker"
 	podmancri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/podman"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
+	multussriov "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/multus-sriov"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/remountsysfs"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/libssh"
 	kind "kubevirt.io/kubevirtci/cluster-provision/gocli/providers/kind/kindbase"
@@ -127,7 +128,11 @@ func (ks *KindSriov) Start(ctx context.Context, cancel context.CancelFunc) error
 		if _, err = controlPlaneClient.Command("kubectl label node "+nodeName+" sriov_capable=true", true); err != nil {
 			return err
 		}
+	}
 
+	msrv := multussriov.NewMultusSriovOpt(ks.Client)
+	if err = msrv.Exec(); err != nil {
+		return err
 	}
 	return nil
 }
