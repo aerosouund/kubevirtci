@@ -21,6 +21,9 @@ func NewRunKindCommand() *cobra.Command {
 	}
 	rk.Flags().UintP("nodes", "n", 1, "number of cluster nodes to start")
 	rk.Flags().String("registry-port", "5000", "forwarded host port for registry container")
+	rk.Flags().String("registry-proxy", "", "registry proxy to use")
+	rk.Flags().String("ip-family", "", "ip family")
+	rk.Flags().Bool("enable-cpu-manager", false, "enable cpu manager")
 	return rk
 }
 
@@ -33,11 +36,27 @@ func runKind(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	rp, err := cmd.Flags().GetString("registry-proxy")
+	if err != nil {
+		return err
+	}
+	ipf, err := cmd.Flags().GetString("ip-family")
+	if err != nil {
+		return err
+	}
+	cpum, err := cmd.Flags().GetBool("enable-cpu-manager")
+	if err != nil {
+		return err
+	}
+
 	kindVersion := args[0]
 	conf := &kind.KindConfig{
-		Nodes:        int(nodes),
-		Version:      kindVersion,
-		RegistryPort: port,
+		Nodes:          int(nodes),
+		Version:        kindVersion,
+		RegistryPort:   port,
+		RegistryProxy:  rp,
+		WithCPUManager: cpum,
+		IpFamily:       ipf,
 	}
 
 	switch kindVersion {
