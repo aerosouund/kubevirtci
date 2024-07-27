@@ -32,7 +32,7 @@ func NewPodmanSSHClient(containerName string) *PodmanSSHClient {
 func IsAvailable() bool {
 	cmd := exec.Command("podman", "-v")
 	out, err := cmd.Output()
-	if err != nil || len(out) != 1 {
+	if err != nil {
 		return false
 	}
 	return strings.HasPrefix(string(out), "podman version")

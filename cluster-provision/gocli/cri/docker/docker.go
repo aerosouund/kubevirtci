@@ -18,7 +18,7 @@ func NewDockerClient() *DockerClient {
 func IsAvailable() bool {
 	cmd := exec.Command("docker", "-v")
 	out, err := cmd.Output()
-	if err != nil || len(out) != 1 {
+	if err != nil {
 		return false
 	}
 	return strings.HasPrefix(string(out), "Docker version")
