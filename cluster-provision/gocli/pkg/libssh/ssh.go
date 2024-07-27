@@ -154,26 +154,14 @@ func (s *SSHClientImpl) SCP(fileName string, contents fs.File) error {
 }
 
 func (s *SSHClientImpl) CopyRemoteFile(remotePath, localPath string) error {
-	client, err := ssh.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(s.sshPort)), s.config)
-	if err != nil {
-		return fmt.Errorf("Failed to connect to SSH server: %v", err)
-	}
-	defer client.Close()
-
-	conn, err := client.Dial("tcp", fmt.Sprintf("192.168.66.10%d:22", s.nodeIdx))
-	if err != nil {
-		return fmt.Errorf("Error establishing connection to the next hop host: %s", err)
+	if s.client == nil {
+		err := s.initClient()
+		if err != nil {
+			return err
+		}
 	}
 
-	ncc, chans, reqs, err := ssh.NewClientConn(conn, fmt.Sprintf("192.168.66.10%d:22", s.nodeIdx), s.config)
-	if err != nil {
-		return fmt.Errorf("Error creating forwarded ssh connection: %s", err)
-	}
-
-	jumpHost := ssh.NewClient(ncc, chans, reqs)
-	defer jumpHost.Close()
-
-	scpClient, err := scp.NewClientBySSH(jumpHost)
+	scpClient, err := scp.NewClientBySSH(s.client)
 	if err != nil {
 		return err
 	}
@@ -183,7 +171,7 @@ func (s *SSHClientImpl) CopyRemoteFile(remotePath, localPath string) error {
 		return err
 	}
 
-	destFile, err := os.Open(localPath)
+	destFile, err := os.Create(localPath)
 	if err != nil {
 		return err
 	}
