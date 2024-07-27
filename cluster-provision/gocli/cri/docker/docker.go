@@ -33,8 +33,8 @@ func (dc *DockerClient) ImagePull(image string) error {
 	return nil
 }
 
-func (dc *DockerClient) Inspect(containerID string) ([]byte, error) {
-	cmd := exec.Command("docker", "inspect", containerID)
+func (dc *DockerClient) Inspect(containerID, format string) ([]byte, error) {
+	cmd := exec.Command("docker", "inspect", containerID, "--format", format)
 	out, err := cmd.Output()
 	if err != nil {
 		return nil, err

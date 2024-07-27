@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/yaml"
@@ -288,19 +288,12 @@ func (k *KindBaseProvider) runRegistry(hostPort string) (string, string, error) 
 		return "", "", err
 	}
 
-	registryJSON := []types.ContainerJSON{}
-
-	jsonData, err := k.CRI.Inspect(registryID)
+	ip, err := k.CRI.Inspect(registryID, "{{.NetworkSettings.Networks.kind.IPAddress}}")
 	if err != nil {
 		return "", "", err
 	}
 
-	err = json.Unmarshal(jsonData, &registryJSON)
-	if err != nil {
-		return "", "", err
-	}
-
-	return registryID, registryJSON[0].NetworkSettings.Networks["kind"].IPAddress, nil
+	return registryID, strings.TrimSuffix(string(ip), "\n"), nil
 }
 
 func (k *KindBaseProvider) downloadCNI() error {

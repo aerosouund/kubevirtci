@@ -158,8 +158,8 @@ func (p *Podman) Start(containerID string) error {
 	return nil
 }
 
-func (p *Podman) Inspect(containerID string) ([]byte, error) {
-	cmd := exec.Command("podman", "inspect", containerID)
+func (p *Podman) Inspect(containerID, format string) ([]byte, error) {
+	cmd := exec.Command("podman", "inspect", containerID, "--format", format)
 	out, err := cmd.Output()
 	if err != nil {
 		return nil, err

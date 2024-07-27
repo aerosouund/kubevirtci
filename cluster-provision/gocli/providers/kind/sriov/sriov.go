@@ -2,7 +2,6 @@ package sriov
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -10,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	dockercri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/docker"
 	podmancri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/podman"
@@ -83,18 +81,16 @@ func (ks *KindSriov) Start(ctx context.Context, cancel context.CancelFunc) error
 			sshClient = podmancri.NewPodmanSSHClient(node.String())
 		}
 
-		nodeJson := []types.ContainerJSON{}
-		resp, err := ks.CRI.Inspect(nodeName)
+		resp, err := ks.CRI.Inspect(nodeName, "{{.State.Pid}}")
 		if err != nil {
 			return err
 		}
 
-		err = json.Unmarshal(resp, &nodeJson)
+		pid, err := strconv.Atoi(strings.TrimSuffix(string(resp), "\n"))
 		if err != nil {
 			return err
 		}
 
-		pid := nodeJson[0].State.Pid
 		if err = ks.linkNetNS(pid, nodeName); err != nil {
 			return err
 		}

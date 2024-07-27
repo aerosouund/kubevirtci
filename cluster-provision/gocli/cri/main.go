@@ -6,7 +6,7 @@ type ContainerClient interface {
 	Create(image string, co *CreateOpts) (string, error)
 	Start(containerID string) error
 	Remove(containerID string) error
-	Inspect(containerID string) ([]byte, error)
+	Inspect(containerID, format string) ([]byte, error)
 }
 
 type CreateOpts struct {
