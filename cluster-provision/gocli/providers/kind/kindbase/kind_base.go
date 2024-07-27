@@ -176,9 +176,11 @@ func (k *KindBaseProvider) Start(ctx context.Context, cancel context.CancelFunc)
 			return err
 		}
 
-		rp := registryproxy.NewRegistryProxyOpt(sshClient, k.RegistryProxy)
-		if err = rp.Exec(); err != nil {
-			return err
+		if k.RegistryProxy != "" {
+			rp := registryproxy.NewRegistryProxyOpt(sshClient, k.RegistryProxy)
+			if err = rp.Exec(); err != nil {
+				return err
+			}
 		}
 	}
 
