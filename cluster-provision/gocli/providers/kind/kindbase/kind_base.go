@@ -99,11 +99,11 @@ func NewKindBaseProvider(kindConfig *KindConfig) (*KindBaseProvider, error) {
 }
 
 func DetectContainerRuntime() (string, error) {
-	if dockercri.IsAvailable() {
-		return "docker", nil
-	}
 	if podmancri.IsAvailable() {
 		return "podman", nil
+	}
+	if dockercri.IsAvailable() {
+		return "docker", nil
 	}
 	return "", fmt.Errorf("No valid container runtime found")
 }
