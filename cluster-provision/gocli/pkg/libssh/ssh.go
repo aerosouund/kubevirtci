@@ -158,6 +158,7 @@ func (s *SSHClientImpl) CopyRemoteFile(remotePath, localPath string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to connect to SSH server: %v", err)
 	}
+	defer client.Close()
 
 	conn, err := client.Dial("tcp", fmt.Sprintf("192.168.66.10%d:22", s.nodeIdx))
 	if err != nil {
@@ -170,6 +171,7 @@ func (s *SSHClientImpl) CopyRemoteFile(remotePath, localPath string) error {
 	}
 
 	jumpHost := ssh.NewClient(ncc, chans, reqs)
+	defer jumpHost.Close()
 
 	scpClient, err := scp.NewClientBySSH(jumpHost)
 	if err != nil {
