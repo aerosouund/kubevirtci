@@ -74,9 +74,11 @@ func NewKindBaseProvider(kindConfig *KindConfig) (*KindBaseProvider, error) {
 
 	switch runtime {
 	case "docker":
+		logrus.Info("Using Docker as container runtime")
 		cri = dockercri.NewDockerClient()
 		k = kind.NewProvider(kind.ProviderWithDocker())
 	case "podman":
+		logrus.Info("Using Podman as container runtime")
 		cri = podmancri.NewPodman()
 		k = kind.NewProvider(kind.ProviderWithPodman())
 	}
