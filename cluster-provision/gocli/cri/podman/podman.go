@@ -89,7 +89,7 @@ func (p *PodmanSSHClient) SCP(destPath string, contents fs.File) error {
 		return fmt.Errorf("failed to close temp file: %w", err)
 	}
 
-	cmd := exec.Command("podman", "cp", tempFile.Name(), destPath)
+	cmd := exec.Command("podman", "cp", p.containerName, tempFile.Name(), destPath)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
