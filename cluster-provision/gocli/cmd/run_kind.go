@@ -70,12 +70,10 @@ func runKind(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-	case "ovn":
-
 	case "vgpu":
 		kindProvider, err = vgpu.NewKindVGPU(conf)
 	default:
-		return fmt.Errorf("Invalid k8s version passed, please use one of k8s-1.28, sriov, ovn or vgpu")
+		return fmt.Errorf("Invalid k8s version passed, please use one of k8s-1.28, sriov or vgpu")
 	}
 
 	b := context.Background()
