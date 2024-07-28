@@ -39,7 +39,8 @@ func IsAvailable() bool {
 }
 
 func (p *PodmanSSHClient) Command(cmd string, stdOut bool) (string, error) {
-	command := exec.Command("podman", "exec", "-ti", "/bin/sh", "-c", cmd)
+	logrus.Infof("[node %s]: %s\n", p.containerName, cmd)
+	command := exec.Command("podman", "exec", p.containerName, "/bin/sh", "-c", cmd)
 	if !stdOut {
 		out, err := command.CombinedOutput()
 		if err != nil {
