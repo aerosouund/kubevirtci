@@ -492,7 +492,7 @@ func (kp *KubevirtProvider) runDNSMasq(ctx context.Context, portMap nat.PortMap)
 			fmt.Sprintf("NUM_NODES=%d", kp.Nodes),
 			fmt.Sprintf("NUM_SECONDARY_NICS=%d", kp.SecondaryNics),
 		},
-		Cmd: []string{"/bin/bash", "-c", "/dnsmasq.sh"},
+		Cmd: []string{"/bin/bash", "-c", "sleep 90000000"},
 		ExposedPorts: nat.PortSet{
 			utils.TCPPortOrDie(utils.PortSSH):         {},
 			utils.TCPPortOrDie(utils.PortRegistry):    {},
