@@ -209,8 +209,6 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	if err != nil {
 		return err
 	}
-	time.Sleep(time.Minute * 10)
-
 	rootkey := rootkey.NewRootKey(sshClient)
 	if err = rootkey.Exec(); err != nil {
 		return err
