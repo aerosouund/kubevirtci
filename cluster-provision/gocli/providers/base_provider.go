@@ -174,7 +174,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 			"/var/run/disk":     {},
 			"/var/lib/registry": {},
 		},
-		Cmd: []string{"/bin/bash", "-c", fmt.Sprintf("/vm.sh --memory %s --cpu %s %s", kp.Memory, strconv.Itoa(int(kp.CPU)), kp.QemuArgs)},
+		Cmd: []string{"/bin/bash", "-c", "sleep", "900000000"},
 	}, &container.HostConfig{
 		Mounts: []mount.Mount{
 			{
@@ -209,7 +209,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	if err != nil {
 		return err
 	}
-	time.Sleep(time.Minute * 10)
+	time.Sleep(time.Minute * 20)
 
 	rootkey := rootkey.NewRootKey(sshClient)
 	if err = rootkey.Exec(); err != nil {
