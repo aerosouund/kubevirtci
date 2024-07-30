@@ -174,7 +174,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 			"/var/run/disk":     {},
 			"/var/lib/registry": {},
 		},
-		Cmd: []string{"/bin/bash", "-c", "sleep", "900000000"},
+		Cmd: []string{"/bin/bash", "-c", "sleep 90000"},
 	}, &container.HostConfig{
 		Mounts: []mount.Mount{
 			{
