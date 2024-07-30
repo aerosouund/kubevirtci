@@ -166,7 +166,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	}
 
 	node, err := kp.Docker.ContainerCreate(ctx, &container.Config{
-		Image: "aerosouund/bootc-linux-base:latest",
+		Image: kp.Image,
 		Env: []string{
 			fmt.Sprintf("NODE_NUM=%s", nodeNum),
 		},
@@ -174,7 +174,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 			"/var/run/disk":     {},
 			"/var/lib/registry": {},
 		},
-		Cmd: []string{"/bin/bash", "-c", fmt.Sprintf("sleep 90000000")},
+		Cmd: []string{"/bin/bash", "-c", fmt.Sprintf("/vm.sh --memory %s --cpu %s %s", kp.Memory, strconv.Itoa(int(kp.CPU)), kp.QemuArgs)},
 	}, &container.HostConfig{
 		Mounts: []mount.Mount{
 			{
