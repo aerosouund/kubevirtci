@@ -48,15 +48,6 @@ function pull_container_retry() {
     fi
 }
 
-if [ ! -f "/tmp/extra-pre-pull-images" ]; then
-    echo "ERROR: extra-pre-pull-images list missing"
-    exit 1
-fi
-if [ ! -f "/tmp/fetch-images.sh" ]; then
-    echo "ERROR: fetch-images.sh missing"
-    exit 1
-fi
-
 if grep -q "CentOS Stream 9" /etc/os-release; then
   release="centos9"
 else
