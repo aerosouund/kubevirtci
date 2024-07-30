@@ -43,7 +43,6 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/node01"
 	nodesprovision "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/nodes"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/prometheus"
-	provisionopt "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/provision"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/psa"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/realtime"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts/rookceph"
@@ -167,7 +166,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	}
 
 	node, err := kp.Docker.ContainerCreate(ctx, &container.Config{
-		Image: kp.Image,
+		Image: "aerosouund/bootc-linux-base:latest",
 		Env: []string{
 			fmt.Sprintf("NODE_NUM=%s", nodeNum),
 		},
@@ -221,12 +220,12 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		return err
 	}
 
-	if strings.Contains(kp.Phases, "linux") {
-		provisionOpt := provisionopt.NewLinuxProvisioner(sshClient)
-		if err = provisionOpt.Exec(); err != nil {
-			return err
-		}
-	}
+	// if strings.Contains(kp.Phases, "linux") {
+	// 	provisionOpt := provisionopt.NewLinuxProvisioner(sshClient)
+	// 	if err = provisionOpt.Exec(); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	if strings.Contains(kp.Phases, "k8s") {
 		// copy provider scripts
