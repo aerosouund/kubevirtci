@@ -174,8 +174,8 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 			"/var/run/disk":     {},
 			"/var/lib/registry": {},
 		},
-		Cmd: []string{"/bin/bash", "-c", fmt.Sprintf("/vm.sh --memory %s --cpu %s %s", kp.Memory, strconv.Itoa(int(kp.CPU)), kp.QemuArgs)},
-		// Cmd: []string{"/bin/bash", "-c", "sleep 900000000"},
+		// Cmd: []string{"/bin/bash", "-c", fmt.Sprintf("/vm.sh --memory %s --cpu %s %s", kp.Memory, strconv.Itoa(int(kp.CPU)), kp.QemuArgs)},
+		Cmd: []string{"/bin/bash", "-c", "sleep 900000000"},
 	}, &container.HostConfig{
 		Mounts: []mount.Mount{
 			{
@@ -492,7 +492,7 @@ func (kp *KubevirtProvider) runDNSMasq(ctx context.Context, portMap nat.PortMap)
 			fmt.Sprintf("NUM_NODES=%d", kp.Nodes),
 			fmt.Sprintf("NUM_SECONDARY_NICS=%d", kp.SecondaryNics),
 		},
-		Cmd: []string{"/bin/bash", "-c", "sleep 90000000"},
+		Cmd: []string{"/bin/bash", "-c", "/dnsmasq.sh"},
 		ExposedPorts: nat.PortSet{
 			utils.TCPPortOrDie(utils.PortSSH):         {},
 			utils.TCPPortOrDie(utils.PortRegistry):    {},
