@@ -166,7 +166,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	}
 
 	node, err := kp.Docker.ContainerCreate(ctx, &container.Config{
-		Image: "aerosouund/bootc-linux-base:latest",
+		Image: "aerosouund/bootc-k8s-1.28:0.1.1",
 		Env: []string{
 			fmt.Sprintf("NODE_NUM=%s", nodeNum),
 		},
