@@ -222,7 +222,7 @@ func (k *K8sProvisioner) Exec() error {
 		"echo '" + string(controllerManagerPatch) + "' | tee /etc/provision/kubeadm-patches/kube-controller-manager.yaml >> /dev/null",
 		"echo '" + string(schedulerPatch) + "' | tee /etc/provision/kubeadm-patches/kube-scheduler.yaml >> /dev/null",
 		"mkdir /etc/kubernetes/audit",
-		"echo '" + string(advAudit) + "' | tee /etc/etc/kubernetes/audit/adv-audit.yaml >> /dev/null",
+		"echo '" + string(advAudit) + "' | tee /etc/kubernetes/audit/adv-audit.yaml >> /dev/null",
 		"echo '" + string(psa) + "' | tee /etc/kubernetes/psa.yaml >> /dev/null",
 		"echo '" + kubeAdmConf + "' | tee /etc/kubernetes/kubeadm.conf >> /dev/null",
 		"echo '" + kubeAdm6Conf + "' | tee /etc/kubernetes/kubeadm_ipv6.conf >> /dev/null",
