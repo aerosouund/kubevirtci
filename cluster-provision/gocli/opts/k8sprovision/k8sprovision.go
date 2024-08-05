@@ -215,7 +215,7 @@ func (k *K8sProvisioner) Exec() error {
 		"echo bridge >> /etc/modules-load.d/k8s.conf",
 		"echo br_netfilter >> /etc/modules-load.d/k8s.conf",
 		"echo overlay >> /etc/modules-load.d/k8s.conf",
-		"mkdir -p /provision/kubeadm-patches",
+		"mkdir -p /etc/provision/kubeadm-patches",
 		"echo '" + string(secContextPatch) + "' | tee /etc/provision/kubeadm-patches/add-security-context-deployment-patch.yaml >> /dev/null",
 		"echo '" + string(etcdPatch) + "' | tee /etc/provision/kubeadm-patches/etcd.yaml >> /dev/null",
 		"echo '" + string(apiServerPatch) + "' | tee /etc/provision/kubeadm-patches/kube-apiserver.yaml >> /dev/null",
