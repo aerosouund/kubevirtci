@@ -136,13 +136,13 @@ func (k *K8sProvisioner) Exec() error {
 
 	cmds := []string{
 		"echo '" + string(crio) + "' | tee /etc/yum.repos.d/devel_kubic_libcontainers_stable_cri-o_v1.28.repo >> /dev/null",
-		"dnf install -y cri-o",
+		"dnf install -y cri-o || true",
 		"echo '" + string(registries) + "' | tee /etc/containers/registries.conf >> /dev/null",
 		"echo '" + string(storage) + "' | tee /etc/containers/storage.conf >> /dev/null",
 		"systemctl restart crio",
 		"systemctl enable --now crio",
 		"echo '" + k8sRepoWithVersion + "' | tee /etc/yum.repos.d/kubernetes.repo >> /dev/null",
-		fmt.Sprintf("dnf install --skip-broken --nobest --nogpgcheck --disableexcludes=kubernetes -y kubectl-%[1]s kubeadm-%[1]s kubelet-%[1]s kubernetes-cni", packagesVersion),
+		fmt.Sprintf("dnf install --skip-broken --nobest --nogpgcheck --disableexcludes=kubernetes -y kubectl-%[1]s kubeadm-%[1]s kubelet-%[1]s kubernetes-cni || true", packagesVersion),
 		"kubeadm config images pull --kubernetes-version " + k.version,
 		`image_regex='([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+' image_regex_w_double_quotes='"?'"${image_regex}"'"?' find /tmp -type f -name '*.yaml' -print0 | xargs -0 grep -iE '(image|value): '"${image_regex_w_double_quotes}" > /tmp/images`,
 	}
@@ -183,8 +183,8 @@ func (k *K8sProvisioner) Exec() error {
 
 	cmds = []string{
 		"mkdir /provision",
-		"yum install -y patch || true",
-		"dnf install -y patch || true",
+		// "yum install -y patch || true",
+		// "dnf install -y patch || true",
 		"cp /tmp/cni.do-not-change.yaml /provision/cni.yaml",
 		"mv /tmp/cni.do-not-change.yaml /provision/cni_ipv6.yaml",
 		"echo '" + string(cniPatch) + "' | tee /tmp/cni_patch.diff >> /dev/null",
