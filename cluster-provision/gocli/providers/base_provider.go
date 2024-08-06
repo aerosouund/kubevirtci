@@ -166,7 +166,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	}
 
 	node, err := kp.Docker.ContainerCreate(ctx, &container.Config{
-		Image: "aerosouund/bootc-k8s-1.28:0.1.1",
+		Image: "aerosouund/bootc-k8s-1.28:0.1.2",
 		Env: []string{
 			fmt.Sprintf("NODE_NUM=%s", nodeNum),
 		},
@@ -234,19 +234,6 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		if _, err = sshClient.Command("cp -r /opt/* /tmp/", true); err != nil {
 			return err
 		}
-
-		// if _, err = sshClient.Command("ls -la /tmp && sleep 90000000", true); err != nil {
-		// 	return err
-		// }
-		// Copy manifests to the VM
-		// success, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"/bin/bash", "-c", "scp -r -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 /scripts/manifests/* root@192.168.66.101:/tmp"}, os.Stdout)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// if !success {
-		// 	return fmt.Errorf("error copying shit to node")
-		// }
 
 		versionWithMinor, ok := versionMap[version]
 		if !ok {
