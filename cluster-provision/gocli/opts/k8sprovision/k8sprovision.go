@@ -183,8 +183,6 @@ func (k *K8sProvisioner) Exec() error {
 
 	cmds = []string{
 		"mkdir -p /etc/provision",
-		// "yum install -y patch || true",
-		// "dnf install -y patch || true",
 		"cp /tmp/cni.do-not-change.yaml /etc/provision/cni.yaml",
 		"mv /tmp/cni.do-not-change.yaml /etc/provision/cni_ipv6.yaml",
 		"echo '" + string(cniPatch) + "' | tee /tmp/cni_patch.diff >> /dev/null",
@@ -226,7 +224,6 @@ func (k *K8sProvisioner) Exec() error {
 		"echo '" + string(psa) + "' | tee /etc/kubernetes/psa.yaml >> /dev/null",
 		"echo '" + kubeAdmConf + "' | tee /etc/kubernetes/kubeadm.conf >> /dev/null",
 		"echo '" + kubeAdm6Conf + "' | tee /etc/kubernetes/kubeadm_ipv6.conf >> /dev/null",
-		// "until ip address show dev eth0 | grep global | grep inet6; do sleep 1; done",
 		"swapoff -a",
 		"systemctl restart kubelet",
 		"sudo ostree admin unlock --hotfix",
