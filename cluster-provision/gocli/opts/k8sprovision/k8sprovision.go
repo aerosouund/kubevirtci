@@ -33,22 +33,12 @@ func NewK8sProvisioner(sshClient libssh.Client, version string, slim bool) *K8sP
 }
 
 func (k *K8sProvisioner) Exec() error {
-	crio, err := f.ReadFile("conf/crio-yum.repo")
-	if err != nil {
-		return err
-	}
-
 	registries, err := f.ReadFile("conf/registries.conf")
 	if err != nil {
 		return err
 	}
 
 	storage, err := f.ReadFile("conf/storage.conf")
-	if err != nil {
-		return err
-	}
-
-	k8sRepo, err := f.ReadFile("conf/kubernetes.repo")
 	if err != nil {
 		return err
 	}
@@ -83,31 +73,6 @@ func (k *K8sProvisioner) Exec() error {
 		return err
 	}
 
-	etcdPatch, err := patchFs.ReadFile("patches/etcd.yaml")
-	if err != nil {
-		return err
-	}
-
-	apiServerPatch, err := patchFs.ReadFile("patches/kube-apiserver.yaml")
-	if err != nil {
-		return err
-	}
-
-	controllerManagerPatch, err := patchFs.ReadFile("patches/kube-controller-manager.yaml")
-	if err != nil {
-		return err
-	}
-
-	schedulerPatch, err := patchFs.ReadFile("patches/kube-scheduler.yaml")
-	if err != nil {
-		return err
-	}
-
-	packagesVersion, err := k.getPackagesVersion()
-	if err != nil {
-		return err
-	}
-
 	advAudit, err := f.ReadFile("conf/adv-audit.yaml")
 	if err != nil {
 		return err
@@ -128,21 +93,13 @@ func (k *K8sProvisioner) Exec() error {
 		return err
 	}
 
-	k8sMinor := strings.Split(k.version, ".")[1]
-	k8sRepoWithVersion := strings.Replace(string(k8sRepo), "VERSION", k8sMinor, 1)
-
 	kubeAdmConf := strings.Replace(string(kubeAdm), "VERSION", k.version, 1)
 	kubeAdm6Conf := strings.Replace(string(kubeAdm6), "VERSION", k.version, 1)
 
 	cmds := []string{
-		"echo '" + string(crio) + "' | tee /etc/yum.repos.d/devel_kubic_libcontainers_stable_cri-o_v1.28.repo >> /dev/null",
-		"dnf install -y cri-o || true",
 		"echo '" + string(registries) + "' | tee /etc/containers/registries.conf >> /dev/null",
 		"echo '" + string(storage) + "' | tee /etc/containers/storage.conf >> /dev/null",
-		"systemctl restart crio",
 		"systemctl enable --now crio",
-		"echo '" + k8sRepoWithVersion + "' | tee /etc/yum.repos.d/kubernetes.repo >> /dev/null",
-		fmt.Sprintf("dnf install --skip-broken --nobest --nogpgcheck --disableexcludes=kubernetes -y kubectl-%[1]s kubeadm-%[1]s kubelet-%[1]s kubernetes-cni || true", packagesVersion),
 		"kubeadm config images pull --kubernetes-version " + k.version,
 		`image_regex='([a-z0-9\_\.]+[/-]?)+(@sha256)?:[a-z0-9\_\.\-]+' image_regex_w_double_quotes='"?'"${image_regex}"'"?' find /tmp -type f -name '*.yaml' -print0 | xargs -0 grep -iE '(image|value): '"${image_regex_w_double_quotes}" > /tmp/images`,
 	}
@@ -207,18 +164,10 @@ func (k *K8sProvisioner) Exec() error {
 		`echo "net.netfilter.nf_conntrack_max=1000000" >> /etc/sysctl.conf`,
 		"sysctl --system",
 		"systemctl restart NetworkManager",
-		// `nmcli connection modify "System eth0" ipv6.method auto ipv6.addr-gen-mode eui64`,
-		// `nmcli connection up "System eth0"`,
-		// "sysctl --system",
 		"echo bridge >> /etc/modules-load.d/k8s.conf",
 		"echo br_netfilter >> /etc/modules-load.d/k8s.conf",
 		"echo overlay >> /etc/modules-load.d/k8s.conf",
 		"mkdir -p /etc/provision/kubeadm-patches",
-		"echo '" + string(secContextPatch) + "' | tee /etc/provision/kubeadm-patches/add-security-context-deployment-patch.yaml >> /dev/null",
-		"echo '" + string(etcdPatch) + "' | tee /etc/provision/kubeadm-patches/etcd.yaml >> /dev/null",
-		"echo '" + string(apiServerPatch) + "' | tee /etc/provision/kubeadm-patches/kube-apiserver.yaml >> /dev/null",
-		"echo '" + string(controllerManagerPatch) + "' | tee /etc/provision/kubeadm-patches/kube-controller-manager.yaml >> /dev/null",
-		"echo '" + string(schedulerPatch) + "' | tee /etc/provision/kubeadm-patches/kube-scheduler.yaml >> /dev/null",
 		"mkdir /etc/kubernetes/audit",
 		"echo '" + string(advAudit) + "' | tee /etc/kubernetes/audit/adv-audit.yaml >> /dev/null",
 		"echo '" + string(psa) + "' | tee /etc/kubernetes/psa.yaml >> /dev/null",
@@ -226,7 +175,6 @@ func (k *K8sProvisioner) Exec() error {
 		"echo '" + kubeAdm6Conf + "' | tee /etc/kubernetes/kubeadm_ipv6.conf >> /dev/null",
 		"swapoff -a",
 		"systemctl restart kubelet",
-		"sudo ostree admin unlock --hotfix",
 		"kubeadm init --config /etc/kubernetes/kubeadm.conf -v5 || true",
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf patch deployment coredns -n kube-system -p '" + string(secContextPatch) + "'",
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f /etc/provision/cni.yaml",
