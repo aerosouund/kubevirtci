@@ -3,7 +3,9 @@ package bootc
 import (
 	"embed"
 	_ "embed"
+	"io/fs"
 	"os"
+	"path/filepath"
 
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
 )
@@ -27,7 +29,7 @@ type BootcProvisioner struct {
 	cri cri.ContainerClient
 }
 
-func NewBootcProvsisioner(cri cri.ContainerClient) *BootcProvisioner {
+func NewBootcProvisioner(cri cri.ContainerClient) *BootcProvisioner {
 	return &BootcProvisioner{
 		cri: cri,
 	}
@@ -51,6 +53,36 @@ func (b *BootcProvisioner) BuildLinuxBase(tag string) error {
 }
 
 func (b *BootcProvisioner) BuildK8sBase(tag, k8sVersion string) error {
+	if err := os.Mkdir("patches", 0777); err != nil {
+		return err
+	}
+
+	err := fs.WalkDir(patches, "patches", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() && filepath.Ext(path) == ".yaml" {
+			yamlData, err := patches.ReadFile(path)
+			if err != nil {
+				return err
+			}
+
+			yamlFile, err := os.Create(path)
+			if err != nil {
+				return err
+			}
+
+			_, err = yamlFile.Write(yamlData)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	containerFile, err := os.Create("k8s.Containerfile")
 	if err != nil {
 		return err
