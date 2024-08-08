@@ -8,6 +8,7 @@ type ContainerClient interface {
 	Remove(containerID string) error
 	Inspect(containerID, format string) ([]byte, error)
 	Build(tag, containerFile string) error
+	Run(runArgs []string) error
 }
 
 type CreateOpts struct {

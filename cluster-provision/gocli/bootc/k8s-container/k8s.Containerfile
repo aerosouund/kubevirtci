@@ -1,4 +1,4 @@
-FROM kubevirtci:linux-base
+FROM LINUX_BASE
 
 ARG VERSION
 

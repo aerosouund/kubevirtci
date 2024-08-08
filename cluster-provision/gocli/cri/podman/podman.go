@@ -186,3 +186,15 @@ func (dc *Podman) Build(tag, containerFile string) error {
 	}
 	return nil
 }
+
+func (dc *Podman) Run(runArgs []string) error {
+	runArgs = append([]string{"run"}, runArgs...)
+	cmd := exec.Command("podman", runArgs...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
+}
