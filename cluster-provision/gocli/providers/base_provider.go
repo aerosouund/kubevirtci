@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -27,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/bootc"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/cri"
 	dockercri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/docker"
 	podmancri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/podman"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
@@ -60,6 +62,11 @@ var versionMap = map[string]string{
 	"1.29": "1.29.6",
 	"1.28": "1.28.11",
 }
+
+//go:embed Containerfile
+var containerfile []byte
+
+var containerRuntime cri.ContainerClient
 
 func NewKubevirtProvider(k8sversion string, image string, cli *client.Client,
 	options []KubevirtProviderOption) *KubevirtProvider {
@@ -130,27 +137,64 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 
 	var bootcProvisioner *bootc.BootcProvisioner
 
-	if dockercri.IsAvailable() {
-		bootcProvisioner = bootc.NewBootcProvisioner(dockercri.NewDockerClient())
-	} else {
-		if !podmancri.IsAvailable() {
-			return fmt.Errorf("No valid container runtime available")
-		}
-		bootcProvisioner = bootc.NewBootcProvisioner(podmancri.NewPodman())
+	runtime, err := DetectContainerRuntime()
+	if err != nil {
+		return err
 	}
 
-	// err := docker.ImagePull(kp.Docker, ctx, kp.Image, types.ImagePullOptions{})
-	// if err != nil {
-	// 	return err
-	// }
+	switch runtime {
+	case "docker":
+		containerRuntime = dockercri.NewDockerClient()
+
+	case "podman":
+		containerRuntime = podmancri.NewPodman()
+	}
+
+	bootcProvisioner = bootc.NewBootcProvisioner(containerRuntime)
 
 	var linuxPhaseTag string
+	var qcowImage string
 	if strings.Contains(kp.Phases, "linux") {
 		linuxPhaseTag = "kubevirtci/linux-base:" + uuid.New().String()[:10]
+		qcowImage = linuxPhaseTag
 		err := bootcProvisioner.BuildLinuxBase(linuxPhaseTag)
 		if err != nil {
 			return err
 		}
+	}
+
+	if strings.Contains(kp.Phases, "k8s") {
+		versionWithMinor, ok := versionMap[version]
+		if !ok {
+			return fmt.Errorf("Invalid version")
+		}
+
+		k8sPhaseTag := "kubevirtci/k8s-" + kp.Version + ":" + uuid.New().String()[:10]
+		qcowImage = linuxPhaseTag
+		err := bootcProvisioner.BuildK8sBase(k8sPhaseTag, versionWithMinor)
+		if err != nil {
+			return err
+		}
+	}
+
+	cf, err := os.Create("Containerfile")
+	if err != nil {
+		return err
+	}
+
+	_, err = cf.Write(containerfile)
+	if err != nil {
+		return err
+	}
+
+	err = bootcProvisioner.GenerateQcow(qcowImage)
+	if err != nil {
+		return err
+	}
+
+	err = containerRuntime.Build(target, "Containerfile", map[string]string{})
+	if err != nil {
+		return err
 	}
 
 	dnsmasq, err := kp.runDNSMasq(ctx, portMap)
@@ -189,7 +233,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	}
 
 	node, err := kp.Docker.ContainerCreate(ctx, &container.Config{
-		Image: "aerosouund/bootc-k8s-1.28:0.1.2",
+		Image: target,
 		Env: []string{
 			fmt.Sprintf("NODE_NUM=%s", nodeNum),
 		},
@@ -243,12 +287,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 			return err
 		}
 
-		versionWithMinor, ok := versionMap[version]
-		if !ok {
-			return fmt.Errorf("Invalid version")
-		}
-
-		provisionK8sOpt := k8sprovision.NewK8sProvisioner(sshClient, versionWithMinor, kp.Slim)
+		provisionK8sOpt := k8sprovision.NewK8sProvisioner(sshClient, versionMap[version], kp.Slim)
 		if err = provisionK8sOpt.Exec(); err != nil {
 			return err
 		}
@@ -931,4 +970,14 @@ func (kp *KubevirtProvider) copyDirectory(ctx context.Context, cli *client.Clien
 		return err
 	}
 	return nil
+}
+
+func DetectContainerRuntime() (string, error) {
+	if podmancri.IsAvailable() {
+		return "podman", nil
+	}
+	if dockercri.IsAvailable() {
+		return "docker", nil
+	}
+	return "", fmt.Errorf("No valid container runtime found")
 }

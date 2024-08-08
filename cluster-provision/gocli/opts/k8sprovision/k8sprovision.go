@@ -3,8 +3,6 @@ package k8sprovision
 import (
 	"embed"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
 	"time"
 
@@ -216,34 +214,4 @@ func (k *K8sProvisioner) pullImageRetry(image string) error {
 		return fmt.Errorf("reached max retries to download for %s", image)
 	}
 	return nil
-}
-
-func (k *K8sProvisioner) getPackagesVersion() (string, error) {
-	packagesVersion := k.version
-	if strings.HasSuffix(k.version, "alpha") || strings.HasSuffix(k.version, "beta") || strings.HasSuffix(k.version, "rc") {
-		k8sversion := strings.Split(k.version, ".")
-
-		url := fmt.Sprintf("https://storage.googleapis.com/kubernetes-release/release/stable-%s.%s.txt", k8sversion[0], k8sversion[1])
-		resp, err := http.Get(url)
-		if err != nil {
-			fmt.Println("Error fetching the URL:", err)
-			return "", err
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			fmt.Printf("Failed to fetch URL. HTTP status: %s\n", resp.Status)
-			return "", err
-		}
-
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Error reading the response body:", err)
-			return "", err
-		}
-
-		packagesVersion = strings.TrimPrefix(string(body), "v")
-
-	}
-	return packagesVersion, nil
 }

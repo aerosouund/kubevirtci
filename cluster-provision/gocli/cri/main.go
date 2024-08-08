@@ -7,7 +7,7 @@ type ContainerClient interface {
 	Start(containerID string) error
 	Remove(containerID string) error
 	Inspect(containerID, format string) ([]byte, error)
-	Build(tag, containerFile string) error
+	Build(tag, containerFile string, buildArgs map[string]string) error
 	Run(runArgs []string) error
 }
 

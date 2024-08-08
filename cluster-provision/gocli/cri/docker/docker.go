@@ -100,8 +100,15 @@ func (dc *DockerClient) Remove(containerID string) error {
 	return nil
 }
 
-func (dc *DockerClient) Build(tag, containerFile string) error {
-	cmd := exec.Command("docker", "build", "-t", tag, "-f", containerFile, ".")
+func (dc *DockerClient) Build(tag, containerFile string, buildArgs map[string]string) error {
+	args := []string{"build", "-t", tag}
+
+	for k, v := range buildArgs {
+		args = append(args, "--build-arg "+k+"="+v)
+	}
+
+	args = append(args, []string{"-f", containerFile, "."}...)
+	cmd := exec.Command("docker", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

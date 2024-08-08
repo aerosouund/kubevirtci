@@ -46,7 +46,7 @@ func (b *BootcProvisioner) BuildLinuxBase(tag string) error {
 		return err
 	}
 
-	err = b.cri.Build(tag, fileName)
+	err = b.cri.Build(tag, fileName, map[string]string{})
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (b *BootcProvisioner) BuildK8sBase(tag, k8sVersion string) error {
 		return err
 	}
 
-	err = b.cri.Build(tag, fileName)
+	err = b.cri.Build(tag, fileName, map[string]string{"VERSION": k8sVersion})
 	if err != nil {
 		return err
 	}
