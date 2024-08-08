@@ -286,9 +286,17 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	}
 
 	if strings.Contains(kp.Phases, "k8s") {
-		// copy provider scripts
-		if _, err = sshClient.Command("cp -r /opt/* /tmp/", true); err != nil {
+		if _, err = sshClient.Command("mkdir -p /tmp/ceph /tmp/cnao /tmp/nfs-csi /tmp/nodeports /tmp/prometheus /tmp/whereabouts /tmp/kwok", true); err != nil {
 			return err
+		}
+
+		success, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"/bin/bash", "-c", "scp -r -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 /scripts/manifests/* root@192.168.66.101:/tmp"}, os.Stdout)
+		if err != nil {
+			return err
+		}
+
+		if !success {
+			return fmt.Errorf("error copying manifests to node")
 		}
 
 		provisionK8sOpt := k8sprovision.NewK8sProvisioner(sshClient, versionMap[version], kp.Slim)
