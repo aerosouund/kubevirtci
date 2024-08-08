@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"path/filepath"
-	"strings"
 
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
@@ -20,10 +18,7 @@ var versionMap = map[string]string{
 	"1.28": "1.28.11",
 }
 
-const (
-	baseLinuxPhase = "quay.io/kubevirtci/centos9"
-	baseK8sPhase   = "quay.io/kubevirtci/centos9:2406250402-b7986c3"
-)
+const baseLinuxPhase = "quay.io/kubevirtci/centos9"
 
 // NewProvisionCommand provision given cluster
 func NewProvisionCommand() *cobra.Command {
@@ -101,28 +96,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 		}
 	}
 
-	phases, err := cmd.Flags().GetString("phases")
-	if err != nil {
-		return err
-	}
-
-	if strings.Contains(phases, "linux") {
-		base = baseLinuxPhase
-	} else {
-		base = baseK8sPhase
-	}
-
-	containerSuffix, err := cmd.Flags().GetString("container-suffix")
-	if err != nil {
-		return err
-	}
-	name := filepath.Base(versionNoMinor)
-	if len(containerSuffix) > 0 {
-		name = fmt.Sprintf("%s-%s", name, containerSuffix)
-	}
-
 	portMap := nat.PortMap{}
-
 	utils.AppendTCPIfExplicit(portMap, utils.PortSSH, cmd.Flags(), "ssh-port")
 	utils.AppendTCPIfExplicit(portMap, utils.PortVNC, cmd.Flags(), "vnc-port")
 

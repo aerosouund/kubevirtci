@@ -117,6 +117,7 @@ func NewFromRunning(dnsmasqPrefix string) (*KubevirtProvider, error) {
 }
 
 func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.CancelFunc, portMap nat.PortMap) (retErr error) {
+	k8sContainerBase := kp.Image
 	prefix := fmt.Sprintf("k8s-%s-provision", kp.Version)
 	target := fmt.Sprintf("quay.io/kubevirtci/k8s-%s", kp.Version)
 	if kp.Phases == "linux" {
@@ -152,11 +153,12 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 
 	bootcProvisioner = bootc.NewBootcProvisioner(containerRuntime)
 
-	var linuxPhaseTag string
-	var qcowImage string
+	var qcowImage, linuxPhaseTag string
+
 	if strings.Contains(kp.Phases, "linux") {
 		linuxPhaseTag = "kubevirtci/linux-base:" + uuid.New().String()[:10]
 		qcowImage = linuxPhaseTag
+		k8sContainerBase = linuxPhaseTag
 		err := bootcProvisioner.BuildLinuxBase(linuxPhaseTag)
 		if err != nil {
 			return err
@@ -170,8 +172,8 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		}
 
 		k8sPhaseTag := "kubevirtci/k8s-" + kp.Version + ":" + uuid.New().String()[:10]
-		qcowImage = linuxPhaseTag
-		err := bootcProvisioner.BuildK8sBase(k8sPhaseTag, versionWithMinor)
+		qcowImage = k8sPhaseTag
+		err := bootcProvisioner.BuildK8sBase(k8sPhaseTag, versionWithMinor, k8sContainerBase)
 		if err != nil {
 			return err
 		}
@@ -261,7 +263,9 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	if err != nil {
 		return err
 	}
+
 	containers <- node.ID
+
 	if err := kp.Docker.ContainerStart(ctx, node.ID, types.ContainerStartOptions{}); err != nil {
 		return err
 	}

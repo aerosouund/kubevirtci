@@ -2,6 +2,7 @@ package bootc
 
 import (
 	"embed"
+	"strings"
 
 	"io/fs"
 	"os"
@@ -53,12 +54,23 @@ func (b *BootcProvisioner) BuildLinuxBase(tag string) error {
 	return nil
 }
 
-func (b *BootcProvisioner) BuildK8sBase(tag, k8sVersion string) error {
+func (b *BootcProvisioner) BuildK8sBase(tag, k8sVersion, baseImage string) error {
+	fileName := "k8s.Containerfile"
+	fileWithBase := strings.Replace(string(k8sContainerfile), "LINUX_BASE", baseImage, 1)
+
+	containerFile, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
+	_, err = containerFile.Write([]byte(fileWithBase))
+	if err != nil {
+		return err
+	}
 	if err := os.Mkdir("patches", 0777); err != nil {
 		return err
 	}
 
-	err := fs.WalkDir(patches, "patches", func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(patches, "patches", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -80,16 +92,6 @@ func (b *BootcProvisioner) BuildK8sBase(tag, k8sVersion string) error {
 		}
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-	fileName := "k8s.Containerfile"
-
-	containerFile, err := os.Create(fileName)
-	if err != nil {
-		return err
-	}
-	_, err = containerFile.Write(k8sContainerfile)
 	if err != nil {
 		return err
 	}
