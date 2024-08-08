@@ -146,7 +146,6 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	switch runtime {
 	case "docker":
 		containerRuntime = dockercri.NewDockerClient()
-
 	case "podman":
 		containerRuntime = podmancri.NewPodman()
 	}
