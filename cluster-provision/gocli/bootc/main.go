@@ -2,7 +2,7 @@ package bootc
 
 import (
 	"embed"
-	_ "embed"
+
 	"io/fs"
 	"os"
 	"path/filepath"
