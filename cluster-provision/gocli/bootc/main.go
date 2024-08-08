@@ -36,7 +36,8 @@ func NewBootcProvisioner(cri cri.ContainerClient) *BootcProvisioner {
 }
 
 func (b *BootcProvisioner) BuildLinuxBase(tag string) error {
-	containerFile, err := os.Create("linux.Containerfile")
+	fileName := "linux.Containerfile"
+	containerFile, err := os.Create(fileName)
 	if err != nil {
 		return err
 	}
@@ -45,7 +46,7 @@ func (b *BootcProvisioner) BuildLinuxBase(tag string) error {
 		return err
 	}
 
-	err = b.cri.Build(tag, "linux.Containerfile")
+	err = b.cri.Build(tag, fileName)
 	if err != nil {
 		return err
 	}
@@ -82,8 +83,9 @@ func (b *BootcProvisioner) BuildK8sBase(tag, k8sVersion string) error {
 	if err != nil {
 		return err
 	}
+	fileName := "k8s.Containerfile"
 
-	containerFile, err := os.Create("k8s.Containerfile")
+	containerFile, err := os.Create(fileName)
 	if err != nil {
 		return err
 	}
@@ -92,7 +94,7 @@ func (b *BootcProvisioner) BuildK8sBase(tag, k8sVersion string) error {
 		return err
 	}
 
-	err = b.cri.Build(tag, "k8s.Containerfile")
+	err = b.cri.Build(tag, fileName)
 	if err != nil {
 		return err
 	}

@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -23,9 +22,13 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/go-connections/nat"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/bootc"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
+	dockercri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/docker"
+	podmancri "kubevirt.io/kubevirtci/cluster-provision/gocli/cri/podman"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/opts"
 	aaq "kubevirt.io/kubevirtci/cluster-provision/gocli/opts/aaq"
@@ -125,9 +128,29 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 
 	go kp.handleInterrupt(cancel, stop)
 
-	err := docker.ImagePull(kp.Docker, ctx, kp.Image, types.ImagePullOptions{})
-	if err != nil {
-		return err
+	var bootcProvisioner *bootc.BootcProvisioner
+
+	if dockercri.IsAvailable() {
+		bootcProvisioner = bootc.NewBootcProvisioner(dockercri.NewDockerClient())
+	} else {
+		if !podmancri.IsAvailable() {
+			return fmt.Errorf("No valid container runtime available")
+		}
+		bootcProvisioner = bootc.NewBootcProvisioner(podmancri.NewPodman())
+	}
+
+	// err := docker.ImagePull(kp.Docker, ctx, kp.Image, types.ImagePullOptions{})
+	// if err != nil {
+	// 	return err
+	// }
+
+	var linuxPhaseTag string
+	if strings.Contains(kp.Phases, "linux") {
+		linuxPhaseTag = "kubevirtci/linux-base:" + uuid.New().String()[:10]
+		err := bootcProvisioner.BuildLinuxBase(linuxPhaseTag)
+		if err != nil {
+			return err
+		}
 	}
 
 	dnsmasq, err := kp.runDNSMasq(ctx, portMap)
@@ -199,12 +222,6 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		return err
 	}
 
-	// Wait for ssh.sh script to exist
-	_, err = docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"bin/bash", "-c", "while [ ! -f /ssh_ready ] ; do sleep 1; done", "checking for ssh.sh script"}, os.Stdout)
-	if err != nil {
-		return err
-	}
-
 	sshClient, err := libssh.NewSSHClient(sshPort, 1, false)
 	if err != nil {
 		return err
@@ -219,13 +236,6 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	if err != nil {
 		return err
 	}
-
-	// if strings.Contains(kp.Phases, "linux") {
-	// 	provisionOpt := provisionopt.NewLinuxProvisioner(sshClient)
-	// 	if err = provisionOpt.Exec(); err != nil {
-	// 		return err
-	// 	}
-	// }
 
 	if strings.Contains(kp.Phases, "k8s") {
 		// copy provider scripts
@@ -245,11 +255,6 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	}
 
 	if _, err = sshClient.Command("sudo shutdown now -h", true); err != nil {
-		return err
-	}
-
-	_, err = docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"rm", "/ssh_ready"}, io.Discard)
-	if err != nil {
 		return err
 	}
 
