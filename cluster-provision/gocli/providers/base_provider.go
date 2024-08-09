@@ -167,7 +167,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		}
 	}
 
-	if strings.Contains(kp.Phases, "k8s") {
+	if false {
 		versionWithMinor, ok := versionMap[version]
 		if !ok {
 			return fmt.Errorf("Invalid version")
