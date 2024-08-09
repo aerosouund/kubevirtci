@@ -37,18 +37,8 @@ func NewBootcProvisioner(cri cri.ContainerClient) *BootcProvisioner {
 }
 
 func (b *BootcProvisioner) BuildLinuxBase(tag string) error {
-	fileName := "linux.Containerfile"
+	fileName := "provision-system.sh"
 	containerFile, err := os.Create(fileName)
-	if err != nil {
-		return err
-	}
-	_, err = containerFile.Write(linuxContainerfile)
-	if err != nil {
-		return err
-	}
-
-	fileName = "provision-system.sh"
-	containerFile, err = os.Create(fileName)
 	if err != nil {
 		return err
 	}
@@ -63,6 +53,16 @@ func (b *BootcProvisioner) BuildLinuxBase(tag string) error {
 		return err
 	}
 	_, err = containerFile.Write(provisionSystemService)
+	if err != nil {
+		return err
+	}
+
+	fileName = "linux.Containerfile"
+	containerFile, err = os.Create(fileName)
+	if err != nil {
+		return err
+	}
+	_, err = containerFile.Write(linuxContainerfile)
 	if err != nil {
 		return err
 	}
