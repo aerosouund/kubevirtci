@@ -124,11 +124,7 @@ func (b *BootcProvisioner) BuildK8sBase(tag, k8sVersion, baseImage string) error
 }
 
 func (b *BootcProvisioner) GenerateQcow(image string) error {
-	err := os.Mkdir("output", 0777)
-	if err != nil {
-		return err
-	}
-
+	_ = os.Mkdir("output", 0777)
 	runArgs := []string{"--rm", "-it",
 		"--privileged",
 		"--security-opt label=type:unconfined_t",
@@ -140,7 +136,7 @@ func (b *BootcProvisioner) GenerateQcow(image string) error {
 		"--local",
 		image}
 
-	err = b.cri.Run(runArgs)
+	err := b.cri.Run(runArgs)
 	if err != nil {
 		return err
 	}
