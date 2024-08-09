@@ -66,7 +66,10 @@ var versionMap = map[string]string{
 //go:embed Containerfile
 var containerfile []byte
 
-var containerRuntime cri.ContainerClient
+var (
+	containerRuntime cri.ContainerClient
+	sshClient        libssh.Client
+)
 
 func NewKubevirtProvider(k8sversion string, image string, cli *client.Client,
 	options []KubevirtProviderOption) *KubevirtProvider {
@@ -198,93 +201,93 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		return err
 	}
 
-	dnsmasq, err := kp.runDNSMasq(ctx, portMap)
-	if err != nil {
-		return err
-	}
-
-	kp.DNSMasq = dnsmasq
-	containers <- dnsmasq
-
-	dm, err := kp.Docker.ContainerInspect(context.Background(), dnsmasq)
-	if err != nil {
-		return err
-	}
-
-	sshPort, err := utils.GetPublicPort(utils.PortSSH, dm.NetworkSettings.Ports)
-	if err != nil {
-		return err
-	}
-
-	nodeName := kp.nodeNameFromIndex(1)
-	nodeNum := fmt.Sprintf("%02d", 1)
-
-	vol, err := kp.Docker.VolumeCreate(ctx, volume.CreateOptions{
-		Name: fmt.Sprintf("%s-%s", prefix, nodeName),
-	})
-	if err != nil {
-		return err
-	}
-	volumes <- vol.Name
-	registryVol, err := kp.Docker.VolumeCreate(ctx, volume.CreateOptions{
-		Name: fmt.Sprintf("%s-%s", prefix, "registry"),
-	})
-	if err != nil {
-		return err
-	}
-
-	node, err := kp.Docker.ContainerCreate(ctx, &container.Config{
-		Image: target,
-		Env: []string{
-			fmt.Sprintf("NODE_NUM=%s", nodeNum),
-		},
-		Volumes: map[string]struct{}{
-			"/var/run/disk":     {},
-			"/var/lib/registry": {},
-		},
-		Cmd: []string{"/bin/bash", "-c", fmt.Sprintf("/vm.sh --memory %s --cpu %s %s", kp.Memory, strconv.Itoa(int(kp.CPU)), kp.QemuArgs)},
-	}, &container.HostConfig{
-		Mounts: []mount.Mount{
-			{
-				Type:   "volume",
-				Source: vol.Name,
-				Target: "/var/run/disk",
-			},
-			{
-				Type:   "volume",
-				Source: registryVol.Name,
-				Target: "/var/lib/registry",
-			},
-		},
-		Privileged:  true,
-		NetworkMode: container.NetworkMode("container:" + kp.DNSMasq),
-	}, nil, nil, kp.nodeContainer(kp.Version, nodeName))
-	if err != nil {
-		return err
-	}
-
-	containers <- node.ID
-
-	if err := kp.Docker.ContainerStart(ctx, node.ID, types.ContainerStartOptions{}); err != nil {
-		return err
-	}
-
-	sshClient, err := libssh.NewSSHClient(sshPort, 1, false)
-	if err != nil {
-		return err
-	}
-
-	rootkey := rootkey.NewRootKey(sshClient)
-	if err = rootkey.Exec(); err != nil {
-		return err
-	}
-
-	sshClient, err = libssh.NewSSHClient(sshPort, 1, true)
-	if err != nil {
-		return err
-	}
-
 	if strings.Contains(kp.Phases, "k8s") {
+		dnsmasq, err := kp.runDNSMasq(ctx, portMap)
+		if err != nil {
+			return err
+		}
+
+		kp.DNSMasq = dnsmasq
+		containers <- dnsmasq
+
+		dm, err := kp.Docker.ContainerInspect(context.Background(), dnsmasq)
+		if err != nil {
+			return err
+		}
+
+		sshPort, err := utils.GetPublicPort(utils.PortSSH, dm.NetworkSettings.Ports)
+		if err != nil {
+			return err
+		}
+
+		nodeName := kp.nodeNameFromIndex(1)
+		nodeNum := fmt.Sprintf("%02d", 1)
+
+		vol, err := kp.Docker.VolumeCreate(ctx, volume.CreateOptions{
+			Name: fmt.Sprintf("%s-%s", prefix, nodeName),
+		})
+		if err != nil {
+			return err
+		}
+		volumes <- vol.Name
+		registryVol, err := kp.Docker.VolumeCreate(ctx, volume.CreateOptions{
+			Name: fmt.Sprintf("%s-%s", prefix, "registry"),
+		})
+		if err != nil {
+			return err
+		}
+
+		node, err := kp.Docker.ContainerCreate(ctx, &container.Config{
+			Image: target,
+			Env: []string{
+				fmt.Sprintf("NODE_NUM=%s", nodeNum),
+			},
+			Volumes: map[string]struct{}{
+				"/var/run/disk":     {},
+				"/var/lib/registry": {},
+			},
+			Cmd: []string{"/bin/bash", "-c", fmt.Sprintf("/vm.sh --memory %s --cpu %s %s", kp.Memory, strconv.Itoa(int(kp.CPU)), kp.QemuArgs)},
+		}, &container.HostConfig{
+			Mounts: []mount.Mount{
+				{
+					Type:   "volume",
+					Source: vol.Name,
+					Target: "/var/run/disk",
+				},
+				{
+					Type:   "volume",
+					Source: registryVol.Name,
+					Target: "/var/lib/registry",
+				},
+			},
+			Privileged:  true,
+			NetworkMode: container.NetworkMode("container:" + kp.DNSMasq),
+		}, nil, nil, kp.nodeContainer(kp.Version, nodeName))
+		if err != nil {
+			return err
+		}
+
+		containers <- node.ID
+
+		if err := kp.Docker.ContainerStart(ctx, node.ID, types.ContainerStartOptions{}); err != nil {
+			return err
+		}
+
+		sshClient, err := libssh.NewSSHClient(sshPort, 1, false)
+		if err != nil {
+			return err
+		}
+
+		rootkey := rootkey.NewRootKey(sshClient)
+		if err = rootkey.Exec(); err != nil {
+			return err
+		}
+
+		sshClient, err = libssh.NewSSHClient(sshPort, 1, true)
+		if err != nil {
+			return err
+		}
+
 		if _, err = sshClient.Command("mkdir -p /tmp/ceph /tmp/cnao /tmp/nfs-csi /tmp/nodeports /tmp/prometheus /tmp/whereabouts /tmp/kwok", true); err != nil {
 			return err
 		}
@@ -302,47 +305,47 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		if err = provisionK8sOpt.Exec(); err != nil {
 			return err
 		}
-	}
 
-	if _, err = sshClient.Command("sudo shutdown now -h", true); err != nil {
-		return err
-	}
+		if _, err = sshClient.Command("sudo shutdown now -h", true); err != nil {
+			return err
+		}
 
-	logrus.Info("waiting for the node to stop")
-	okChan, errChan := kp.Docker.ContainerWait(ctx, kp.nodeContainer(kp.Version, nodeName), container.WaitConditionNotRunning)
-	select {
-	case <-okChan:
-	case err := <-errChan:
+		logrus.Info("waiting for the node to stop")
+		okChan, errChan := kp.Docker.ContainerWait(ctx, kp.nodeContainer(kp.Version, nodeName), container.WaitConditionNotRunning)
+		select {
+		case <-okChan:
+		case err := <-errChan:
+			if err != nil {
+				return fmt.Errorf("waiting for the node to stop failed: %v", err)
+			}
+		}
+
+		if len(kp.AdditionalKernelArgs) > 0 {
+			dir, err := os.MkdirTemp("", "gocli")
+			if err != nil {
+				return fmt.Errorf("failed creating a temporary directory: %v", err)
+			}
+			defer os.RemoveAll(dir)
+			if err := os.WriteFile(filepath.Join(dir, "additional.kernel.args"), []byte(shellescape.QuoteCommand(kp.AdditionalKernelArgs)), 0666); err != nil {
+				return fmt.Errorf("failed creating additional.kernel.args file: %v", err)
+			}
+			if err := kp.copyDirectory(ctx, kp.Docker, node.ID, dir, "/"); err != nil {
+				return fmt.Errorf("failed copying additional kernel arguments into the container: %v", err)
+			}
+		}
+
+		logrus.Infof("Commiting the node as %s", target)
+		_, err = kp.Docker.ContainerCommit(ctx, target, types.ContainerCommitOptions{
+			Reference: target,
+			Comment:   "PROVISION SUCCEEDED",
+			Author:    "gocli",
+			Changes:   nil,
+			Pause:     false,
+			Config:    nil,
+		})
 		if err != nil {
-			return fmt.Errorf("waiting for the node to stop failed: %v", err)
+			return fmt.Errorf("commiting the node failed: %v", err)
 		}
-	}
-
-	if len(kp.AdditionalKernelArgs) > 0 {
-		dir, err := os.MkdirTemp("", "gocli")
-		if err != nil {
-			return fmt.Errorf("failed creating a temporary directory: %v", err)
-		}
-		defer os.RemoveAll(dir)
-		if err := os.WriteFile(filepath.Join(dir, "additional.kernel.args"), []byte(shellescape.QuoteCommand(kp.AdditionalKernelArgs)), 0666); err != nil {
-			return fmt.Errorf("failed creating additional.kernel.args file: %v", err)
-		}
-		if err := kp.copyDirectory(ctx, kp.Docker, node.ID, dir, "/"); err != nil {
-			return fmt.Errorf("failed copying additional kernel arguments into the container: %v", err)
-		}
-	}
-
-	logrus.Infof("Commiting the node as %s", target)
-	_, err = kp.Docker.ContainerCommit(ctx, node.ID, types.ContainerCommitOptions{
-		Reference: target,
-		Comment:   "PROVISION SUCCEEDED",
-		Author:    "gocli",
-		Changes:   nil,
-		Pause:     false,
-		Config:    nil,
-	})
-	if err != nil {
-		return fmt.Errorf("commiting the node failed: %v", err)
 	}
 
 	return nil
