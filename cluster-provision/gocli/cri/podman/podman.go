@@ -186,6 +186,8 @@ func (dc *Podman) Build(tag, containerFile string, buildArgs map[string]string) 
 	args = append(args, []string{"-f", containerFile, "."}...)
 
 	cmd := exec.Command("podman", args...)
+	logrus.Info("Running: ", cmd.String())
+
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -198,6 +200,8 @@ func (dc *Podman) Build(tag, containerFile string, buildArgs map[string]string) 
 func (dc *Podman) Run(runArgs []string) error {
 	runArgs = append([]string{"run"}, runArgs...)
 	cmd := exec.Command("podman", runArgs...)
+	logrus.Info("Running: ", cmd.String())
+
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

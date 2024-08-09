@@ -109,6 +109,8 @@ func (dc *DockerClient) Build(tag, containerFile string, buildArgs map[string]st
 
 	args = append(args, []string{"-f", containerFile, "."}...)
 	cmd := exec.Command("docker", args...)
+	logrus.Info("Running: ", cmd.String())
+
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -121,6 +123,8 @@ func (dc *DockerClient) Build(tag, containerFile string, buildArgs map[string]st
 func (dc *DockerClient) Run(runArgs []string) error {
 	runArgs = append([]string{"run"}, runArgs...)
 	cmd := exec.Command("docker", runArgs...)
+	logrus.Info("Running: ", cmd.String())
+
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
