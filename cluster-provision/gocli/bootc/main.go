@@ -23,7 +23,7 @@ var provisionSystem []byte
 //go:embed k8s-container/provision-system.service
 var provisionSystemService []byte
 
-//go:embed k8s-container/patches
+//go:embed k8s-container/patches/*
 var patches embed.FS
 
 type BootcProvisioner struct {
@@ -43,6 +43,26 @@ func (b *BootcProvisioner) BuildLinuxBase(tag string) error {
 		return err
 	}
 	_, err = containerFile.Write(linuxContainerfile)
+	if err != nil {
+		return err
+	}
+
+	fileName = "provision-system.sh"
+	containerFile, err = os.Create(fileName)
+	if err != nil {
+		return err
+	}
+	_, err = containerFile.Write(provisionSystem)
+	if err != nil {
+		return err
+	}
+
+	fileName = "provision-system.service"
+	containerFile, err = os.Create(fileName)
+	if err != nil {
+		return err
+	}
+	_, err = containerFile.Write(provisionSystemService)
 	if err != nil {
 		return err
 	}
@@ -70,7 +90,7 @@ func (b *BootcProvisioner) BuildK8sBase(tag, k8sVersion, baseImage string) error
 		return err
 	}
 
-	err = fs.WalkDir(patches, "patches", func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(patches, "k8s-container/patches", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
