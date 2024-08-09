@@ -43,7 +43,7 @@ func NewProvisionCommand() *cobra.Command {
 }
 
 func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
-	var base string
+	// var base string
 	versionNoMinor := args[0]
 
 	allowedVersions := []string{"1.30", "1.29", "1.28"}
@@ -106,7 +106,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
-	kp := providers.NewKubevirtProvider(versionNoMinor, base, cli, opts)
+	kp := providers.NewKubevirtProvider(versionNoMinor, baseLinuxPhase, cli, opts)
 	err = kp.Provision(ctx, cancel, portMap)
 	if err != nil {
 		return err
