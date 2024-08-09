@@ -155,7 +155,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	var qcowImage, linuxPhaseTag string
 
 	if true {
-		linuxPhaseTag = "kubevirtci/linux-base:" + uuid.New().String()[:17]
+		linuxPhaseTag = "kubevirtci/linux-base:" + uuid.New().String()[:13]
 		qcowImage = linuxPhaseTag
 		k8sContainerBase = linuxPhaseTag
 		err := bootcProvisioner.BuildLinuxBase(linuxPhaseTag)
@@ -170,7 +170,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 			return fmt.Errorf("Invalid version")
 		}
 
-		k8sPhaseTag := "kubevirtci/k8s-" + kp.Version + ":" + uuid.New().String()[:17]
+		k8sPhaseTag := "kubevirtci/k8s-" + kp.Version + ":" + uuid.New().String()[:13]
 		qcowImage = k8sPhaseTag
 		err := bootcProvisioner.BuildK8sBase(k8sPhaseTag, versionWithMinor, k8sContainerBase)
 		if err != nil {
