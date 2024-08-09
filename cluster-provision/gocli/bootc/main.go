@@ -23,6 +23,9 @@ var provisionSystem []byte
 //go:embed k8s-container/provision-system.service
 var provisionSystemService []byte
 
+//go:embed k8s-container/config.toml
+var configToml []byte
+
 //go:embed k8s-container/patches/*
 var patches embed.FS
 
@@ -125,18 +128,33 @@ func (b *BootcProvisioner) BuildK8sBase(tag, k8sVersion, baseImage string) error
 
 func (b *BootcProvisioner) GenerateQcow(image string) error {
 	_ = os.Mkdir("output", 0777)
+
+	configFileName := "config.toml"
+	conf, err := os.Create(configFileName)
+	if err != nil {
+		return err
+	}
+	_, err = conf.Write(configToml)
+	if err != nil {
+		return err
+	}
+
 	runArgs := []string{"--rm", "-it",
 		"--privileged",
-		"--security-opt label=type:unconfined_t",
-		"-v output:/output",
-		"-v /var/lib/containers/storage:/var/lib/containers/storage",
-		"-v config.toml:/config.toml:ro",
+		"--security-opt",
+		"label=type:unconfined_t",
+		"-v",
+		"output:/output",
+		"-v",
+		"/var/lib/containers/storage:/var/lib/containers/storage",
+		"-v",
+		"config.toml:/config.toml:ro",
 		"quay.io/centos-bootc/bootc-image-builder:latest",
 		"--type qcow2",
 		"--local",
 		image}
 
-	err := b.cri.Run(runArgs)
+	err = b.cri.Run(runArgs)
 	if err != nil {
 		return err
 	}
