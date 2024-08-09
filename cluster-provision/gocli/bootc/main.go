@@ -148,7 +148,7 @@ func (b *BootcProvisioner) GenerateQcow(image string) error {
 		"-v",
 		"/var/lib/containers/storage:/var/lib/containers/storage",
 		"-v",
-		"config.toml:/config.toml:ro",
+		"./config.toml:/config.toml:ro",
 		"quay.io/centos-bootc/bootc-image-builder:latest",
 		"--type",
 		"qcow2",
