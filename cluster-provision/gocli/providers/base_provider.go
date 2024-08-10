@@ -167,7 +167,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		}
 	}
 
-	if false {
+	if true {
 		versionWithMinor, ok := versionMap[version]
 		if !ok {
 			return fmt.Errorf("Invalid version")

@@ -28,4 +28,4 @@ RUN dnf install -y cri-o patch
 RUN mkdir -p /provision/kubeadm-patches
 
 # COPY manifests /opt/
-COPY patches /provision/kubeadm-patches
+# COPY patches /provision/kubeadm-patches
