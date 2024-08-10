@@ -101,7 +101,7 @@ func (dc *DockerClient) Remove(containerID string) error {
 }
 
 func (dc *DockerClient) Build(tag, containerFile string, buildArgs map[string]string) error {
-	args := []string{"build", "-t", tag}
+	args := []string{"build", "--pull=false", "-t", tag}
 
 	for k, v := range buildArgs {
 		args = append(args, "--build-arg "+k+"="+v)
