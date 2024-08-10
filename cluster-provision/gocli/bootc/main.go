@@ -89,9 +89,7 @@ func (b *BootcProvisioner) BuildK8sBase(tag, k8sVersion, baseImage string) error
 	if err != nil {
 		return err
 	}
-	if err := os.Mkdir("patches", 0777); err != nil {
-		return err
-	}
+	_ = os.Mkdir("patches", 0777)
 
 	err = fs.WalkDir(patches, "k8s-container/patches", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
