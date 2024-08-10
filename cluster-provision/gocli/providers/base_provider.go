@@ -173,7 +173,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 			return fmt.Errorf("Invalid version")
 		}
 
-		k8sPhaseTag := "kubevirtci/k8s-" + version + ":" + uuid.New().String()[:13]
+		k8sPhaseTag := "kubevirtci/k8s-phase-" + version + ":" + uuid.New().String()[:13]
 		qcowImage = k8sPhaseTag
 		err := bootcProvisioner.BuildK8sBase(k8sPhaseTag, versionWithMinor, k8sContainerBase)
 		if err != nil {
@@ -195,8 +195,9 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	if err != nil {
 		return err
 	}
+	clusterImage := "quay.io/kubevirtci/k8s-" + version + ":" + uuid.New().String()[:13]
 
-	err = dockercri.NewDockerClient().Build(target, "Containerfile", map[string]string{})
+	err = dockercri.NewDockerClient().Build(clusterImage, "Containerfile", map[string]string{})
 	if err != nil {
 		return err
 	}
@@ -238,7 +239,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		}
 
 		node, err := kp.Docker.ContainerCreate(ctx, &container.Config{
-			Image: target,
+			Image: clusterImage,
 			Env: []string{
 				fmt.Sprintf("NODE_NUM=%s", nodeNum),
 			},
