@@ -144,7 +144,7 @@ func (b *BootcProvisioner) GenerateQcow(image string) error {
 		"--security-opt",
 		"label=type:unconfined_t",
 		"-v",
-		"output:/output",
+		"./output:/output",
 		"-v",
 		"/var/lib/containers/storage:/var/lib/containers/storage",
 		"-v",

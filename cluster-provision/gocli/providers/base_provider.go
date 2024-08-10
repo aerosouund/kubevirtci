@@ -155,11 +155,11 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 
 	bootcProvisioner = bootc.NewBootcProvisioner(containerRuntime)
 
-	var linuxPhaseTag string
+	var qcowImage, linuxPhaseTag string
 
 	if true {
 		linuxPhaseTag = "kubevirtci/linux-base:" + uuid.New().String()[:13]
-		// qcowImage = linuxPhaseTag
+		qcowImage = linuxPhaseTag
 		k8sContainerBase = linuxPhaseTag
 		err := bootcProvisioner.BuildLinuxBase(linuxPhaseTag)
 		if err != nil {
@@ -174,7 +174,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		}
 
 		k8sPhaseTag := "kubevirtci/k8s-" + kp.Version + ":" + uuid.New().String()[:13]
-		// qcowImage = k8sPhaseTag
+		qcowImage = k8sPhaseTag
 		err := bootcProvisioner.BuildK8sBase(k8sPhaseTag, versionWithMinor, k8sContainerBase)
 		if err != nil {
 			return err
@@ -191,10 +191,10 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		return err
 	}
 
-	// err = bootcProvisioner.GenerateQcow(qcowImage)
-	// if err != nil {
-	// 	return err
-	// }
+	err = bootcProvisioner.GenerateQcow(qcowImage)
+	if err != nil {
+		return err
+	}
 
 	err = containerRuntime.Build(target, "Containerfile", map[string]string{})
 	if err != nil {
