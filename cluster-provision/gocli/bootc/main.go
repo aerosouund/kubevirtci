@@ -153,7 +153,7 @@ func (b *BootcProvisioner) GenerateQcow(image string) error {
 		"--type",
 		"qcow2",
 		"--local",
-		image}
+		"localhost/" + image}
 
 	err = b.cri.Run(runArgs)
 	if err != nil {
