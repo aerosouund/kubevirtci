@@ -173,7 +173,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 			return fmt.Errorf("Invalid version")
 		}
 
-		k8sPhaseTag := "kubevirtci/k8s-" + kp.Version + ":" + uuid.New().String()[:13]
+		k8sPhaseTag := "kubevirtci/k8s-" + version + ":" + uuid.New().String()[:13]
 		qcowImage = k8sPhaseTag
 		err := bootcProvisioner.BuildK8sBase(k8sPhaseTag, versionWithMinor, k8sContainerBase)
 		if err != nil {
