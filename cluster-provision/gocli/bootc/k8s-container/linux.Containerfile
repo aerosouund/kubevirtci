@@ -25,6 +25,7 @@ RUN mkdir -p $KUBEVIRTCI_SHARED_DIR \
 
 RUN dnf install -y "kernel-modules-5.14.0-480.el9.x86_64" \
     && dnf install -y patch \
+    && dnf install -y curl \
     && systemctl enable provision-system.service \
     && dnf -y remove firewalld \
     && dnf -y install iscsi-initiator-utils \
