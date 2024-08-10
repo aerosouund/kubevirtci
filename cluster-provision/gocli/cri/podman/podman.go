@@ -180,7 +180,7 @@ func (dc *Podman) Build(tag, containerFile string, buildArgs map[string]string) 
 	args := []string{"build", "-t", tag}
 
 	for k, v := range buildArgs {
-		args = append(args, "--build-arg "+k+"="+v)
+		args = append(args, "--build-arg", k+"="+v)
 	}
 
 	args = append(args, []string{"-f", containerFile, "."}...)
