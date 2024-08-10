@@ -987,11 +987,11 @@ func (kp *KubevirtProvider) copyDirectory(ctx context.Context, cli *client.Clien
 }
 
 func DetectContainerRuntime() (string, error) {
-	if dockercri.IsAvailable() {
-		return "docker", nil
-	}
 	if podmancri.IsAvailable() {
 		return "podman", nil
+	}
+	if dockercri.IsAvailable() {
+		return "docker", nil
 	}
 
 	return "", fmt.Errorf("No valid container runtime found")
