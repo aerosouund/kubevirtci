@@ -139,7 +139,7 @@ func (b *BootcProvisioner) GenerateQcow(image string) error {
 		return err
 	}
 
-	runArgs := []string{"--rm", "-it",
+	runArgs := []string{"--rm",
 		"--privileged",
 		"--security-opt",
 		"label=type:unconfined_t",
