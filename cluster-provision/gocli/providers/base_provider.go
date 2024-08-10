@@ -190,12 +190,11 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	if err != nil {
 		return err
 	}
-	fmt.Println(qcowImage)
 
-	// err = bootcProvisioner.GenerateQcow(qcowImage)
-	// if err != nil {
-	// 	return err
-	// }
+	err = bootcProvisioner.GenerateQcow(qcowImage)
+	if err != nil {
+		return err
+	}
 
 	err = dockercri.NewDockerClient().Build(target, "Containerfile", map[string]string{})
 	if err != nil {
