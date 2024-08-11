@@ -336,7 +336,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		}
 
 		logrus.Infof("Commiting the node as %s", target)
-		_, err = kp.Docker.ContainerCommit(ctx, target, types.ContainerCommitOptions{
+		_, err = kp.Docker.ContainerCommit(ctx, node.ID, types.ContainerCommitOptions{
 			Reference: target,
 			Comment:   "PROVISION SUCCEEDED",
 			Author:    "gocli",
