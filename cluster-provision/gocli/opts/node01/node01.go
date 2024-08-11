@@ -37,7 +37,7 @@ func (n *Node01Provisioner) Exec() error {
 		`[ -f /sys/fs/cgroup/cgroup.controllers ] && mkdir -p /etc/crio/crio.conf.d && echo '` + string(cgroupv2) + `' |  tee /etc/crio/crio.conf.d/00-cgroupv2.conf > /dev/null &&  sed -i 's/--cgroup-driver=systemd/--cgroup-driver=cgroupfs/' /etc/sysconfig/kubelet && systemctl stop kubelet && systemctl restart crio && systemctl start kubelet`,
 		"while [[ $(systemctl status crio | grep -c active) -eq 0 ]]; do sleep 2; done",
 		"swapoff -a",
-		"until ip address show dev enp0s2 | grep global | grep inet6; do sleep 1; done",
+		// "until ip address show dev enp0s2 | grep global | grep inet6; do sleep 1; done",
 		`kubeadm init --config /etc/kubernetes/kubeadm.conf -v5`,
 		`kubectl --kubeconfig=/etc/kubernetes/admin.conf patch deployment coredns -n kube-system -p "$(cat /provision/kubeadm-patches/add-security-context-deployment-patch.yaml)"`,
 		`kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f /provision/cni.yaml`,
