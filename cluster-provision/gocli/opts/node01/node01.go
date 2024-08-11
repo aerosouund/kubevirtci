@@ -21,10 +21,10 @@ func NewNode01Provisioner(sc libssh.Client) *Node01Provisioner {
 }
 
 func (n *Node01Provisioner) Exec() error {
-	cgroupv2, err := f.ReadFile("conf/00-cgroupv2.conf")
-	if err != nil {
-		return err
-	}
+	// cgroupv2, err := f.ReadFile("conf/00-cgroupv2.conf")
+	// if err != nil {
+	// 	return err
+	// }
 	advAudit, err := f.ReadFile("conf/adv-audit.yaml")
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func (n *Node01Provisioner) Exec() error {
 		`if [ -f /home/vagrant/enable_audit ]; then echo '` + string(advAudit) + `' | tee /etc/kubernetes/audit/adv-audit.yaml > /dev/null; fi`,
 		`timeout=30; interval=5; while ! hostnamectl | grep Transient; do echo "Waiting for dhclient to set the hostname from dnsmasq"; sleep $interval; timeout=$((timeout - interval)); [ $timeout -le 0 ] && exit 1; done`,
 		`mkdir -p /etc/crio/crio.conf.d`,
-		`[ -f /sys/fs/cgroup/cgroup.controllers ] && mkdir -p /etc/crio/crio.conf.d && echo '` + string(cgroupv2) + `' |  tee /etc/crio/crio.conf.d/00-cgroupv2.conf > /dev/null &&  sed -i 's/--cgroup-driver=systemd/--cgroup-driver=cgroupfs/' /etc/sysconfig/kubelet && systemctl stop kubelet && systemctl restart crio && systemctl start kubelet`,
+		// `[ -f /sys/fs/cgroup/cgroup.controllers ] && mkdir -p /etc/crio/crio.conf.d && echo '` + string(cgroupv2) + `' |  tee /etc/crio/crio.conf.d/00-cgroupv2.conf > /dev/null &&  sed -i 's/--cgroup-driver=systemd/--cgroup-driver=cgroupfs/' /etc/sysconfig/kubelet && systemctl stop kubelet && systemctl restart crio && systemctl start kubelet`,
 		"while [[ $(systemctl status crio | grep -c active) -eq 0 ]]; do sleep 2; done",
 		"swapoff -a",
 		// "until ip address show dev enp0s2 | grep global | grep inet6; do sleep 1; done",
