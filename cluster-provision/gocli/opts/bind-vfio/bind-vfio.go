@@ -21,6 +21,9 @@ func NewBindVfioOpt(sshClient libssh.Client, id string) *BindVfioOpt {
 }
 
 func (o *BindVfioOpt) Exec() error {
+	if _, err := o.sshClient.Command("yum install lspci", true); err != nil {
+		return err
+	}
 	addr, err := o.sshClient.Command("lspci -D -d "+o.pciID, false)
 	if err != nil {
 		return err
