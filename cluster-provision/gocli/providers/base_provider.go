@@ -203,11 +203,12 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	if err != nil {
 		return err
 	}
+	fmt.Println(qcowImage)
 
-	err = bootcProvisioner.GenerateQcow(qcowImage)
-	if err != nil {
-		return err
-	}
+	// err = bootcProvisioner.GenerateQcow(qcowImage)
+	// if err != nil {
+	// 	return err
+	// }
 	clusterImage := "quay.io/kubevirtci/k8s-" + version + ":" + uuid.New().String()[:13]
 
 	err = dockercri.NewDockerClient().Build(clusterImage, "Containerfile", map[string]string{})
