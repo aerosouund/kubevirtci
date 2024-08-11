@@ -21,7 +21,7 @@ func NewBindVfioOpt(sshClient libssh.Client, id string) *BindVfioOpt {
 }
 
 func (o *BindVfioOpt) Exec() error {
-	if _, err := o.sshClient.Command("yum install pciutils", true); err != nil {
+	if _, err := o.sshClient.Command("yum install pciutils -y", true); err != nil {
 		return err
 	}
 	addr, err := o.sshClient.Command("lspci -D -d "+o.pciID, false)
