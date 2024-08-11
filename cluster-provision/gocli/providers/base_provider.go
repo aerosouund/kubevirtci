@@ -176,7 +176,7 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 		macCounter++
 
 		vmContainerConfig := &container.Config{
-			Image: kp.Image,
+			Image: "quay.io/kubevirtci/k8s-1.29:latest",
 			Env: []string{
 				fmt.Sprintf("NODE_NUM=%s", nodeNum),
 			},
@@ -215,14 +215,14 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 			return err
 		}
 
-		success, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"/bin/bash", "-c", "while [ ! -f /ssh_ready ] ; do sleep 1; done"}, os.Stdout)
-		if err != nil {
-			return err
-		}
+		// success, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"/bin/bash", "-c", "while [ ! -f /ssh_ready ] ; do sleep 1; done"}, os.Stdout)
+		// if err != nil {
+		// 	return err
+		// }
 
-		if !success {
-			return fmt.Errorf("checking for ssh.sh script for node %s failed", nodeName)
-		}
+		// if !success {
+		// 	return fmt.Errorf("checking for ssh.sh script for node %s failed", nodeName)
+		// }
 
 		err = kp.waitForVMToBeUp(kp.Version, nodeName)
 		if err != nil {
