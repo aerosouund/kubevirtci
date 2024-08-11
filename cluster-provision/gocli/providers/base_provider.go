@@ -66,6 +66,9 @@ var versionMap = map[string]string{
 //go:embed Containerfile
 var containerfile []byte
 
+//go:embed vm.sh
+var vmSh []byte
+
 var (
 	containerRuntime cri.ContainerClient
 	sshClient        libssh.Client
@@ -187,6 +190,16 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	}
 
 	_, err = cf.Write(containerfile)
+	if err != nil {
+		return err
+	}
+
+	vmsh, err := os.Create("vm.sh")
+	if err != nil {
+		return err
+	}
+
+	_, err = vmsh.Write(vmSh)
 	if err != nil {
 		return err
 	}
