@@ -80,6 +80,25 @@ func (k *K8sProvisioner) Exec() error {
 	if err != nil {
 		return err
 	}
+	etcdPatch, err := patchFs.ReadFile("patches/etcd.yaml")
+	if err != nil {
+		return err
+	}
+
+	apiServerPatch, err := patchFs.ReadFile("patches/kube-apiserver.yaml")
+	if err != nil {
+		return err
+	}
+
+	controllerManagerPatch, err := patchFs.ReadFile("patches/kube-controller-manager.yaml")
+	if err != nil {
+		return err
+	}
+
+	schedulerPatch, err := patchFs.ReadFile("patches/kube-scheduler.yaml")
+	if err != nil {
+		return err
+	}
 
 	kubeAdm, err := f.ReadFile("conf/kubeadm.conf")
 	if err != nil {
