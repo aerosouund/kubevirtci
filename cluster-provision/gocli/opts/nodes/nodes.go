@@ -35,7 +35,7 @@ func (n *NodesProvisioner) Exec() error {
 		"systemctl daemon-reload &&  service kubelet restart",
 		// "if [[ $? -ne 0 ]]; then && rm -rf /var/lib/kubelet/cpu_manager_state && service kubelet restart; fi",
 		"swapoff -a",
-		"until ip address show dev eth0 | grep global | grep inet6; do sleep 1; done",
+		"until ip address show dev enp0s2 | grep global | grep inet6; do sleep 1; done",
 		"kubeadm join --token abcdef.1234567890123456 192.168.66.101:6443 --ignore-preflight-errors=all --discovery-token-unsafe-skip-ca-verification=true",
 		"mkdir -p /var/lib/rook",
 		"chcon -t container_file_t /var/lib/rook",
