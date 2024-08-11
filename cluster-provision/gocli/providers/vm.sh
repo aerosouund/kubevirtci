@@ -178,7 +178,6 @@ exec qemu-system-x86_64 -enable-kvm \
   -device virtio-net-pci,netdev=network0,mac=52:55:00:d1:55:${n} \
   -netdev tap,id=network0,ifname=tap${n},script=no,downscript=no \
   -device virtio-rng-pci \
-  -snapshot \
   -drive file=/disk.qcow2,if=virtio,cache=unsafe \
   -vnc :${n} -cpu host,migratable=no,+invtsc -m ${MEMORY} -smp ${CPU} ${numa_arg} \
   -serial pty -M q35,accel=kvm,kernel_irqchip=split \
