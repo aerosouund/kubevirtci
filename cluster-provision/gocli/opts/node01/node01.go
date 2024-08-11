@@ -40,7 +40,7 @@ func (n *Node01Provisioner) Exec() error {
 		// "until ip address show dev enp0s2 | grep global | grep inet6; do sleep 1; done",
 		`kubeadm init --config /etc/kubernetes/kubeadm.conf -v5`,
 		`kubectl --kubeconfig=/etc/kubernetes/admin.conf patch deployment coredns -n kube-system -p "$(cat /etc/provision/kubeadm-patches/add-security-context-deployment-patch.yaml)"`,
-		`kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f /provision/cni.yaml`,
+		`kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f /etc/provision/cni.yaml`,
 		`kubectl --kubeconfig=/etc/kubernetes/admin.conf taint nodes node01 node-role.kubernetes.io/control-plane:NoSchedule-`,
 		`kubectl --kubeconfig=/etc/kubernetes/admin.conf get nodes --no-headers; kubectl_rc=$?; retry_counter=0; while [[ $retry_counter -lt 20 && $kubectl_rc -ne 0 ]]; do sleep 10; echo "Waiting for api server to be available...";  kubectl --kubeconfig=/etc/kubernetes/admin.conf get nodes --no-headers; kubectl_rc=$?; retry_counter=$((retry_counter + 1)); done`,
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf version",
