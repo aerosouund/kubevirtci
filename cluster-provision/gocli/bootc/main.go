@@ -89,32 +89,6 @@ func (b *BootcProvisioner) BuildK8sBase(tag, k8sVersion, baseImage string) error
 	}
 	_ = os.Mkdir("patches", 0777)
 
-	// err = fs.WalkDir(patches, "k8s-container/patches", func(path string, d fs.DirEntry, err error) error {
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	if !d.IsDir() && filepath.Ext(path) == ".yaml" {
-	// 		yamlData, err := patches.ReadFile(path)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-
-	// 		yamlFile, err := os.Create(path)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-
-	// 		_, err = yamlFile.Write(yamlData)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// 	return nil
-	// })
-	// if err != nil {
-	// 	return err
-	// }
-
 	err = b.cri.Build(tag, fileName, map[string]string{"VERSION": k8sVersion})
 	if err != nil {
 		return err

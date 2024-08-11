@@ -23,6 +23,9 @@ RUN dnf install --nobest --nogpgcheck --disableexcludes=kubernetes -y \
     kubelet-${VERSION} \
     kubernetes-cni
 
+
+RUN echo "KUBELET_EXTRA_ARGS=--cgroup-driver=cgroupfs --runtime-cgroups=/systemd/system.slice  --fail-swap-on=false --kubelet-cgroups=/systemd/system.slice" >> /etc/sysconfig/kubelet
+
 RUN dnf install -y cri-o patch
 
 RUN mkdir -p /provision/kubeadm-patches
