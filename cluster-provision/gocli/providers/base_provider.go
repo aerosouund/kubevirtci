@@ -614,11 +614,11 @@ func (kp *KubevirtProvider) provisionNode(sshClient libssh.Client, nodeIdx int) 
 		opts = append(opts, realtimeOpt)
 	}
 
-	for _, s := range []string{"8086:2668", "8086:2415"} {
-		// move the VM sound cards to a vfio-pci driver to prepare for assignment
-		bvfio := bindvfio.NewBindVfioOpt(sshClient, s)
-		opts = append(opts, bvfio)
-	}
+	// for _, s := range []string{"8086:2668", "8086:2415"} {
+	// 	// move the VM sound cards to a vfio-pci driver to prepare for assignment
+	// 	bvfio := bindvfio.NewBindVfioOpt(sshClient, s)
+	// 	opts = append(opts, bvfio)
+	// }
 
 	if kp.SingleStack {
 		if _, err := sshClient.Command("touch /home/vagrant/single_stack", false); err != nil {
