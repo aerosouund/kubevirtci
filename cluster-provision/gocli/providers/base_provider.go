@@ -123,7 +123,10 @@ func NewFromRunning(dnsmasqPrefix string) (*KubevirtProvider, error) {
 }
 
 func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.CancelFunc, portMap nat.PortMap) (retErr error) {
-	k8sContainerBase := kp.Image
+	var (
+		k8sContainerBase         = kp.Image
+		qcowImage, linuxPhaseTag string
+	)
 	prefix := fmt.Sprintf("k8s-%s-provision", kp.Version)
 	target := fmt.Sprintf("quay.io/kubevirtci/k8s-%s", kp.Version)
 	if kp.Phases == "linux" {
@@ -158,9 +161,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 
 	bootcProvisioner = bootc.NewBootcProvisioner(containerRuntime)
 
-	var qcowImage, linuxPhaseTag string
-
-	if true {
+	if strings.Contains(kp.Phases, "linux") {
 		linuxPhaseTag = "kubevirtci/linux-base:" + uuid.New().String()[:13]
 		qcowImage = linuxPhaseTag
 		k8sContainerBase = linuxPhaseTag
@@ -170,7 +171,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		}
 	}
 
-	if true {
+	if strings.Contains(kp.Phases, "k8s") {
 		versionWithMinor, ok := versionMap[version]
 		if !ok {
 			return fmt.Errorf("Invalid version")
@@ -203,15 +204,13 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	if err != nil {
 		return err
 	}
-	fmt.Println(qcowImage)
 
 	err = bootcProvisioner.GenerateQcow(qcowImage)
 	if err != nil {
 		return err
 	}
-	clusterImage := "quay.io/kubevirtci/k8s-" + version + ":" + uuid.New().String()[:13]
 
-	err = dockercri.NewDockerClient().Build(clusterImage, "Containerfile", map[string]string{})
+	err = dockercri.NewDockerClient().Build(target, "Containerfile", map[string]string{})
 	if err != nil {
 		return err
 	}
@@ -253,7 +252,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		}
 
 		node, err := kp.Docker.ContainerCreate(ctx, &container.Config{
-			Image: clusterImage,
+			Image: target,
 			Env: []string{
 				fmt.Sprintf("NODE_NUM=%s", nodeNum),
 			},

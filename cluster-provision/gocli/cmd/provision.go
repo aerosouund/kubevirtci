@@ -18,7 +18,7 @@ var versionMap = map[string]string{
 	"1.28": "1.28.11",
 }
 
-const baseLinuxPhase = "quay.io/kubevirtci/centos9-base"
+const base = "quay.io/kubevirtci/centos9-base"
 
 // NewProvisionCommand provision given cluster
 func NewProvisionCommand() *cobra.Command {
@@ -43,19 +43,10 @@ func NewProvisionCommand() *cobra.Command {
 }
 
 func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
-	// var base string
 	versionNoMinor := args[0]
-
-	allowedVersions := []string{"1.30", "1.29", "1.28"}
-	validVersion := false
-	for _, ver := range allowedVersions {
-		if versionNoMinor == ver {
-			validVersion = true
-		}
-	}
-
-	if !validVersion {
-		return fmt.Errorf("Invalid version passed, please pass one of 1.30, 1.29 or 1.28")
+	_, ok := versionMap[versionNoMinor]
+	if !ok {
+		return fmt.Errorf("Invalid version passed, exiting!")
 	}
 
 	opts := []providers.KubevirtProviderOption{}
@@ -106,7 +97,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
-	kp := providers.NewKubevirtProvider(versionNoMinor, baseLinuxPhase, cli, opts)
+	kp := providers.NewKubevirtProvider(versionNoMinor, base, cli, opts)
 	err = kp.Provision(ctx, cancel, portMap)
 	if err != nil {
 		return err
