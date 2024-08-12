@@ -176,8 +176,8 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 		macCounter++
 
 		vmContainerConfig := &container.Config{
-			// Image: "quay.io/kubevirtci/k8s-1.30:latest",
-			Image: kp.Image,
+			Image: "quay.io/kubevirtci/k8s-1.30:latest",
+			// Image: kp.Image,
 			Env: []string{
 				fmt.Sprintf("NODE_NUM=%s", nodeNum),
 			},
