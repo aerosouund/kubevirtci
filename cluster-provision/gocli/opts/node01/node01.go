@@ -39,7 +39,7 @@ func (n *Node01Provisioner) Exec() error {
 		"swapoff -a",
 		"until ip address show dev enp0s2 | grep global | grep inet6; do sleep 1; done",
 		`kubeadm init --config /etc/kubernetes/kubeadm.conf -v5`,
-		`kubectl --kubeconfig=/etc/kubernetes/admin.conf patch deployment coredns -n kube-system -p "$(cat /etc/provision/kubeadm-patches/add-security-context-deployment-patch.yaml)"`,
+		// `kubectl --kubeconfig=/etc/kubernetes/admin.conf patch deployment coredns -n kube-system -p "$(cat /etc/provision/kubeadm-patches/add-security-context-deployment-patch.yaml)"`,
 		`kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f /etc/provision/cni.yaml`,
 		"sleep 900000000",
 		`kubectl --kubeconfig=/etc/kubernetes/admin.conf taint nodes node01 node-role.kubernetes.io/control-plane:NoSchedule-`,
