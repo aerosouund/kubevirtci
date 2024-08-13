@@ -1011,7 +1011,7 @@ func DetectContainerRuntime() (string, error) {
 }
 
 func getPackagesVersion(version string) (string, error) {
-	if strings.HasSuffix(version, "alpha") || strings.HasSuffix(version, "beta") || strings.HasSuffix(version, "rc") {
+	if strings.Contains(version, "alpha") || strings.Contains(version, "beta") || strings.Contains(version, "rc") {
 		k8sversion := strings.Split(version, ".")
 
 		url := fmt.Sprintf("https://storage.googleapis.com/kubernetes-release/release/stable-%s.%s.txt", k8sversion[0], k8sversion[1])
