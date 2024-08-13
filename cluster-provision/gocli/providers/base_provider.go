@@ -160,7 +160,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 
 	bootcProvisioner = bootc.NewBootcProvisioner(containerRuntime)
 
-	if strings.Contains(kp.Phases, "linux") {
+	if true {
 		linuxPhaseTag = "kubevirtci/linux-base:" + uuid.New().String()[:13]
 		qcowImage = linuxPhaseTag
 		k8sContainerBase = linuxPhaseTag
