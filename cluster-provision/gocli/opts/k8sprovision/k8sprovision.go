@@ -193,6 +193,7 @@ func (k *K8sProvisioner) Exec() error {
 		"echo '" + kubeAdmConf + "' | tee /etc/kubernetes/kubeadm.conf >> /dev/null",
 		"echo '" + kubeAdm6Conf + "' | tee /etc/kubernetes/kubeadm_ipv6.conf >> /dev/null",
 		"swapoff -a",
+		"echo 'KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --runtime-cgroups=/systemd/system.slice  --fail-swap-on=false --kubelet-cgroups=/systemd/system.slice' >> /etc/sysconfig/kubelet",
 		"systemctl restart kubelet",
 		"kubeadm init --config /etc/kubernetes/kubeadm.conf -v5 || true",
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf patch deployment coredns -n kube-system -p '" + string(secContextPatch) + "'",

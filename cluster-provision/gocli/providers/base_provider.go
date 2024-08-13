@@ -7,6 +7,8 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -177,7 +179,12 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	if strings.Contains(kp.Phases, "k8s") {
 		k8sPhaseTag := "kubevirtci/k8s-phase-" + versionMajorMinor + ":" + uuid.New().String()[:13]
 		qcowImage = k8sPhaseTag
-		err := bootcProvisioner.BuildK8sBase(k8sPhaseTag, version, k8sContainerBase)
+		v, err := getPackagesVersion(version)
+		if err != nil {
+			return err
+		}
+
+		err = bootcProvisioner.BuildK8sBase(k8sPhaseTag, v, k8sContainerBase)
 		if err != nil {
 			return err
 		}
@@ -1007,4 +1014,34 @@ func DetectContainerRuntime() (string, error) {
 	}
 
 	return "", fmt.Errorf("No valid container runtime found")
+}
+
+func getPackagesVersion(version string) (string, error) {
+	if strings.HasSuffix(version, "alpha") || strings.HasSuffix(version, "beta") || strings.HasSuffix(version, "rc") {
+		k8sversion := strings.Split(version, ".")
+
+		url := fmt.Sprintf("https://storage.googleapis.com/kubernetes-release/release/stable-%s.%s.txt", k8sversion[0], k8sversion[1])
+		resp, err := http.Get(url)
+		if err != nil {
+			fmt.Println("Error fetching the URL:", err)
+			return "", err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			fmt.Printf("Failed to fetch URL. HTTP status: %s\n", resp.Status)
+			return "", err
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading the response body:", err)
+			return "", err
+		}
+
+		packagesVersion := strings.TrimPrefix(string(body), "v")
+		return packagesVersion, nil
+
+	}
+	return version, nil
 }
