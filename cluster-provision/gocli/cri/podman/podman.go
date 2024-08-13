@@ -177,7 +177,7 @@ func (p *Podman) Remove(containerID string) error {
 }
 
 func (dc *Podman) Build(tag, containerFile string, buildArgs map[string]string) error {
-	args := []string{"build", "-t", tag}
+	args := []string{"build", "-t", tag, "--pull-never"}
 
 	for k, v := range buildArgs {
 		args = append(args, "--build-arg", k+"="+v)
