@@ -174,7 +174,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		k8sPhaseTag := "kubevirtci/k8s-phase-" + versionMajorMinor + ":" + uuid.New().String()[:13]
 		qcowImage = k8sPhaseTag
 		v, err := getPackagesVersion(version)
-		if err != nil {
+		if v == "" {
 			v = versionMajorMinor
 		}
 
