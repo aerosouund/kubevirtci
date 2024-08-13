@@ -175,7 +175,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		qcowImage = k8sPhaseTag
 		v, err := getPackagesVersion(version)
 		if err != nil {
-			return err
+			v = versionMajorMinor
 		}
 
 		err = bootcProvisioner.BuildK8sBase(k8sPhaseTag, v, k8sContainerBase)
