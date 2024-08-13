@@ -57,11 +57,11 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/libssh"
 )
 
-var versionMap = map[string]string{
-	"1.30": "1.30.2",
-	"1.29": "1.29.6",
-	"1.28": "1.28.11",
-}
+// var versionMap = map[string]string{
+// 	"1.30": "1.30.2",
+// 	"1.29": "1.29.6",
+// 	"1.28": "1.28.11",
+// }
 
 //go:embed Containerfile
 var containerfile []byte
@@ -122,17 +122,20 @@ func NewFromRunning(dnsmasqPrefix string) (*KubevirtProvider, error) {
 	return kp, nil
 }
 
-func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.CancelFunc, portMap nat.PortMap) (retErr error) {
+func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.CancelFunc, portMap nat.PortMap, version string) (retErr error) {
 	var (
 		k8sContainerBase         = kp.Image
 		qcowImage, linuxPhaseTag string
 	)
-	prefix := fmt.Sprintf("k8s-%s-provision", kp.Version)
-	target := fmt.Sprintf("quay.io/kubevirtci/k8s-%s", kp.Version)
+	versionMajorMinor := strings.Join(strings.Split(version, ".")[:2], ".")
+	prefix := fmt.Sprintf("k8s-%s-provision", versionMajorMinor)
+	target := fmt.Sprintf("quay.io/kubevirtci/k8s-%s", versionMajorMinor)
+	kp.Version = prefix
+
 	if kp.Phases == "linux" {
 		target = kp.Image + "-base"
 	}
-	version := kp.Version
+
 	kp.Version = prefix
 
 	stop := make(chan error, 10)
@@ -172,14 +175,9 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 	}
 
 	if strings.Contains(kp.Phases, "k8s") {
-		versionWithMinor, ok := versionMap[version]
-		if !ok {
-			return fmt.Errorf("Invalid version")
-		}
-
-		k8sPhaseTag := "kubevirtci/k8s-phase-" + version + ":" + uuid.New().String()[:13]
+		k8sPhaseTag := "kubevirtci/k8s-phase-" + versionMajorMinor + ":" + uuid.New().String()[:13]
 		qcowImage = k8sPhaseTag
-		err := bootcProvisioner.BuildK8sBase(k8sPhaseTag, versionWithMinor, k8sContainerBase)
+		err := bootcProvisioner.BuildK8sBase(k8sPhaseTag, version, k8sContainerBase)
 		if err != nil {
 			return err
 		}
@@ -315,7 +313,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 			return fmt.Errorf("error copying manifests to node")
 		}
 
-		provisionK8sOpt := k8sprovision.NewK8sProvisioner(sshClient, versionMap[version], kp.Slim)
+		provisionK8sOpt := k8sprovision.NewK8sProvisioner(sshClient, version, kp.Slim)
 		if err = provisionK8sOpt.Exec(); err != nil {
 			return err
 		}

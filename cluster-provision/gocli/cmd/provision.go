@@ -16,6 +16,7 @@ var versionMap = map[string]string{
 	"1.30": "1.30.2",
 	"1.29": "1.29.6",
 	"1.28": "1.28.11",
+	"1.31": "1.31.0-beta.0",
 }
 
 const base = "quay.io/kubevirtci/centos9-base"
@@ -44,7 +45,7 @@ func NewProvisionCommand() *cobra.Command {
 
 func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	versionNoMinor := args[0]
-	_, ok := versionMap[versionNoMinor]
+	ver, ok := versionMap[versionNoMinor]
 	if !ok {
 		return fmt.Errorf("Invalid version passed, exiting!")
 	}
@@ -97,8 +98,8 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
-	kp := providers.NewKubevirtProvider(versionNoMinor, base, cli, opts)
-	err = kp.Provision(ctx, cancel, portMap)
+	kp := providers.NewKubevirtProvider(ver, base, cli, opts)
+	err = kp.Provision(ctx, cancel, portMap, ver)
 	if err != nil {
 		return err
 	}

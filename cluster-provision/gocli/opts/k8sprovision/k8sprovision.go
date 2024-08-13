@@ -200,12 +200,9 @@ func (k *K8sProvisioner) Exec() error {
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf wait --for=condition=Ready pods --all -n kube-system --timeout=300s",
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf get pods -n kube-system",
 		"kubeadm reset --force",
-		// "mkdir -p /var/provision/kubevirt.io/tests",
-		// "chcon -t container_file_t /var/provision/kubevirt.io/tests",
-		// `echo "tmpfs /var/provision/kubevirt.io/tests tmpfs rw,context=system_u:object_r:container_file_t:s0 0 1" >> /etc/fstab`,
-		// "rm -f /etc/sysconfig/network-scripts/ifcfg-*",
-		// "nmcli connection add con-name eth0 ifname eth0 type ethernet",
-		// "rm -f /etc/machine-id ; touch /etc/machine-id",
+		"mkdir -p /var/provision/kubevirt.io/tests",
+		"chcon -t container_file_t /var/provision/kubevirt.io/tests",
+		`echo "tmpfs /var/provision/kubevirt.io/tests tmpfs rw,context=system_u:object_r:container_file_t:s0 0 1" >> /etc/fstab`,
 	}
 
 	for _, cmd := range cmds {

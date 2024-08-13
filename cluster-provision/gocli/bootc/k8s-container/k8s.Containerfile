@@ -27,6 +27,3 @@ RUN dnf install --nobest --nogpgcheck --disableexcludes=kubernetes -y \
 RUN dnf install -y cri-o patch
 
 RUN mkdir -p /provision/kubeadm-patches
-
-# COPY manifests /opt/
-# COPY patches /provision/kubeadm-patches
