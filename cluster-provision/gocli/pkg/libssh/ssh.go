@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bramvdbogaerde/go-scp"
 	"github.com/sirupsen/logrus"
@@ -219,9 +220,25 @@ func (s *SSHClientImpl) executeCommand(cmd string, outWriter, errWriter io.Write
 }
 
 func (s *SSHClientImpl) initClient() error {
-	client, err := ssh.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(s.sshPort)), s.config)
-	if err != nil {
-		return fmt.Errorf("Failed to connect to SSH server: %v", err)
+	var (
+		client      *ssh.Client
+		established bool
+		err         error
+	)
+
+	for i := 0; i < 5; i++ {
+		client, err = ssh.Dial("tcp", net.JoinHostPort("127.0.0.1", fmt.Sprint(s.sshPort)), s.config)
+		if err != nil {
+			logrus.Infof("Attempt %d. Error establishing connection: %s, sleeping 6 seconds", i+1, err.Error())
+			time.Sleep(time.Second * 6)
+		} else {
+			established = true
+			break
+		}
+	}
+
+	if !established {
+		return fmt.Errorf("Error establishing connection after 10 attempts")
 	}
 
 	conn, err := client.Dial("tcp", fmt.Sprintf("192.168.66.10%d:22", s.nodeIdx))
