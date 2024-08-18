@@ -36,4 +36,4 @@ function configure_registry_proxy() {
 
 make -C cluster-provision/gocli cli
 
-./cluster-provision/gocli/build/cli run-kind $KUBEVIRT_PROVIDER --with-extra-mounts=true --nodes=$KUBEVIRT_NUM_NODES
+./cluster-provision/gocli/build/cli run-kind k8s-1.28 --with-extra-mounts=true --nodes=$KUBEVIRT_NUM_NODES
