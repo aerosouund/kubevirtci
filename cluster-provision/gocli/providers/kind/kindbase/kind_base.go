@@ -53,6 +53,8 @@ type KindConfig struct {
 	IpFamily        string
 	WithCPUManager  bool
 	RegistryProxy   string
+	WithExtraMounts bool
+	WithVfio        bool
 }
 
 const (
@@ -89,7 +91,7 @@ func NewKindBaseProvider(kindConfig *KindConfig) (*KindBaseProvider, error) {
 		Provider:   k,
 		KindConfig: kindConfig,
 	}
-	cluster, err := kp.PrepareClusterYaml(false, false)
+	cluster, err := kp.PrepareClusterYaml(kindConfig.WithExtraMounts, kindConfig.WithVfio)
 	if err != nil {
 		return nil, err
 	}

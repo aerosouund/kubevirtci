@@ -24,6 +24,8 @@ func NewRunKindCommand() *cobra.Command {
 	rk.Flags().String("registry-proxy", "", "registry proxy to use")
 	rk.Flags().String("ip-family", "", "ip family")
 	rk.Flags().Bool("enable-cpu-manager", false, "enable cpu manager")
+	rk.Flags().Bool("with-extra-mounts", false, "add extra mounts")
+	rk.Flags().Bool("with-vfio", false, "use vfio")
 	return rk
 }
 
@@ -48,15 +50,25 @@ func runKind(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	mounts, err := cmd.Flags().GetBool("with-extra-mounts")
+	if err != nil {
+		return err
+	}
+	vfio, err := cmd.Flags().GetBool("with-vfio")
+	if err != nil {
+		return err
+	}
 
 	kindVersion := args[0]
 	conf := &kind.KindConfig{
-		Nodes:          int(nodes),
-		Version:        kindVersion,
-		RegistryPort:   port,
-		RegistryProxy:  rp,
-		WithCPUManager: cpum,
-		IpFamily:       ipf,
+		Nodes:           int(nodes),
+		Version:         kindVersion,
+		RegistryPort:    port,
+		RegistryProxy:   rp,
+		WithCPUManager:  cpum,
+		IpFamily:        ipf,
+		WithExtraMounts: mounts,
+		WithVfio:        vfio,
 	}
 
 	switch kindVersion {
