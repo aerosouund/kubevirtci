@@ -26,7 +26,10 @@ function set_kind_params() {
 make -C cluster-provision/gocli cli
 
 function up() {
-    if [ "$CI" != "false" ]; then export REGISTRY_PROXY="docker-mirror-proxy.kubevirt-prow.svc"; fi
-    ./cluster-provision/gocli/build/cli run-kind k8s-1.28 --with-extra-mounts=true --nodes=$KUBEVIRT_NUM_NODES --registry-proxy=$REGISTRY_PROXY
+    if [ "$CI" == "true" ]; then export REGISTRY_PROXY="docker-mirror-proxy.kubevirt-prow.svc"; fi
+    ./cluster-provision/gocli/build/cli run-kind k8s-1.28 \
+        --with-extra-mounts=true \
+        --nodes=$KUBEVIRT_NUM_NODES \
+        --registry-proxy=$REGISTRY_PROXY
 }
 
