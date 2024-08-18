@@ -7,6 +7,7 @@ DEFAULT_HOST_PORT=5000
 ALTERNATE_HOST_PORT=5001
 export CLUSTER_NAME=${CLUSTER_NAME:-$DEFAULT_CLUSTER_NAME}
 KUBEVIRT_NUM_NODES=${KUBEVIRT_NUM_NODES:-1}
+REGISTRY_PROXY=""
 
 if [ $CLUSTER_NAME == $DEFAULT_CLUSTER_NAME ]; then
     export HOST_PORT=$DEFAULT_HOST_PORT
@@ -22,18 +23,10 @@ function set_kind_params() {
     export KIND_NODE_IMAGE="${KIND_NODE_IMAGE:-$image}"
 }
 
-function configure_registry_proxy() {
-    [ "$CI" != "true" ] && return
-
-    echo "Configuring cluster nodes to work with CI mirror-proxy..."
-
-    local -r ci_proxy_hostname="docker-mirror-proxy.kubevirt-prow.svc"
-    local -r kind_binary_path="${KUBEVIRTCI_CONFIG_PATH}/$KUBEVIRT_PROVIDER/.kind"
-    local -r configure_registry_proxy_script="${KUBEVIRTCI_PATH}/cluster/kind/configure-registry-proxy.sh"
-
-    KIND_BIN="$kind_binary_path" PROXY_HOSTNAME="$ci_proxy_hostname" $configure_registry_proxy_script
-}
-
 make -C cluster-provision/gocli cli
 
-./cluster-provision/gocli/build/cli run-kind k8s-1.28 --with-extra-mounts=true --nodes=$KUBEVIRT_NUM_NODES
+function up() {
+    if [ "$CI" != "false" ]; then export REGISTRY_PROXY="docker-mirror-proxy.kubevirt-prow.svc"; fi
+    ./cluster-provision/gocli/build/cli run-kind k8s-1.28 --with-extra-mounts=true --nodes=$KUBEVIRT_NUM_NODES --registry-proxy=$REGISTRY_PROXY
+}
+
