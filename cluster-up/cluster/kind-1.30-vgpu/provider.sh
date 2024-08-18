@@ -13,7 +13,13 @@ else
     export HOST_PORT=$ALTERNATE_HOST_PORT
 fi
 
+function detect_cri() {
+    if podman ps >/dev/null 2>&1; then echo podman; elif docker ps >/dev/null 2>&1; then echo docker; fi
+}
+
 make -C cluster-provision/gocli cli
+
+export CRI_BIN=${CRI_BIN:-$(detect_cri)}
 
 function up() {
     # print hardware info for easier debugging based on logs
