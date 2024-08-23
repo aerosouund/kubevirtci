@@ -39,6 +39,13 @@ export KUBEVIRTCI_GOCLI_CONTAINER=quay.io/kubevirtci/gocli:latest
     export KUBEVIRT_KSM_ON="false"
     export KUBEVIRT_SWAP_ON="false"
 
+    # Test ETCD in memory
+    export KUBEVIRT_WITH_ETC_IN_MEMORY="true"
+    export KUBEVIRT_WITH_ETC_CAPACITY="1024M"
+    make cluster-up
+    ${ksh} get nodes
+    make cluster-down
+
     # Test NFS CSI
     export KUBEVIRT_DEPLOY_NFS_CSI="true"
     make cluster-up
@@ -49,15 +56,6 @@ export KUBEVIRTCI_GOCLI_CONTAINER=quay.io/kubevirtci/gocli:latest
 
     # Test rook ceph
     export KUBEVIRT_STORAGE="rook-ceph-default"
-    make cluster-up
-    ${ksh} get nodes
-    make cluster-down
-
-    unset KUBEVIRT_STORAGE
-
-    # Test ETCD in memory
-    export KUBEVIRT_WITH_ETC_IN_MEMORY="true"
-    export KUBEVIRT_WITH_ETC_CAPACITY="1024M"
     make cluster-up
     ${ksh} get nodes
     make cluster-down
