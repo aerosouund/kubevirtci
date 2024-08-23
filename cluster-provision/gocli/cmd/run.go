@@ -899,6 +899,16 @@ func provisionNode(sshClient libssh.Client, n *nodesconfig.NodeLinuxConfig) erro
 		opts = append(opts, psaOpt)
 	}
 
+	if n.KsmEnabled {
+		ksmOpt := ksm.NewKsmOpt(sshClient, n.KsmScanInterval, n.KsmPageCount)
+		opts = append(opts, ksmOpt)
+	}
+
+	if n.SwapEnabled {
+		swapOpt := swap.NewSwapOpt(sshClient, n.Swappiness, n.UnlimitedSwap, n.SwapSize)
+		opts = append(opts, swapOpt)
+	}
+
 	if n.NodeIdx == 1 {
 		n := node01.NewNode01Provisioner(sshClient, n.SingleStack)
 		opts = append(opts, n)
@@ -915,16 +925,6 @@ func provisionNode(sshClient libssh.Client, n *nodesconfig.NodeLinuxConfig) erro
 		}
 		n := nodesprovision.NewNodesProvisioner(sshClient, n.SingleStack)
 		opts = append(opts, n)
-	}
-
-	if n.KsmEnabled {
-		ksmOpt := ksm.NewKsmOpt(sshClient, n.KsmScanInterval, n.KsmPageCount)
-		opts = append(opts, ksmOpt)
-	}
-
-	if n.SwapEnabled {
-		swapOpt := swap.NewSwapOpt(sshClient, n.Swappiness, n.UnlimitedSwap, n.SwapSize)
-		opts = append(opts, swapOpt)
 	}
 
 	for _, o := range opts {
