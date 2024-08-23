@@ -104,7 +104,7 @@ func (o *nfsCsiOpt) Exec() error {
 
 	backoffStrategy := backoff.NewExponentialBackOff()
 	backoffStrategy.InitialInterval = 10 * time.Second
-	backoffStrategy.MaxElapsedTime = 3 * time.Minute
+	backoffStrategy.MaxElapsedTime = 8 * time.Minute
 
 	err = backoff.Retry(operation, backoffStrategy)
 	if err != nil {
