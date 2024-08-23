@@ -45,7 +45,7 @@ func (o *nfsCsiOpt) Exec() error {
 		if err != nil {
 			return err
 		}
-		if !d.IsDir() && filepath.Ext(path) == ".yaml" {
+		if !d.IsDir() && filepath.Ext(path) == ".yaml" && path != "ns.yaml" {
 			yamlData, err := f.ReadFile(path)
 			if err != nil {
 				return err
