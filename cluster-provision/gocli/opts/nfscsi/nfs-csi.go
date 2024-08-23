@@ -16,6 +16,9 @@ import (
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/k8s"
 )
 
+//go:embed manifests/ns.yaml
+var ns []byte
+
 //go:embed manifests/*
 var f embed.FS
 
@@ -30,7 +33,15 @@ func NewNfsCsiOpt(c k8s.K8sDynamicClient) *nfsCsiOpt {
 }
 
 func (o *nfsCsiOpt) Exec() error {
-	err := fs.WalkDir(f, "manifests", func(path string, d fs.DirEntry, err error) error {
+	obj, err := k8s.SerializeIntoObject(ns)
+	if err != nil {
+		return err
+	}
+	if err := o.client.Apply(obj); err != nil {
+		return fmt.Errorf("error applying manifest %s", err)
+	}
+
+	err = fs.WalkDir(f, "manifests", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
