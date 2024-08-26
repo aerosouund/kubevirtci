@@ -418,9 +418,7 @@ func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.Cancel
 		}
 	}
 
-	if err = sshClient.Command("sudo shutdown now -h"); err != nil {
-		return err
-	}
+	_ = sshClient.Command("sudo shutdown now -h")
 
 	_, err = docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"rm", "/ssh_ready"}, io.Discard)
 	if err != nil {
