@@ -257,7 +257,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 
 	envVars := fmt.Sprintf("version=%s slim=%t", version, slim)
 	if strings.Contains(phases, "linux") {
-		err := sshClient.Command("sudo /bin/bash " + envVars + " /scripts/provision.sh")
+		err := sshClient.Command("sudo /bin/bash -c < " + envVars + " /scripts/provision.sh")
 		if err != nil {
 			return err
 		}
@@ -287,7 +287,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 
-		err = sshClient.Command("sudo /bin/bash " + envVars + " /scripts/k8s_provision.sh")
+		err = sshClient.Command("sudo /bin/bash -c < " + envVars + " /scripts/k8s_provision.sh")
 		if err != nil {
 			return err
 		}
