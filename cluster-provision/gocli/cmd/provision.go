@@ -291,7 +291,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 
-		err = sshClient.Command("sudo /bin/bash /scripts/k8s_provision.sh")
+		err = sshClient.Command("sudo /bin/bash /tmp/k8s_provision.sh")
 		if err != nil {
 			return err
 		}
