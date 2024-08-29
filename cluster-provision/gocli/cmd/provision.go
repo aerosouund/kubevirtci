@@ -276,6 +276,10 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 		if err != nil {
 			return err
 		}
+		err = _cmd(cli, nodeContainer(prefix, nodeName), "if [ -f /scripts/k8s_provision.sh ]; then scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 /scripts/k8s_provision.sh vagrant@192.168.66.101:/tmp/k8s_provision.sh; fi", "copying /scripts/k8s_provision.sh if existing")
+		if err != nil {
+			return err
+		}
 
 		err = _cmd(cli, nodeContainer(prefix, nodeName), "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key vagrant@192.168.66.101 'mkdir -p /tmp/ceph /tmp/cnao /tmp/nfs-csi /tmp/nodeports /tmp/prometheus /tmp/whereabouts /tmp/kwok'", "Create required manifest directories before copy")
 		if err != nil {
