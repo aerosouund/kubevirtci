@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	containers2 "kubevirt.io/kubevirtci/cluster-provision/gocli/containers"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/libssh"
 
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/cmd/utils"
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/docker"
@@ -167,6 +168,21 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 
+	dm, err := cli.ContainerInspect(context.Background(), dnsmasq.ID)
+	if err != nil {
+		return err
+	}
+
+	sshPort, err := utils.GetPublicPort(utils.PortSSH, dm.NetworkSettings.Ports)
+	if err != nil {
+		return err
+	}
+
+	sshClient, err := libssh.NewSSHClient(sshPort, 1, false)
+	if err != nil {
+		return err
+	}
+
 	nodeName := nodeNameFromIndex(1)
 	nodeNum := fmt.Sprintf("%02d", 1)
 
@@ -241,7 +257,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 
 	envVars := fmt.Sprintf("version=%s slim=%t", version, slim)
 	if strings.Contains(phases, "linux") {
-		err = performPhase(cli, nodeContainer(prefix, nodeName), "/scripts/provision.sh", envVars)
+		err := sshClient.Command("sudo /bin/bash" + envVars + " /scripts/provision.sh")
 		if err != nil {
 			return err
 		}
@@ -252,7 +268,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 		if err != nil {
 			return err
 		}
-		err = _cmd(cli, nodeContainer(prefix, nodeName), "if [ -f /scripts/extra-pre-pull-images ]; then scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 /scripts/extra-pre-pull-images vagrant@192.168.66.101:/tmp/extra-pre-pull-images; fi", "copying /scripts/extra-pre-pull-images if existing")
+		err = _cmd(cli, nodeContainer(prefix, nodeName), "", "copying /scripts/extra-pre-pull-images if existing")
 		if err != nil {
 			return err
 		}
@@ -271,13 +287,14 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 
-		err = performPhase(cli, nodeContainer(prefix, nodeName), "/scripts/k8s_provision.sh", envVars)
+		err = sshClient.Command("sudo /bin/bash" + envVars + " /scripts/k8s_provision.sh")
 		if err != nil {
 			return err
 		}
 	}
 
-	_cmd(cli, nodeContainer(prefix, nodeName), "ssh.sh sudo shutdown now -h", "shutting down the node")
+	sshClient.Command("sudo shutdown now -h")
+
 	err = _cmd(cli, nodeContainer(prefix, nodeName), "rm /usr/local/bin/ssh.sh", "removing the ssh.sh script")
 	if err != nil {
 		return err
@@ -366,15 +383,4 @@ func _cmd(cli *client.Client, container string, cmd string, description string) 
 		return fmt.Errorf("%s failed", cmd)
 	}
 	return nil
-}
-
-func performPhase(cli *client.Client, container string, script string, envVars string) error {
-	err := _cmd(cli, container, fmt.Sprintf("test -f %s", script), "checking provision scripts")
-	if err != nil {
-		return err
-	}
-
-	return _cmd(cli, container,
-		fmt.Sprintf("ssh.sh sudo %s /bin/bash < %s", envVars, script),
-		fmt.Sprintf("provisioning the node (%s)", script))
 }
