@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/alessio/shellescape"
 	"github.com/docker/docker/api/types"
@@ -287,8 +286,6 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 		if err != nil {
 			return err
 		}
-
-		time.Sleep(time.Second * 120)
 
 		err = sshClient.Command("sudo " + envVars + " /bin/bash /tmp/k8s_provision.sh")
 		if err != nil {
