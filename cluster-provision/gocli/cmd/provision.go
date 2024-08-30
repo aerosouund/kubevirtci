@@ -282,7 +282,7 @@ func provisionCluster(cmd *cobra.Command, args []string) (retErr error) {
 			return err
 		}
 
-		err = _cmd(cli, nodeContainer(prefix, nodeName), "find /scripts/ -maxdepth 1 -type f -exec scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 /scripts/* vagrant@192.168.66.101:/tmp", "copying manifests to the VM")
+		err = _cmd(cli, nodeContainer(prefix, nodeName), `find /scripts/ -maxdepth 1 -type f -exec scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key -P 22 {} vagrant@192.168.66.101:/tmp \;`, "copying manifests to the VM")
 		if err != nil {
 			return err
 		}
