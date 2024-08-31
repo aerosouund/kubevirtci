@@ -806,14 +806,14 @@ func provisionK8sOptions(sshClient libssh.Client, k8sClient k8s.K8sDynamicClient
 		opts = append(opts, nfsCsiOpt)
 	}
 
-	if n.Multus {
-		multusOpt := multus.NewMultusOpt(k8sClient, sshClient)
-		opts = append(opts, multusOpt)
-	}
-
 	if n.CNAO {
 		cnaoOpt := cnao.NewCnaoOpt(k8sClient, sshClient)
 		opts = append(opts, cnaoOpt)
+	}
+
+	if n.Multus {
+		multusOpt := multus.NewMultusOpt(k8sClient, sshClient)
+		opts = append(opts, multusOpt)
 	}
 
 	if n.Istio {
