@@ -1,0 +1,4 @@
+      cniConfFileName: "istio-cni.conf"
+    sidecarInjectorWebhook:
+      injectedAnnotations:
+        "k8s.v1.cni.cncf.io/networks": istio-cni

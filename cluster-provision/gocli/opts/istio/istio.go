@@ -23,6 +23,9 @@ var istioWithCnao []byte
 //go:embed manifests/istio-operator.cr.yaml
 var istioNoCnao []byte
 
+//go:embed manifests/cnaoPatch.yaml
+var cnaoPatch []byte
+
 const istioVersion = "1.15.0"
 
 type istioOperatorOpt struct {
@@ -66,6 +69,7 @@ func (o *istioOperatorOpt) Exec() error {
 		"PATH=/opt/istio-" + istioVersion + "/bin:$PATH istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
 		"echo '" + string(istioNoCnao) + "' > /opt/istio/istio-operator.cr.yaml",
 		"echo '" + string(istioWithCnao) + "' > /opt/istio/istio-operator.cr.yaml",
+		"echo '" + string(cnaoPatch) + "' > /opt/istio/istio-operator-with-cnao.yaml",
 	}
 	for _, cmd := range cmds {
 		if err := o.sshClient.Command(cmd); err != nil {
