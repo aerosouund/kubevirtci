@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/k8s"
+	"kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/libssh"
 )
 
 func TestIstioOpt(t *testing.T) {
@@ -25,7 +26,7 @@ var _ = Describe("IstioOpt", func() {
 		mockCtrl = gomock.NewController(GinkgoT())
 		r := k8s.NewReactorConfig("create", "istiooperators", IstioReactor)
 		k8sclient = k8s.NewTestClient(r)
-		opt = NewIstioDeployOpt(k8sclient, false)
+		opt = NewIstioDeployOpt(&libssh.SSHClientImpl{}, k8sclient, false)
 	})
 
 	AfterEach(func() {

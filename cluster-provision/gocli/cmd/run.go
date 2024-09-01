@@ -836,7 +836,7 @@ func provisionK8sOptions(sshClient libssh.Client, k8sClient k8s.K8sDynamicClient
 	}
 
 	if n.Istio {
-		istioOpt := istio.NewIstioDeployOpt(k8sClient, n.CNAO)
+		istioOpt := istio.NewIstioDeployOpt(sshClient, k8sClient, n.CNAO)
 		opts = append(opts, istioOpt)
 	}
 

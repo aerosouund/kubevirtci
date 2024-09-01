@@ -32,6 +32,7 @@ type istioOperatorOpt struct {
 
 type istioDeployOpt struct {
 	cnaoEnabled bool
+	sshClient   libssh.Client
 	client      k8s.K8sDynamicClient
 }
 
@@ -42,10 +43,11 @@ func NewIstioOperatorOpt(sc libssh.Client, c k8s.K8sDynamicClient) *istioOperato
 	}
 }
 
-func NewIstioDeployOpt(c k8s.K8sDynamicClient, cnaoEnabled bool) *istioDeployOpt {
+func NewIstioDeployOpt(sc libssh.Client, c k8s.K8sDynamicClient, cnaoEnabled bool) *istioDeployOpt {
 	return &istioDeployOpt{
 		client:      c,
 		cnaoEnabled: cnaoEnabled,
+		sshClient:   sc,
 	}
 }
 
@@ -72,6 +74,20 @@ func (o *istioOperatorOpt) Exec() error {
 }
 
 func (o *istioDeployOpt) Exec() error {
+	if o.cnaoEnabled {
+		if err := o.sshClient.Command("kubectl --kubeconfig=/etc/kubernetes/admin.conf apply -f /opt/istio/istio-operator-with-cnao.cr.yaml"); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if err := o.sshClient.Command("kubectl --kubeconfig=/etc/kubernetes/admin.conf apply -f /opt/istio/istio-operator.cr.yaml"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o *istioDeployOpt) exec() error {
 	obj, err := k8s.SerializeIntoObject(istioWithCnao)
 	if err != nil {
 		return err
