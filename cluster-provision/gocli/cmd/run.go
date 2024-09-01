@@ -820,9 +820,8 @@ func provisionK8sOptions(sshClient libssh.Client, k8sClient k8s.K8sDynamicClient
 	}
 
 	if n.Istio {
-		if err := sshClient.Command("/scripts/istio.sh"); err != nil {
-			return fmt.Errorf("deploying Istio service mesh failed: %s", err)
-		}
+		istioOpt := istio.NewIstioOperatorOpt(sshClient, k8sClient)
+		opts = append(opts, istioOpt)
 	}
 
 	if n.CNAO {
