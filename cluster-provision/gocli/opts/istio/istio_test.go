@@ -7,7 +7,6 @@ import (
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
 	k8s "kubevirt.io/kubevirtci/cluster-provision/gocli/pkg/k8s"
-	kubevirtcimocks "kubevirt.io/kubevirtci/cluster-provision/gocli/utils/mock"
 )
 
 func TestIstioOpt(t *testing.T) {
@@ -18,18 +17,15 @@ func TestIstioOpt(t *testing.T) {
 var _ = Describe("IstioOpt", func() {
 	var (
 		mockCtrl  *gomock.Controller
-		sshClient *kubevirtcimocks.MockSSHClient
 		k8sclient k8s.K8sDynamicClient
-		opt       *istioOpt
+		opt       *istioDeployOpt
 	)
 
 	BeforeEach(func() {
 		mockCtrl = gomock.NewController(GinkgoT())
-		sshClient = kubevirtcimocks.NewMockSSHClient(mockCtrl)
 		r := k8s.NewReactorConfig("create", "istiooperators", IstioReactor)
 		k8sclient = k8s.NewTestClient(r)
-		opt = NewIstioOpt(sshClient, k8sclient, false)
-		AddExpectCalls(sshClient)
+		opt = NewIstioDeployOpt(k8sclient, false)
 	})
 
 	AfterEach(func() {

@@ -25,21 +25,31 @@ var istioNoCnao []byte
 
 const istioVersion = "1.15.0"
 
-type istioOpt struct {
-	cnaoEnabled bool
-	client      k8s.K8sDynamicClient
-	sshClient   libssh.Client
+type istioOperatorOpt struct {
+	sshClient libssh.Client
+	client    k8s.K8sDynamicClient
 }
 
-func NewIstioOpt(sc libssh.Client, c k8s.K8sDynamicClient, cnaoEnabled bool) *istioOpt {
-	return &istioOpt{
-		client:      c,
-		cnaoEnabled: cnaoEnabled,
-		sshClient:   sc,
+type istioDeployOpt struct {
+	cnaoEnabled bool
+	client      k8s.K8sDynamicClient
+}
+
+func NewIstioOperatorOpt(sc libssh.Client, c k8s.K8sDynamicClient) *istioOperatorOpt {
+	return &istioOperatorOpt{
+		sshClient: sc,
+		client:    c,
 	}
 }
 
-func (o *istioOpt) Exec() error {
+func NewIstioDeployOpt(c k8s.K8sDynamicClient, cnaoEnabled bool) *istioDeployOpt {
+	return &istioDeployOpt{
+		client:      c,
+		cnaoEnabled: cnaoEnabled,
+	}
+}
+
+func (o *istioOperatorOpt) Exec() error {
 	obj, err := k8s.SerializeIntoObject(ns)
 	if err != nil {
 		return err
@@ -58,8 +68,11 @@ func (o *istioOpt) Exec() error {
 			return err
 		}
 	}
+	return nil
+}
 
-	obj, err = k8s.SerializeIntoObject(istioWithCnao)
+func (o *istioDeployOpt) Exec() error {
+	obj, err := k8s.SerializeIntoObject(istioWithCnao)
 	if err != nil {
 		return err
 	}
