@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"path"
@@ -700,6 +701,18 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		err = waitForVMToBeUp(prefix, nodeName)
 		if err != nil {
 			return err
+		}
+
+		success, err = docker.Exec(cli, nodeContainer(prefix, nodeName), []string{"/bin/bash", "-c", "scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i vagrant.key " + fmt.Sprintf("-r /scripts vagrant@192.168.66.10%d:/home/vagrant/scripts", x+1)}, io.Discard)
+		if err != nil {
+			return err
+		}
+
+		// move the scripts to the same location they were in in the nodecontainer to enable command abstraction
+		for _, cmd := range []string{"sudo mkdir /scripts", "sudo cp -r /home/vagrant/scripts/* /scripts"} {
+			if err = sshClient.Command(cmd); err != nil {
+				return err
+			}
 		}
 
 		rootkey := rootkey.NewRootKey(sshClient)
