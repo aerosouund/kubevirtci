@@ -66,10 +66,11 @@ func (o *istioOperatorOpt) Exec() error {
 
 	cmds := []string{
 		"source /var/lib/kubevirtci/shared_vars.sh",
-		"PATH=/opt/istio-" + istioVersion + "/bin:$PATH istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
+		"mkdir /opt/istio",
 		"echo '" + string(istioNoCnao) + "' > /opt/istio/istio-operator.cr.yaml",
 		"echo '" + string(istioWithCnao) + "' > /opt/istio/istio-operator.cr.yaml",
 		"echo '" + string(cnaoPatch) + "' > /opt/istio/istio-operator-with-cnao.yaml",
+		"PATH=/opt/istio-" + istioVersion + "/bin:$PATH istioctl --kubeconfig /etc/kubernetes/admin.conf --hub quay.io/kubevirtci operator init",
 	}
 	for _, cmd := range cmds {
 		if err := o.sshClient.Command(cmd); err != nil {
