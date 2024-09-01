@@ -14,6 +14,15 @@ function deploy_kwok() {
     fi
 }
 
+function copy_istio_cni_conf_files() {
+    if [ "$KUBEVIRT_DEPLOY_ISTIO" == "true" ] && [ "$KUBEVIRT_WITH_CNAO" == "true" ]; then
+        for nodeNum in $(seq -f "%02g" 1 $KUBEVIRT_NUM_NODES); do
+            $ssh node${nodeNum} -- "until ls /etc/cni/multus > /dev/null 2>&1; do sleep 1; done"
+            $ssh node${nodeNum} -- sudo cp -uv /etc/cni/multus/net.d/*istio*.conf /etc/cni/net.d/
+        done
+    fi
+}
+
 
 
 # configure Prometheus to select kubevirt prometheusrules
@@ -95,4 +104,6 @@ function up() {
         echo "Waiting for cluster components..."
         sleep 5
     done
+
+    copy_istio_cni_conf_files
 }
