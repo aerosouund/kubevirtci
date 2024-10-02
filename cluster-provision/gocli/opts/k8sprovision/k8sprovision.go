@@ -129,13 +129,14 @@ func (k *k8sProvisioner) Exec() error {
 	}
 
 	k8sMinor := strings.Split(k.version, ".")[1]
-	k8sRepoWithVersion := strings.Replace(string(k8sRepo), "VERSION", k8sMinor, 1)
 
-	kubeAdmConf := strings.Replace(string(kubeAdm), "VERSION", k.version, 1)
-	kubeAdm6Conf := strings.Replace(string(kubeAdm6), "VERSION", k.version, 1)
+	crioWithVersion := strings.Replace(string(crio), "VERSION", k8sMinor, -1)
+	k8sRepoWithVersion := strings.Replace(string(k8sRepo), "VERSION", k8sMinor, -1)
+	kubeAdmConf := strings.Replace(string(kubeAdm), "VERSION", k.version, -1)
+	kubeAdm6Conf := strings.Replace(string(kubeAdm6), "VERSION", k.version, -1)
 
 	cmds := []string{
-		"echo '" + string(crio) + "' | tee /etc/yum.repos.d/devel_kubic_libcontainers_stable_cri-o_v1.28.repo >> /dev/null",
+		"echo '" + crioWithVersion + "' | tee /etc/yum.repos.d/devel_kubic_libcontainers_stable_cri-o_v1." + k8sMinor + ".repo >> /dev/null",
 		"dnf install -y cri-o",
 		"echo '" + string(registries) + "' | tee /etc/containers/registries.conf >> /dev/null",
 		"echo '" + string(storage) + "' | tee /etc/containers/storage.conf >> /dev/null",
@@ -233,6 +234,9 @@ func (k *k8sProvisioner) Exec() error {
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf wait --for=condition=Ready pods --all -n kube-system --timeout=300s",
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf get pods -n kube-system",
 		"kubeadm reset --force",
+		`for i in {1..10} do; mkdir -p /var/local/kubevirt-storage/local-volume/disk${i} && mkdir -p /mnt/local-storage/local/disk${i} && echo "/var/local/kubevirt-storage/local-volume/disk${i} /mnt/local-storage/local/disk${i} none defaults,bind 0 0" >> /etc/fstab; done`,
+		"chmod -R 777 /var/local/kubevirt-storage/local-volume",
+		"chcon -R unconfined_u:object_r:svirt_sandbox_file_t:s0 /mnt/local-storage/",
 		"mkdir -p /var/provision/kubevirt.io/tests",
 		"chcon -t container_file_t /var/provision/kubevirt.io/tests",
 		`echo "tmpfs /var/provision/kubevirt.io/tests tmpfs rw,context=system_u:object_r:container_file_t:s0 0 1" >> /etc/fstab`,
