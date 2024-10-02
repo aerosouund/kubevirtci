@@ -107,11 +107,11 @@ var ProvisionFlagMap = map[string]FlagConfig{
 		ProviderOptFunc: WithAdditionalKernelArgs,
 	},
 	"vnc-port": {
-		FlagType:        "uint16",
+		FlagType:        "uint",
 		ProviderOptFunc: WithVNCPort,
 	},
 	"ssh-port": {
-		FlagType:        "uint16",
+		FlagType:        "uint",
 		ProviderOptFunc: WithSSHPort,
 	},
 	"qemu-args": {
@@ -162,43 +162,43 @@ var RunFlagMap = map[string]FlagConfig{
 		ProviderOptFunc: WithSlim,
 	},
 	"vnc-port": {
-		FlagType:        "uint16",
+		FlagType:        "uint",
 		ProviderOptFunc: WithVNCPort,
 	},
 	"http-port": {
-		FlagType:        "uint16",
+		FlagType:        "uint",
 		ProviderOptFunc: WithHTTPPort,
 	},
 	"https-port": {
-		FlagType:        "uint16",
+		FlagType:        "uint",
 		ProviderOptFunc: WithHTTPSPort,
 	},
 	"registry-port": {
-		FlagType:        "uint16",
+		FlagType:        "uint",
 		ProviderOptFunc: WithRegistryPort,
 	},
 	"ocp-port": {
-		FlagType:        "uint16",
+		FlagType:        "uint",
 		ProviderOptFunc: WithOCPort,
 	},
 	"k8s-port": {
-		FlagType:        "uint16",
+		FlagType:        "uint",
 		ProviderOptFunc: WithK8sPort,
 	},
 	"ssh-port": {
-		FlagType:        "uint16",
+		FlagType:        "uint",
 		ProviderOptFunc: WithSSHPort,
 	},
 	"prometheus-port": {
-		FlagType:        "uint16",
+		FlagType:        "uint",
 		ProviderOptFunc: WithPrometheusPort,
 	},
 	"grafana-port": {
-		FlagType:        "uint16",
+		FlagType:        "uint",
 		ProviderOptFunc: WithGrafanaPort,
 	},
 	"dns-port": {
-		FlagType:        "uint16",
+		FlagType:        "uint",
 		ProviderOptFunc: WithDNSPort,
 	},
 	"nfs-data": {
