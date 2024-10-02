@@ -183,6 +183,9 @@ func (k *k8sProvisioner) Exec() error {
 	}
 
 	cmds = []string{
+		`for i in {1..10}; do mkdir -p /var/local/kubevirt-storage/local-volume/disk${i} && mkdir -p /mnt/local-storage/local/disk${i} && echo "/var/local/kubevirt-storage/local-volume/disk${i} /mnt/local-storage/local/disk${i} none defaults,bind 0 0" >> /etc/fstab; done`,
+		"chmod -R 777 /var/local/kubevirt-storage/local-volume",
+		"chcon -R unconfined_u:object_r:svirt_sandbox_file_t:s0 /mnt/local-storage/",
 		"mkdir /provision",
 		"yum install -y patch || true",
 		"dnf install -y patch || true",
@@ -234,9 +237,6 @@ func (k *k8sProvisioner) Exec() error {
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf wait --for=condition=Ready pods --all -n kube-system --timeout=300s",
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf get pods -n kube-system",
 		"kubeadm reset --force",
-		`for i in {1..10} do; mkdir -p /var/local/kubevirt-storage/local-volume/disk${i} && mkdir -p /mnt/local-storage/local/disk${i} && echo "/var/local/kubevirt-storage/local-volume/disk${i} /mnt/local-storage/local/disk${i} none defaults,bind 0 0" >> /etc/fstab; done`,
-		"chmod -R 777 /var/local/kubevirt-storage/local-volume",
-		"chcon -R unconfined_u:object_r:svirt_sandbox_file_t:s0 /mnt/local-storage/",
 		"mkdir -p /var/provision/kubevirt.io/tests",
 		"chcon -t container_file_t /var/provision/kubevirt.io/tests",
 		`echo "tmpfs /var/provision/kubevirt.io/tests tmpfs rw,context=system_u:object_r:container_file_t:s0 0 1" >> /etc/fstab`,
