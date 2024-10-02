@@ -332,3 +332,15 @@ func WithPhases(p interface{}) KubevirtProviderOption {
 		c.Phases = p.(string)
 	}
 }
+
+func WithSkipCnaoCR(skip interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.SkipCnaoCR = skip.(bool)
+	}
+}
+
+func WithNoEtcdFsync(fsync interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.NoEtcdFsync = fsync.(bool)
+	}
+}

@@ -38,6 +38,7 @@ type KubevirtProvider struct {
 	EnableCeph                   bool     `flag:"enable-ceph" json:"enable_ceph"`
 	EnableIstio                  bool     `flag:"enable-istio" json:"enable_istio"`
 	EnableCNAO                   bool     `flag:"enable-cnao" json:"enable_cnao"`
+	SkipCnaoCR                   bool     `flag:"skip-cnao-cr" json:"skip_cnao_cr"`
 	EnableNFSCSI                 bool     `flag:"enable-nfs-csi" json:"enable_nfs_csi"`
 	EnablePrometheus             bool     `flag:"enable-prometheus" json:"enable_prometheus"`
 	EnablePrometheusAlertManager bool     `flag:"enable-prometheus-alertmanager" json:"enable_prometheus_alertmanager"`
@@ -63,6 +64,7 @@ type KubevirtProvider struct {
 	Phases                       string   `flag:"phases" json:"phases"`
 	RunEtcdOnMemory              bool     `flag:"run-etcd-on-memory" json:"run_etcd_on_memory"`
 	EtcdCapacity                 string   `flag:"etcd-capacity" json:"etcd_capacity"`
+	NoEtcdFsync                  bool     `flag:"no-etcd-fsync" json:"no_etcd_fsync"`
 	Hugepages2M                  uint     `flag:"hugepages-2m" json:"hugepages_2m"`
 	Hugepages1G                  uint     `flag:"hugepages-1g" json:"hugepages_1g"`
 	EnableRealtimeScheduler      bool     `flag:"enable-realtime-scheduler" json:"enable_realtime_scheduler"`
@@ -330,5 +332,13 @@ var RunFlagMap = map[string]FlagConfig{
 	"aaq-version": {
 		FlagType:        "string",
 		ProviderOptFunc: WithAAQVersion,
+	},
+	"skip-cnao-cr": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithSkipCnaoCR,
+	},
+	"no-etcd-fsync": {
+		FlagType:        "bool",
+		ProviderOptFunc: WithNoEtcdFsync,
 	},
 }
