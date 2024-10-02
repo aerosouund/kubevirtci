@@ -5,7 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/spf13/cobra"
@@ -137,19 +137,15 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 	utils.AppendUDPIfExplicit(portMap, utils.PortDNS, cmd.Flags(), "dns-port")
 
 	k8sVersion := args[0]
-	allowedK8sVersions := []string{"k8s-1.28", "k8s-1.29", "k8s-1.30", "1.31"}
+	allowedK8sVersions := []string{"k8s-1.28", "k8s-1.29", "k8s-1.30", "k8s-1.31"}
 	var validVersion bool
 	for _, v := range allowedK8sVersions {
 		if k8sVersion == v {
 			validVersion = true
 		}
 	}
-
-	cluster := args[0]
-
-	background, err := cmd.Flags().GetBool("background")
-	if err != nil {
-		return err
+	if !validVersion {
+		return fmt.Errorf("Invalid k8s version passed, please use one of k8s-1.28, k8s-1.29, k8s-1.30 or k8s-1.31")
 	}
 
 	containerRegistry, err := cmd.Flags().GetString("container-registry")
@@ -177,14 +173,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 		return err
 	}
 
-	hugepages2Mcount, err := cmd.Flags().GetUint("hugepages-2m")
-	if err != nil {
-		return err
-	}
-	hugepages1Gcount, err := cmd.Flags().GetUint("hugepages-1g")
-	if err != nil {
-		return err
-	}
+	clusterImage := fmt.Sprintf("%s/%s/%s%s", containerRegistry, containerOrg, k8sVersion, containerSuffix)
 
 	if slim {
 		clusterImage += "-slim"
@@ -192,7 +181,7 @@ func run(cmd *cobra.Command, args []string) (retErr error) {
 
 	b := context.Background()
 	ctx, cancel := context.WithCancel(b)
-	err = docker.ImagePull(cli, ctx, clusterImage, types.ImagePullOptions{})
+	err = docker.ImagePull(cli, ctx, clusterImage, image.PullOptions{})
 	if err != nil {
 		return fmt.Errorf("Failed to download cluster image %s, %s", clusterImage, err)
 	}
