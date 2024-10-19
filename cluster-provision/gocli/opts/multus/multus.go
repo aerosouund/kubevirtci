@@ -65,7 +65,7 @@ func (o *multusOpt) Exec() error {
 
 		fmt.Println("Pods in kube-multus-ds DaemonSet:", pods)
 		for _, pod := range strings.Split(pods, " ") {
-			logCmd := fmt.Sprintf("kubectl --kubeconfig=/etc/kubernetes/admin.conf logs -n kube-system %s --tail=30", pod)
+			logCmd := fmt.Sprintf("kubectl --kubeconfig=/etc/kubernetes/admin.conf logs -n kube-system %s -c install-multus-binary --tail=30", pod)
 			err := o.sshClient.Command(logCmd)
 			if err != nil {
 				fmt.Println("Failed to get logs for pod", pod, ":", err)
