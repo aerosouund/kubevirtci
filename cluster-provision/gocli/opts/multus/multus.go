@@ -56,7 +56,7 @@ func (o *multusOpt) Exec() error {
 		if rolloutComplete {
 			break
 		}
-		cmd := "kubectl --kubeconfig=/etc/kubernetes/admin.conf get pods -n kube-system -l name=kube-multus-ds -o jsonpath='{.items[*].metadata.name}'"
+		cmd := "kubectl --kubeconfig=/etc/kubernetes/admin.conf get pods -n kube-system -l name=multus -o jsonpath='{.items[*].metadata.name}'"
 		pods, err := o.sshClient.CommandWithNoStdOut(cmd)
 		if err != nil {
 			fmt.Println("Failed to get pods:", err)
