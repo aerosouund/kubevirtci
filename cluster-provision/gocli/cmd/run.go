@@ -14,7 +14,44 @@ import (
 	"kubevirt.io/kubevirtci/cluster-provision/gocli/providers"
 )
 
-var nvmeDisks, scsiDisks, usbDisks []string
+const (
+	proxySettings = `
+curl {{.Proxy}}/ca.crt > /etc/pki/ca-trust/source/anchors/docker_registry_proxy.crt
+update-ca-trust
+
+mkdir -p /etc/systemd/system/crio.service.d
+cat <<EOT >/etc/systemd/system/crio.service.d/override.conf
+[Service]
+Environment="HTTP_PROXY={{.Proxy}}"
+Environment="HTTPS_PROXY={{.Proxy}}"
+Environment="NO_PROXY=localhost,127.0.0.1,registry,10.96.0.0/12,10.244.0.0/16,192.168.0.0/16,fd00:10:96::/112,fd00:10:244::/112,fd00::/64"
+EOT
+
+systemctl daemon-reload
+systemctl restart crio.service
+
+while [[ systemctl status crio | grep active | wc -l -eq 0 ]]
+do
+    sleep 2
+done
+EOF
+`
+	etcdDataDir         = "/var/lib/etcd"
+	nvmeDiskImagePrefix = "/nvme"
+	scsiDiskImagePrefix = "/scsi"
+)
+
+var soundcardPCIIDs = []string{"8086:2668", "8086:2415"}
+var cli *client.Client
+var nvmeDisks []string
+var scsiDisks []string
+var usbDisks []string
+var sshClient libssh.Client
+
+type dockerSetting struct {
+	Proxy string
+}
+
 
 func NewRunCommand() *cobra.Command {
 	run := &cobra.Command{
