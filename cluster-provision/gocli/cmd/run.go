@@ -46,12 +46,10 @@ var cli *client.Client
 var nvmeDisks []string
 var scsiDisks []string
 var usbDisks []string
-var sshClient libssh.Client
 
 type dockerSetting struct {
 	Proxy string
 }
-
 
 func NewRunCommand() *cobra.Command {
 	run := &cobra.Command{
