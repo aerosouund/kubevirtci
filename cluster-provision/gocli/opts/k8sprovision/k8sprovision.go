@@ -188,6 +188,7 @@ func (k *k8sProvisioner) Exec() error {
 	}
 
 	cmds = []string{
+		"echo '" + string(mult) + "' | tee /opt/multus.yaml >> /dev/null",
 		"mkdir /provision",
 		"yum install -y patch || true",
 		"dnf install -y patch || true",
@@ -230,7 +231,6 @@ func (k *k8sProvisioner) Exec() error {
 		"echo '" + string(psa) + "' | tee /etc/kubernetes/psa.yaml >> /dev/null",
 		"echo '" + kubeAdmConf + "' | tee /etc/kubernetes/kubeadm.conf >> /dev/null",
 		"echo '" + kubeAdm6Conf + "' | tee /etc/kubernetes/kubeadm_ipv6.conf >> /dev/null",
-		"echo '" + string(mult) + "' | tee /opt/multus.yaml >> /dev/null",
 		"until ip address show dev eth0 | grep global | grep inet6; do sleep 1; done",
 		"swapoff -a",
 		"systemctl restart kubelet",
