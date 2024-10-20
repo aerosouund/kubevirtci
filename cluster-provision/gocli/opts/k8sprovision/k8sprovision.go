@@ -48,6 +48,11 @@ func (k *k8sProvisioner) Exec() error {
 		return err
 	}
 
+	mult, err := f.ReadFile("conf/multus.conf")
+	if err != nil {
+		return err
+	}
+
 	k8sRepo, err := f.ReadFile("conf/kubernetes.repo")
 	if err != nil {
 		return err
@@ -225,6 +230,7 @@ func (k *k8sProvisioner) Exec() error {
 		"echo '" + string(psa) + "' | tee /etc/kubernetes/psa.yaml >> /dev/null",
 		"echo '" + kubeAdmConf + "' | tee /etc/kubernetes/kubeadm.conf >> /dev/null",
 		"echo '" + kubeAdm6Conf + "' | tee /etc/kubernetes/kubeadm_ipv6.conf >> /dev/null",
+		"echo '" + mult + "' | tee /opt/multus.yaml >> /dev/null",
 		"until ip address show dev eth0 | grep global | grep inet6; do sleep 1; done",
 		"swapoff -a",
 		"systemctl restart kubelet",
@@ -233,6 +239,8 @@ func (k *k8sProvisioner) Exec() error {
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f /provision/cni.yaml",
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf wait --for=condition=Ready pods --all -n kube-system --timeout=300s",
 		"kubectl --kubeconfig=/etc/kubernetes/admin.conf get pods -n kube-system",
+		"kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f /opt/multus.yaml",
+		"while ! kubectl --kubeconfig=/etc/kubernetes/admin.conf rollout status -n kube-system ds/kube-multus-ds --timeout=200s; do kubectl --kubeconfig=/etc/kubernetes/admin.conf describe pods -n kube-system -l name=kube-multus-ds; sleep 5; done",
 		"kubeadm reset --force",
 		`for i in {1..10}; do mkdir -p /var/local/kubevirt-storage/local-volume/disk${i} && mkdir -p /mnt/local-storage/local/disk${i} && echo "/var/local/kubevirt-storage/local-volume/disk${i} /mnt/local-storage/local/disk${i} none defaults,bind 0 0" >> /etc/fstab; done`,
 		"chmod -R 777 /var/local/kubevirt-storage/local-volume",
