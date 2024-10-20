@@ -48,7 +48,7 @@ func (k *k8sProvisioner) Exec() error {
 		return err
 	}
 
-	mult, err := f.ReadFile("conf/multus.conf")
+	mult, err := f.ReadFile("conf/multus.yaml")
 	if err != nil {
 		return err
 	}
