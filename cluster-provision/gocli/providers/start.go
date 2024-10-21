@@ -127,13 +127,20 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 			}
 		}
 
+		containerName := kp.Version + "-" + nodeName
+
+		if kp.Prefix != "" {
+			containerName = kp.Prefix + "-" + nodeName
+
+		}
+
 		node, err := kp.Docker.ContainerCreate(ctx, vmContainerConfig, &container.HostConfig{
 			Privileged:  true,
 			NetworkMode: container.NetworkMode("container:" + kp.DNSMasq),
 			Resources: container.Resources{
 				Devices: deviceMappings,
 			},
-		}, nil, nil, kp.Version+"-"+nodeName)
+		}, nil, nil, containerName)
 		if err != nil {
 			return err
 		}
