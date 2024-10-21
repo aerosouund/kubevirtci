@@ -87,12 +87,6 @@ func (kp *KubevirtProvider) runDNSMasq(ctx context.Context, portMap nat.PortMap)
 		}
 	}
 
-	containerName := kp.Version + "-dnsmasq"
-
-	if kp.Prefix != "" {
-		containerName = kp.Prefix + "-dnsmasq"
-	}
-
 	dnsmasq, err := kp.Docker.ContainerCreate(ctx, &container.Config{
 		Image: kp.Image,
 		Env: []string{
@@ -123,7 +117,7 @@ func (kp *KubevirtProvider) runDNSMasq(ctx context.Context, portMap nat.PortMap)
 			"ceph:192.168.66.2",
 		},
 		Mounts: dnsmasqMounts,
-	}, nil, nil, containerName)
+	}, nil, nil, kp.Prefix+"-dnsmasq")
 
 	if err := kp.Docker.ContainerStart(ctx, dnsmasq.ID, container.StartOptions{}); err != nil {
 		return "", err
@@ -141,7 +135,7 @@ func (kp *KubevirtProvider) runRegistry(ctx context.Context) (string, error) {
 	}, &container.HostConfig{
 		Privileged:  true,
 		NetworkMode: container.NetworkMode("container:" + kp.DNSMasq),
-	}, nil, nil, kp.Version+"-registry")
+	}, nil, nil, kp.Prefix+"-registry")
 	if err != nil {
 		return "", err
 	}
@@ -176,7 +170,7 @@ func (kp *KubevirtProvider) runNFSGanesha(ctx context.Context) (string, error) {
 		},
 		Privileged:  true,
 		NetworkMode: container.NetworkMode("container:" + kp.DNSMasq),
-	}, nil, nil, kp.Version+"-nfs-ganesha")
+	}, nil, nil, kp.Prefix+"-nfs-ganesha")
 	if err != nil {
 		return "", err
 	}
