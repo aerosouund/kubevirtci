@@ -100,6 +100,7 @@ func NewRunCommand() *cobra.Command {
 	run.Flags().Uint("swap-size", 0, "swap memory size in GB")
 	run.Flags().Uint("swapiness", 0, "swapiness")
 	run.Flags().String("docker-proxy", "", "sets network proxy for docker daemon")
+	run.Flags().String("prefix", "", "container prefix")
 	run.Flags().String("container-registry", "quay.io", "the registry to pull cluster container from")
 	run.Flags().String("container-org", "kubevirtci", "the organization at the registry to pull the container from")
 	run.Flags().String("container-suffix", "", "Override container suffix stored at the cli binary")
