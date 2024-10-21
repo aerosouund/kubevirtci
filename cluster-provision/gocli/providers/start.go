@@ -36,6 +36,9 @@ import (
 )
 
 func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc, portMap nat.PortMap) (retErr error) {
+	if kp.Prefix == "" {
+		kp.Prefix = kp.Version
+	}
 	stop := make(chan error, 10)
 	containers, _, done := docker.NewCleanupHandler(kp.Docker, stop, os.Stdout, false)
 
@@ -127,20 +130,13 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 			}
 		}
 
-		containerName := kp.Version + "-" + nodeName
-
-		if kp.Prefix != "" {
-			containerName = kp.Prefix + "-" + nodeName
-
-		}
-
 		node, err := kp.Docker.ContainerCreate(ctx, vmContainerConfig, &container.HostConfig{
 			Privileged:  true,
 			NetworkMode: container.NetworkMode("container:" + kp.DNSMasq),
 			Resources: container.Resources{
 				Devices: deviceMappings,
 			},
-		}, nil, nil, containerName)
+		}, nil, nil, kp.Prefix+"-"+nodeName)
 		if err != nil {
 			return err
 		}
@@ -150,7 +146,7 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 			return err
 		}
 
-		success, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Version, nodeName), []string{"/bin/bash", "-c", "while [ ! -f /ssh_ready ] ; do sleep 1; done"}, os.Stdout)
+		success, err := docker.Exec(kp.Docker, kp.nodeContainer(kp.Prefix, nodeName), []string{"/bin/bash", "-c", "while [ ! -f /ssh_ready ] ; do sleep 1; done"}, os.Stdout)
 		if err != nil {
 			return err
 		}
@@ -159,7 +155,7 @@ func (kp *KubevirtProvider) Start(ctx context.Context, cancel context.CancelFunc
 			return fmt.Errorf("checking for ssh.sh script for node %s failed", nodeName)
 		}
 
-		err = kp.waitForVMToBeUp(kp.Version, nodeName)
+		err = kp.waitForVMToBeUp(kp.Prefix, nodeName)
 		if err != nil {
 			return err
 		}
@@ -228,7 +224,7 @@ func (kp *KubevirtProvider) provisionNode(sshClient libssh.Client, nodeIdx int) 
 				return fmt.Errorf("Starting fips mode failed: %s", err)
 			}
 		}
-		err := kp.waitForVMToBeUp(kp.Version, nodeName)
+		err := kp.waitForVMToBeUp(kp.Prefix, nodeName)
 		if err != nil {
 			return err
 		}
@@ -318,11 +314,7 @@ func (kp *KubevirtProvider) provisionK8sOpts(sshClient libssh.Client) error {
 	}
 
 	if kp.AAQ {
-		if kp.Version == "k8s-1.30" {
-			opts = append(opts, aaq.NewAaqOpt(kp.Client, sshClient, kp.AAQVersion))
-		} else {
-			logrus.Info("AAQ was requested but kubernetes version is less than 1.30, skipping")
-		}
+		opts = append(opts, aaq.NewAaqOpt(kp.Client, sshClient, kp.AAQVersion))
 	}
 
 	if kp.EnablePrometheus {
