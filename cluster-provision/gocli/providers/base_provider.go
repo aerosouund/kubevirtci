@@ -90,7 +90,7 @@ func (kp *KubevirtProvider) runDNSMasq(ctx context.Context, portMap nat.PortMap)
 	containerName := kp.Version + "-dnsmasq"
 
 	if kp.Prefix != "" {
-		containerName = kp.Prefix + "-" + kp.Version + "-dnsmasq"
+		containerName = kp.Prefix + "-dnsmasq"
 	}
 
 	dnsmasq, err := kp.Docker.ContainerCreate(ctx, &container.Config{
