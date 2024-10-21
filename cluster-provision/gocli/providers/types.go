@@ -22,6 +22,7 @@ type KubevirtProvider struct {
 	KernelArgs                   string   `flag:"kernel-args" json:"kernel_args"`
 	Background                   bool     `flag:"background" short:"b" json:"background"`
 	RandomPorts                  bool     `flag:"random-ports" json:"random_ports"`
+	Prefix                       string   `flag:"prefix" json:"prefix"`
 	Slim                         bool     `flag:"slim" json:"slim"`
 	VNCPort                      uint     `flag:"vnc-port" json:"vnc_port"`
 	HTTPPort                     uint     `flag:"http-port" json:"http_port"`
@@ -124,6 +125,10 @@ var RunFlagMap = map[string]FlagConfig{
 	"nodes": {
 		FlagType:        "uint",
 		ProviderOptFunc: WithNodes,
+	},
+	"prefix": {
+		FlagType:        "string",
+		ProviderOptFunc: WithPrefix,
 	},
 	"numa": {
 		FlagType:        "uint",

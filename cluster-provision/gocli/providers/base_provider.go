@@ -87,6 +87,12 @@ func (kp *KubevirtProvider) runDNSMasq(ctx context.Context, portMap nat.PortMap)
 		}
 	}
 
+	containerName := kp.Version + "-dnsmasq"
+
+	if kp.Prefix != "" {
+		containerName = kp.Prefix + "-" + kp.Version + "-dnsmasq"
+	}
+
 	dnsmasq, err := kp.Docker.ContainerCreate(ctx, &container.Config{
 		Image: kp.Image,
 		Env: []string{
@@ -117,7 +123,7 @@ func (kp *KubevirtProvider) runDNSMasq(ctx context.Context, portMap nat.PortMap)
 			"ceph:192.168.66.2",
 		},
 		Mounts: dnsmasqMounts,
-	}, nil, nil, kp.Version+"-dnsmasq")
+	}, nil, nil, containerName)
 
 	if err := kp.Docker.ContainerStart(ctx, dnsmasq.ID, container.StartOptions{}); err != nil {
 		return "", err

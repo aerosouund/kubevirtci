@@ -6,6 +6,12 @@ func WithNodes(nodes interface{}) KubevirtProviderOption {
 	}
 }
 
+func WithPrefix(p interface{}) KubevirtProviderOption {
+	return func(c *KubevirtProvider) {
+		c.Prefix = p.(string)
+	}
+}
+
 func WithNuma(numa interface{}) KubevirtProviderOption {
 	return func(c *KubevirtProvider) {
 		c.Numa = numa.(uint)
