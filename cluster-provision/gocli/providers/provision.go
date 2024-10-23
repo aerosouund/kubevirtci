@@ -25,6 +25,10 @@ import (
 )
 
 func (kp *KubevirtProvider) Provision(ctx context.Context, cancel context.CancelFunc, portMap nat.PortMap, k8sVersion string) (retErr error) {
+	if kp.Prefix == "" {
+		kp.Prefix = kp.Version
+	}
+
 	prefix := fmt.Sprintf("k8s-%s-provision", kp.Version)
 	target := fmt.Sprintf("quay.io/kubevirtci/k8s-%s", kp.Version)
 	if kp.Phases == "linux" {
